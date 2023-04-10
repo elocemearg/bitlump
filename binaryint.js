@@ -532,9 +532,9 @@ class BinaryInt {
                 mantissa = 1.0;
             if (rawMantissa != 0) {
                 let bitValue = 1.0;
-                for (let mask = (1 << (mantissaBitLength - 1)); mask != 0; mask >>= 1) {
+                for (let i = 0; i < mantissaBitLength; i++) {
                     bitValue /= 2;
-                    if (rawMantissa & mask) {
+                    if (this.getBit(mantissaBitStart - i)) {
                         mantissa += bitValue;
                     }
                 }
@@ -548,7 +548,7 @@ class BinaryInt {
         let exponent = this.getCastFloat32Exponent();
         let rawMantissa = this.getCastFloat32Mantissa(true);
         let mantissa = this.getCastFloat32Mantissa();
-        return buildFloat(sign, exponent, rawMantissa, mantissa, 128).toExponential(6);
+        return buildFloat(sign, exponent, rawMantissa, mantissa, 128);
     }
 
     getCastFloat64() {
@@ -556,7 +556,7 @@ class BinaryInt {
         let exponent = this.getCastFloat64Exponent();
         let rawMantissa = this.getCastFloat64Mantissa(true);
         let mantissa = this.getCastFloat64Mantissa();
-        return buildFloat(sign, exponent, rawMantissa, mantissa, 1024).toExponential(15);
+        return buildFloat(sign, exponent, rawMantissa, mantissa, 1024);
     }
 
     copy() {

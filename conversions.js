@@ -323,7 +323,7 @@ function initConversions() {
             let binaryInt = inputValue.getBinaryInt();
             if (binaryInt == null)
                 return null;
-            return binaryInt.getCastFloat32();
+            return binaryInt.getCastFloat32().toPrecision(7);
         }
     );
 
@@ -386,7 +386,7 @@ function initConversions() {
             let binaryInt = inputValue.getBinaryInt();
             if (binaryInt == null)
                 return null;
-            return binaryInt.getCastFloat64();
+            return binaryInt.getCastFloat64().toPrecision(15);
         }
     );
 }
