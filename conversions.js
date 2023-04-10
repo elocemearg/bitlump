@@ -2,16 +2,6 @@
 /* conversion name -> Conversion */
 let conversions = {};
 
-function parseNumber(input) {
-    input = input.trim()
-    if (input.startsWith("0x")) {
-        return parseInt(input.substring(2), 16);
-    }
-    else {
-        return parseInt(input);
-    }
-}
-
 function isHexInteger(input) {
     return input.match(/^ *0x[0-9a-fA-F]+ *$/) != null;
 }
@@ -24,21 +14,36 @@ class InputValue {
     constructor(text) {
         this.text = text;
 
-        /* Try to parse as an integer */
-        this.intValue = parseNumber(text);
+        /* Put the value into a binary integer */
+        this.binaryIntValue = createBinaryIntFromString(text, 8, text.trim().startsWith("-"));
+
+        if (this.binaryIntValue != null) {
+            this.intValue = this.binaryIntValue.getJSInt();
+        }
+        else {
+            this.intValue = null;
+        }
 
         /* Try to parse as a float */
         this.floatValue = parseFloat(text);
-
-        this.binaryIntValue = createBinaryIntFromString(text, 8, text.trim().startsWith("-"));
     }
 
     getBinaryInt() {
         return this.binaryIntValue;
     }
 
+    /* Format a supplied BinaryInt the same way this one is formatted. */
+    formatBinaryInt(binaryInt) {
+        if (this.isHexInteger()) {
+            return "0x" + binaryInt.formatHex(false);
+        }
+        else {
+            return binaryInt.formatDecimal();
+        }
+    }
+
     isInteger() {
-        return !isNaN(this.intValue);
+        return !isNaN(this.intValue) && this.intValue != null;
     }
 
     isHexInteger() {
@@ -91,15 +96,11 @@ function getConversion(conversionName) {
     return conversions[conversionName];
 }
 
-function convertInt(inputValue, signed, bits, swapEndianity) {
+function convertInt(inputValue, signed, bits) {
     let binaryInt = createBinaryIntFromString(inputValue.getText(), Math.floor(bits / 8), signed);
 
     if (binaryInt == null)
         return null;
-
-    if (swapEndianity) {
-        binaryInt.swapEndianity();
-    }
 
     if (inputValue.isHexInteger()) {
         /* Format the answer in base 10 */
@@ -155,18 +156,15 @@ function initConversions() {
 
     let signedness = [ "signed", "unsigned" ];
     let numBits = [ 8, 16, 32, 64 ];
-    let littleEndian = [ false, true ];
     for (let i = 0; i < signedness.length; i++) {
         for (let j = 0; j < numBits.length; j++) {
-            for (let k = 0; k < littleEndian.length; k++) {
-                createConversion("numbers",
-                    signedness[i] + numBits[j].toString() + (littleEndian[k] ? "le" : ""),
-                    signedness[i] + " " + numBits[j].toString() + "-bit integer" + (littleEndian[k] ? " (LE)" : ""),
-                    function(inputValue) {
-                        return convertInt(inputValue, i == 0, numBits[j], littleEndian[k]);
-                    }
-                );
-            }
+            createConversion("numbers",
+                signedness[i] + numBits[j].toString(),
+                signedness[i] + " " + numBits[j].toString() + "-bit integer",
+                function(inputValue) {
+                    return convertInt(inputValue, i == 0, numBits[j]);
+                }
+            );
         }
     }
 

@@ -27,19 +27,42 @@
             <div class="mainoutput">
                 <div class="outputgroup">
                     <div class="outputgrouptitle">Integer input</div>
-                    <div class="outputgrouprow">
-                        <div class="outputcell" style="width: 45%">
-                            <div class="outputcelltitle">Decimal</div>
-                            <div class="outputvalue" data-converter="decimal"></div>
+                    <div>
+                        <div style="width: 55%; display: inline-block;">
+                            <table style="width: 100%; text-align: right;">
+                                <colgroup>
+                                    <col style="width: 3em;" />
+                                </colgroup>
+                                <tr>
+                                    <td>Dec</td>
+                                    <td class="outputvalue" data-converter="decimal"></td>
+                                </tr>
+                                <tr>
+                                    <td>Hex</td>
+                                    <td class="outputvalue" data-converter="hex"></td>
+                                </tr>
+                            </table>
                         </div>
-                        <div class="outputcell" style="width: 45%">
-                            <div class="outputcelltitle">Hex</div>
-                            <div class="outputvalue" data-converter="hex"></div>
+                        <div style="width: 40%; display: inline-block; text-align: center; vertical-align: top;">
+                            <div class="buttonblock">
+                                <div class="buttonrow">
+                                    <button id="decrementinput" onclick="decrementInputValue();">-1</button>
+                                    <button id="incrementinput" onclick="incrementInputValue();">+1</button>
+                                    <button id="shiftleftinput" onclick="shiftLeftInputValue();">Shift left</button>
+                                    <button id="shiftrightinput" onclick="shiftRightInputValue();">Shift right</button>
+                                </div>
+                                <div class="buttonrow">
+                                    <span style="font-size: 10pt;">Endian swap</span>
+                                    <button id="endianswap16input" onclick="endianSwapInputValue(2);">16</button>
+                                    <button id="endianswap32input" onclick="endianSwapInputValue(4);">32</button>
+                                    <button id="endianswap64input" onclick="endianSwapInputValue(8);">64</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">Big-endian signed integer</div>
+                        <div class="outputcelltitle">Signed integer</div>
                         <div class="outputgrouprow">
                             <div class="outputcell" style="width: 9%">
                                 <div class="outputcelltitle">8-bit</div>
@@ -61,29 +84,7 @@
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">Little-endian signed integer</div>
-                        <div class="outputgrouprow">
-                            <div class="outputcell" style="width: 9%">
-                                <div class="outputcelltitle">8-bit</div>
-                                <div class="outputvalue" data-converter="signed8le"></div>
-                            </div>
-                            <div class="outputcell" style="width: 19%">
-                                <div class="outputcelltitle">16-bit</div>
-                                <div class="outputvalue" data-converter="signed16le"></div>
-                            </div>
-                            <div class="outputcell" style="width: 29%">
-                                <div class="outputcelltitle">32-bit</div>
-                                <div class="outputvalue" data-converter="signed32le"></div>
-                            </div>
-                            <div class="outputcell" style="width: 39%">
-                                <div class="outputcelltitle">64-bit</div>
-                                <div class="outputvalue" data-converter="signed64le"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="outputgrouprow">
-                        <div class="outputcelltitle">Big-endian unsigned integer</div>
+                        <div class="outputcelltitle">Unsigned integer</div>
                         <div class="outputgrouprow">
                             <div class="outputcell" style="width: 9%">
                                 <div class="outputcelltitle">8-bit</div>
@@ -100,28 +101,6 @@
                             <div class="outputcell" style="width: 39%">
                                 <div class="outputcelltitle">64-bit</div>
                                 <div class="outputvalue" data-converter="unsigned64"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="outputgrouprow">
-                        <div class="outputcelltitle">Little-endian unsigned integer</div>
-                        <div class="outputgrouprow">
-                            <div class="outputcell" style="width: 9%">
-                                <div class="outputcelltitle">8-bit</div>
-                                <div class="outputvalue" data-converter="unsigned8le"></div>
-                            </div>
-                            <div class="outputcell" style="width: 19%">
-                                <div class="outputcelltitle">16-bit</div>
-                                <div class="outputvalue" data-converter="unsigned16le"></div>
-                            </div>
-                            <div class="outputcell" style="width: 29%">
-                                <div class="outputcelltitle">32-bit</div>
-                                <div class="outputvalue" data-converter="unsigned32le"></div>
-                            </div>
-                            <div class="outputcell" style="width: 39%">
-                                <div class="outputcelltitle">64-bit</div>
-                                <div class="outputvalue" data-converter="unsigned64le"></div>
                             </div>
                         </div>
                     </div>

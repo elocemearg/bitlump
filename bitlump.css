@@ -55,14 +55,14 @@ div.outputcell {
     text-align: center;
 }
 
-div.outputvalue {
+.outputvalue {
     font-family: monospace;
     height: 16pt;
     line-height: 16pt;
     background-color: #ddffdd;
 }
 
-div.outputvaluevoid {
+.outputvaluevoid {
     background-color: #dddddd;
 }
 
@@ -77,4 +77,12 @@ div.outputcellbigcharacter {
     vertical-align: middle;
     text-align: center;
     border: 1px silver inset;
+}
+
+div.buttonblock {
+    text-align: center;
+}
+
+div.buttonrow {
+    margin-bottom: 5px;
 }

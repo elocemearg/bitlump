@@ -1,6 +1,9 @@
 
 const HEX_DIGITS = "0123456789ABCDEF";
 
+const JS_MAX_SAFE_INTEGER = null;
+const JS_MIN_SAFE_INTEGER = null;
+
 function shiftLeft(bytes, numBits) {
     let overflow = false;
 
@@ -53,7 +56,7 @@ function negateBytes(bytes) {
     addUnsignedBytes(bytes, [1]);
 }
 
-function textToByteArray(text, numBytes) {
+function textToByteArray(text, numBytes, signed) {
     let pos = 0;
     let base = 10;
     let minus = false;
@@ -116,6 +119,15 @@ function textToByteArray(text, numBytes) {
             return null;
         }
     }
+
+    /* If we're a signed integer, and there was no minus sign, and the input
+     * was in base 10, and the top bit is now set, return null. This is what
+     * happens when you input, say, "128" to an 8-bit signed integer. We get
+     * 0x80 but 128 can't be expressed in an 8-bit signed integer. */
+    if (signed && !minus && base == 10 && (this.bytes[0] & 0x80) != 0) {
+        return null;
+    }
+
     return bytes;
 }
 
@@ -177,6 +189,198 @@ class BinaryInt {
             }
         }
         return nibbles.join("");
+    }
+
+    getJSInt() {
+        /* If the integer falls in the range
+         * [ Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER ]
+         * then return that as an ordinary number. Otherwise return null. */
+        if (this.ge(BinaryInt.JS_MIN_SAFE_INTEGER) && this.le(BinaryInt.JS_MAX_SAFE_INTEGER)) {
+            let n = 0;
+            if (this.isNegative()) {
+                /* Each base-256 "digit" x counts for -(255 - x) in that
+                 * position, except for the last one which counts -(256 - x).
+                 * So 0xffffffff is:
+                 *     -(0 * 256^3 + 0 * 256^2 + 0 * 256^1 + 1 * 256^0).
+                 */
+                for (let i = 0; i < this.bytes.length; i++) {
+                    n *= 256;
+                    n -= 255 + (i == this.bytes.length - 1 ? 1 : 0) - this.bytes[i];
+                }
+            }
+            else {
+                for (let i = 0; i < this.bytes.length; i++) {
+                    n *= 256;
+                    n += this.bytes[i];
+                }
+            }
+            return n;
+        }
+        else {
+            return null;
+        }
+    }
+
+    getSign() {
+        if (this.isNegative()) {
+            return -1;
+        }
+        else if (this.isZero()) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    /* Return -1, 0 or -1 if this is respectively less than, equal to, or
+     * greater than, other. */
+    cmp(other) {
+        let thisSign = this.getSign();
+        let otherSign = other.getSign();
+        if (thisSign < otherSign)
+            return -1;
+        else if (thisSign > otherSign)
+            return 1;
+        else if (thisSign == 0 && otherSign == 0)
+            return 0;
+
+        /* If we get here, both numbers have the same sign and neither number
+         * is zero. */
+        let length = Math.max(this.bytes.length, other.bytes.length);
+        let thisIndex = this.bytes.length - length;
+        let otherIndex = other.bytes.length - length;
+        let signPad = (thisSign < 0 ? 0xff : 0);
+        while (thisIndex < this.bytes.length) {
+            let thisByte = (thisIndex < 0) ? signPad : this.bytes[thisIndex];
+            let otherByte = (otherIndex < 0) ? signPad : other.bytes[otherIndex];
+            if (thisByte != otherByte) {
+                if (thisByte < otherByte)
+                    return -1;
+                else
+                    return 1;
+            }
+            thisIndex++;
+            otherIndex++;
+        }
+        return 0;
+    }
+
+    eq(other) {
+        return this.cmp(other) == 0;
+    }
+
+    gt(other) {
+        return this.cmp(other) > 0;
+    }
+
+    lt(other) {
+        return this.cmp(other) < 0;
+    }
+
+    ge(other) {
+        return this.cmp(other) >= 0;
+    }
+
+    le(other) {
+        return this.cmp(other) <= 0;
+    }
+
+    addByte(n) {
+        let carry = n;
+        for (let i = this.bytes.length - 1; i >= 0; i--) {
+            if (carry == 0)
+                return true;
+            this.bytes[i] += carry;
+            carry = this.bytes[i] >> 8;
+            this.bytes[i] &= 0xff;
+        }
+        return carry == 0;
+    }
+
+    increment() {
+        return this.addByte(1);
+    }
+
+    subtractByte(n) {
+        let borrow = n;
+        for (let i = this.bytes.length - 1; i >= 0; i--) {
+            if (borrow == 0)
+                return true;
+            this.bytes[i] -= borrow;
+            if (this.bytes[i] < 0) {
+                borrow = 1;
+                this.bytes[i] += 256;
+            }
+            else {
+                borrow = 0;
+            }
+        }
+        return borrow == 0;
+    }
+
+    decrement() {
+        return this.subtractByte(1);
+    }
+
+    shiftLeft(bits) {
+        return !shiftLeft(this.bytes, bits);
+    }
+
+    shiftRight(bits) {
+        let padByte = this.isNegative() ? 0xff : 0;
+        while (bits >= 8) {
+            this.bytes.pop();
+            this.bytes.unshift(padByte);
+        }
+        if (bits > 0) {
+            let readMask = (1 << bits) - 1;
+            let carry = padByte & readMask;
+            for (let i = 0; i < this.bytes.length; i++) {
+                /* Shift in from the previous byte */
+                let shiftedIn = carry << (8 - bits);
+                carry = this.bytes[i] & readMask;
+                this.bytes[i] >>= bits;
+                this.bytes[i] |= shiftedIn;
+            }
+        }
+        return true;
+    }
+
+    endianSwap(numBytes) {
+        if (numBytes > this.bytes.length)
+            return false;
+
+        let padByte = this.isNegative() ? 0xff : 0;
+
+        /* If numBytes < this.bytes.length, discard the top unswapped bytes and
+         * set them all to 0 of 0xff depending on the value's sign. */
+        for (let i = 0; i < this.bytes.length - numBytes; i++) {
+            this.bytes[i] = padByte;
+        }
+
+        let l = this.bytes.length - numBytes;
+        let r = this.bytes.length - 1;
+        while (l < r) {
+            let tmp = this.bytes[l];
+            this.bytes[l] = this.bytes[r];
+            this.bytes[r] = tmp;
+            l++;
+            r--;
+        }
+
+        /* If this is a signed integer, check the top bit of the top byte we
+         * swapped, and adjust the sign if necessary. */
+        /*if (this.bytes[this.bytes.length - numBytes] & 0x80) {
+            padByte = 0xff;
+        }
+        else {
+            padByte = 0;
+        }
+        for (let i = 0; i < this.bytes.length - numBytes; i++) {
+            this.bytes[i] = padByte;
+        }*/
+        return true;
     }
 
     formatDecimal() {
@@ -249,11 +453,17 @@ class BinaryInt {
 }
 
 function createBinaryIntFromString(text, numBytes, signed) {
-    let bytes = textToByteArray(text, numBytes);
+    let bytes = textToByteArray(text, numBytes, signed);
     if (bytes == null)
         return null;
     return new BinaryInt(bytes, signed);
 }
+
+BinaryInt.JS_MAX_SAFE_INTEGER = createBinaryIntFromString(Number.MAX_SAFE_INTEGER.toString(), 8, true);
+BinaryInt.JS_MIN_SAFE_INTEGER = createBinaryIntFromString(Number.MIN_SAFE_INTEGER.toString(), 8, true);
+
+
+/* Test functions */
 
 function testBinaryIntCase(n, numBytes, signed) {
     let b = createBinaryIntFromString(n.toString(), numBytes, signed);
@@ -275,11 +485,11 @@ function testBinaryIntCase(n, numBytes, signed) {
     return true;
 }
 
-function testBinaryInt(numBytes, numTests) {
+function testBinaryIntFormat(numBytes, numTests) {
     let failed = false;
     let unsignedMax = 256 ** numBytes;
     if (numBytes > 4) {
-        console.log("Usage: testBinaryInt(numBytes <= 4, numTests >= 0);");
+        console.log("Usage: testBinaryIntFormt(numBytes <= 4, numTests >= 0);");
         return;
     }
     for (let i = 1; i <= numTests; i++) {
@@ -295,7 +505,50 @@ function testBinaryInt(numBytes, numTests) {
     }
 }
 
-function testExhaustiveBinaryInt(numBytes) {
+function randomSignedness(n, maxSignedValue) {
+    if (n < 0)
+        return true;
+    else if (n > maxSignedValue)
+        return false;
+    else
+        return Math.random() < 0.5;
+}
+
+function testBinaryIntCmp(numBytes, numTests) {
+    let failed = false;
+    let unsignedMax = 256 ** numBytes;
+    if (numBytes > 4) {
+        console.log("Usage: testBinaryIntCmp(numBytes > 4, numTests >= 0);");
+        return;
+    }
+
+    for (let i = 1; i <= numTests; i++) {
+        let a = Math.floor(Math.random() * unsignedMax) - unsignedMax / 2;
+        let b = Math.floor(Math.random() * unsignedMax) - unsignedMax / 2;
+        let aSigned = randomSignedness(a, unsignedMax / 2 - 1);
+        let bSigned = randomSignedness(b, unsignedMax / 2 - 1);
+        let aBin = createBinaryIntFromString(a.toString(), numBytes, aSigned);
+        let bBin = createBinaryIntFromString(b.toString(), numBytes, bSigned);
+        let expectedCmp;
+        if (a < b)
+            expectedCmp = -1;
+        else if (a == b)
+            expectedCmp = 0;
+        else
+            expectedCmp = 1;
+        let observedCmp = aBin.cmp(bBin);
+        if (expectedCmp != observedCmp) {
+            console.log("Test " + i.toString() + "/" + numTests.toString() + ": a " + a.toString() + ", b " + b.toString() + ", expected cmp " + expectedCmp.toString() + ", observed cmp " + observedCmp.toString());
+            failed = true;
+            break;
+        }
+    }
+    if (!failed) {
+        console.log(numTests.toString() + " tests passed.");
+    }
+}
+
+function testExhaustiveBinaryIntFormat(numBytes) {
     let numBits = numBytes * 8;
     let numTests = 0;
     let failed = false;
