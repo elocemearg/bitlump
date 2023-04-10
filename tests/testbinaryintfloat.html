@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Bitlump</title>
+        <meta name="description" content="BinaryInt float transformation test page" />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Inter:400,700%7CRoboto&display=swap" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="../bitlump.css?bump=0" />
+    </head>
+    <body>
+        <script src="../binaryint.js?bump=0"></script>
+        <script src="floattestdata.js?bump=0"></script>
+        <script src="floattest.js?bump=0"></script>
+        <h1>Bitlump Test Page</h1>
+        <p>
+        <span style="font-family: monospace;">tests/floattestdata.js</span>
+        must be generated first using
+        <span style="font-family: monospace;">tests/makefloattests</span>
+        compiled from
+        <span style="font-family: monospace;">tests/makefloattests.c</span>.
+        </p>
+        <p>
+        Open the developer console (F12 in Chrome) and press the button to start.
+        </p>
+        <div>
+            <button onclick="runFloatTest();">Run</button>
+        </div>
+    </body>
+</html>
