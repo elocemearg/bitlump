@@ -10,6 +10,16 @@ function intToHex(i) {
     return i.toString(16).toUpperCase();
 }
 
+function leftPad(s, padChar, desiredLength) {
+    let numPads = desiredLength - s.length;
+    if (numPads > 0) {
+        return Array(numPads).fill(padChar).join("") + s;
+    }
+    else {
+        return s;
+    }
+}
+
 class InputValue {
     constructor(text) {
         this.text = text;
@@ -254,4 +264,129 @@ function initConversions() {
         }
     );
 
+    createConversion("numbers", "float32bin2sign", "32-bit float binary to sign",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat32Sign() ? "-" : "+";
+        }
+    );
+
+    createConversion("numbers", "float32bin2signraw", "32-bit float binary to sign",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat32Sign() ? "1" : "0";
+        }
+    );
+
+    createConversion("numbers", "float32bin2exp", "32-bit float binary to exponent",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat32Exponent().toString();
+        }
+    );
+
+    createConversion("numbers", "float32bin2expraw", "32-bit float binary to exponent",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return "0x" + leftPad(intToHex(binaryInt.getCastFloat32Exponent(true)), '0', 2);
+        }
+    );
+
+    createConversion("numbers", "float32bin2mantissa", "32-bit float binary to mantissa",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat32Mantissa().toFixed(9);
+        }
+    );
+
+    createConversion("numbers", "float32bin2mantissaraw", "32-bit float binary to mantissa",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return "0x" + leftPad(intToHex(binaryInt.getCastFloat32Mantissa(true)), '0', 6);
+        }
+    );
+
+    createConversion("numbers", "float32bin2value", "32-bit float evaluation",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat32();
+        }
+    );
+
+    createConversion("numbers", "float64bin2sign", "64-bit float binary to sign",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat64Sign() ? "-" : "+";
+        }
+    );
+
+    createConversion("numbers", "float64bin2signraw", "64-bit float binary to sign",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat64Sign() ? "1" : "0";
+        }
+    );
+
+    createConversion("numbers", "float64bin2exp", "64-bit float binary to exponent",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat64Exponent().toString();
+        }
+    );
+
+    createConversion("numbers", "float64bin2expraw", "64-bit float binary to exponent",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return "0x" + leftPad(intToHex(binaryInt.getCastFloat64Exponent(true)), '0', 3);
+        }
+    );
+
+    createConversion("numbers", "float64bin2mantissa", "64-bit float binary to mantissa",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat64Mantissa().toFixed(17);
+        }
+    );
+
+    createConversion("numbers", "float64bin2mantissaraw", "64-bit float binary to mantissa",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return "0x" + leftPad(intToHex(binaryInt.getCastFloat64Mantissa(true)), '0', 13);
+        }
+    );
+
+    createConversion("numbers", "float64bin2value", "64-bit float evaluation",
+        function(inputValue) {
+            let binaryInt = inputValue.getBinaryInt();
+            if (binaryInt == null)
+                return null;
+            return binaryInt.getCastFloat64();
+        }
+    );
 }

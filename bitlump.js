@@ -23,7 +23,7 @@ function refresh() {
                 outputValue = converter.convert(currentInputValue);
             }
             if (outputValue !== null) {
-                odiv.innerText = outputValue;
+                odiv.innerHTML = outputValue;
                 odiv.classList.remove("outputvaluevoid");
             }
             else {

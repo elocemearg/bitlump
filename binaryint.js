@@ -131,6 +131,26 @@ function textToByteArray(text, numBytes, signed) {
     return bytes;
 }
 
+function buildFloat(sign, exponent, rawMantissa, mantissa, maxExp) {
+    let n = mantissa;
+    if (exponent == maxExp) {
+        if (rawMantissa != 0)
+            return NaN;
+        else if (s)
+            return -Infinity;
+        else
+            return Infinity;
+    }
+    else {
+        n *= 2 ** exponent;
+    }
+
+    if (sign)
+        n = -n;
+
+    return n;
+}
+
 /* Binary integer of arbitrary fixed size. */
 class BinaryInt {
     constructor(bytes, signed) {
@@ -369,17 +389,6 @@ class BinaryInt {
             r--;
         }
 
-        /* If this is a signed integer, check the top bit of the top byte we
-         * swapped, and adjust the sign if necessary. */
-        /*if (this.bytes[this.bytes.length - numBytes] & 0x80) {
-            padByte = 0xff;
-        }
-        else {
-            padByte = 0;
-        }
-        for (let i = 0; i < this.bytes.length - numBytes; i++) {
-            this.bytes[i] = padByte;
-        }*/
         return true;
     }
 
@@ -445,6 +454,109 @@ class BinaryInt {
          * will be less than divisorByte and thus less than 256. */
         this.bytes = quotient;
         return remainder;
+    }
+
+    getBit(bit) {
+        let byteOffset = this.bytes.length - 1 - Math.floor(bit / 8);
+        let mask = 1 << (bit % 8);
+        if (byteOffset < 0) {
+            return 0;
+        }
+        else if (this.bytes[byteOffset] & mask) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    extractBits(topBit, length) {
+        let n = 0;
+        for (let i = topBit; i > topBit - length; i--) {
+            n *= 2;
+            n += this.getBit(i);
+        }
+        return n;
+    }
+
+    getCastFloat32Sign() {
+        return this.getBit(31);
+    }
+
+    getCastFloat64Sign() {
+        return this.getBit(63);
+    }
+
+    getCastFloat32Exponent(raw=false) {
+        let rawExponent = this.extractBits(30, 8);
+        if (raw) {
+            return rawExponent;
+        }
+        else {
+            if (rawExponent == 0)
+                return -126;
+            else
+                return rawExponent - 127;
+        }
+    }
+
+    getCastFloat64Exponent(raw=false) {
+        let rawExponent = this.extractBits(62, 11);
+        if (raw) {
+            return rawExponent;
+        }
+        else {
+            if (rawExponent == 0)
+                return -1022;
+            else
+                return rawExponent - 1023;
+        }
+    }
+
+    getCastFloat32Mantissa(raw=false) {
+        return this.getCastFloatMantissa(raw, this.getCastFloat32Exponent(true), 22, 23);
+    }
+
+    getCastFloat64Mantissa(raw=false) {
+        return this.getCastFloatMantissa(raw, this.getCastFloat64Exponent(true), 51, 52);
+    }
+
+    getCastFloatMantissa(raw, rawExponent, mantissaBitStart, mantissaBitLength) {
+        let rawMantissa = this.extractBits(mantissaBitStart, mantissaBitLength);
+        if (raw) {
+            return rawMantissa;
+        }
+        else {
+            let mantissa = 0;
+            if (rawExponent != 0)
+                mantissa = 1.0;
+            if (rawMantissa != 0) {
+                let bitValue = 1.0;
+                for (let mask = (1 << (mantissaBitLength - 1)); mask != 0; mask >>= 1) {
+                    bitValue /= 2;
+                    if (rawMantissa & mask) {
+                        mantissa += bitValue;
+                    }
+                }
+            }
+            return mantissa;
+        }
+    }
+
+    getCastFloat32() {
+        let sign = this.getCastFloat32Sign();
+        let exponent = this.getCastFloat32Exponent();
+        let rawMantissa = this.getCastFloat32Mantissa(true);
+        let mantissa = this.getCastFloat32Mantissa();
+        return buildFloat(sign, exponent, rawMantissa, mantissa, 128).toExponential(6);
+    }
+
+    getCastFloat64() {
+        let sign = this.getCastFloat64Sign();
+        let exponent = this.getCastFloat64Exponent();
+        let rawMantissa = this.getCastFloat64Mantissa(true);
+        let mantissa = this.getCastFloat64Mantissa();
+        return buildFloat(sign, exponent, rawMantissa, mantissa, 1024).toExponential(15);
     }
 
     copy() {

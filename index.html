@@ -22,11 +22,11 @@
 
         <div class="main" id="main">
             <div class="maininput">
-                <textarea id="input"></textarea>
+                <input id="input" type="text"></input>
             </div>
             <div class="mainoutput">
                 <div class="outputgroup">
-                    <div class="outputgrouptitle">Integer input</div>
+                    <div class="outputgrouptitle">Binary integer</div>
                     <div>
                         <div style="width: 55%; display: inline-block;">
                             <table style="width: 100%; text-align: right;">
@@ -65,19 +65,19 @@
                         <div class="outputcelltitle">Signed integer</div>
                         <div class="outputgrouprow">
                             <div class="outputcell" style="width: 9%">
-                                <div class="outputcelltitle">8-bit</div>
+                                <div class="outputcellsubtitle">8-bit</div>
                                 <div class="outputvalue" data-converter="signed8"></div>
                             </div>
                             <div class="outputcell" style="width: 19%">
-                                <div class="outputcelltitle">16-bit</div>
+                                <div class="outputcellsubtitle">16-bit</div>
                                 <div class="outputvalue" data-converter="signed16"></div>
                             </div>
                             <div class="outputcell" style="width: 29%">
-                                <div class="outputcelltitle">32-bit</div>
+                                <div class="outputcellsubtitle">32-bit</div>
                                 <div class="outputvalue" data-converter="signed32"></div>
                             </div>
                             <div class="outputcell" style="width: 39%">
-                                <div class="outputcelltitle">64-bit</div>
+                                <div class="outputcellsubtitle">64-bit</div>
                                 <div class="outputvalue" data-converter="signed64"></div>
                             </div>
                         </div>
@@ -87,19 +87,19 @@
                         <div class="outputcelltitle">Unsigned integer</div>
                         <div class="outputgrouprow">
                             <div class="outputcell" style="width: 9%">
-                                <div class="outputcelltitle">8-bit</div>
+                                <div class="outputcellsubtitle">8-bit</div>
                                 <div class="outputvalue" data-converter="unsigned8"></div>
                             </div>
                             <div class="outputcell" style="width: 19%">
-                                <div class="outputcelltitle">16-bit</div>
+                                <div class="outputcellsubtitle">16-bit</div>
                                 <div class="outputvalue" data-converter="unsigned16"></div>
                             </div>
                             <div class="outputcell" style="width: 29%">
-                                <div class="outputcelltitle">32-bit</div>
+                                <div class="outputcellsubtitle">32-bit</div>
                                 <div class="outputvalue" data-converter="unsigned32"></div>
                             </div>
                             <div class="outputcell" style="width: 39%">
-                                <div class="outputcelltitle">64-bit</div>
+                                <div class="outputcellsubtitle">64-bit</div>
                                 <div class="outputvalue" data-converter="unsigned64"></div>
                             </div>
                         </div>
@@ -117,14 +117,67 @@
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcell" style="width: 45%">
-                            <div class="outputcelltitle">Unicode codepoint</div>
+                        <div class="outputcelltitle">IEEE-754 32-bit floating point</div>
+                        <table style="width: 100%; text-align: right;">
+                            <colgroup>
+                                <col style="width: 5%; text-align: center;" />
+                                <col style="width: 10%;" />
+                                <col style="width: 40%;" />
+                                <col style="width: 40%;" />
+                            </colgroup>
+                            <tr style="font-size: 10pt;">
+                                <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="text-align: center;" data-converter="float32bin2signraw"></td>
+                                <td class="outputvalue" data-converter="float32bin2expraw"></td>
+                                <td class="outputvalue" data-converter="float32bin2mantissaraw"></td>
+                                <td class="outputvalue" rowspan="2" data-converter="float32bin2value"></td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="text-align: center;" data-converter="float32bin2sign"></td>
+                                <td class="outputvalue" data-converter="float32bin2exp"></td>
+                                <td class="outputvalue" data-converter="float32bin2mantissa"></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">IEEE-754 64-bit floating point</div>
+                        <table style="width: 100%; text-align: right;">
+                            <colgroup>
+                                <col style="width: 5%; text-align: center;" />
+                                <col style="width: 10%;" />
+                                <col style="width: 40%;" />
+                                <col style="width: 40%;" />
+                            </colgroup>
+                            <tr style="font-size: 10pt;">
+                                <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="text-align: center;" data-converter="float64bin2signraw"></td>
+                                <td class="outputvalue" data-converter="float64bin2expraw"></td>
+                                <td class="outputvalue" data-converter="float64bin2mantissaraw"></td>
+                                <td class="outputvalue" rowspan="2" style="width: 40%;" data-converter="float64bin2value"></td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="width: 5%; text-align: center;" data-converter="float64bin2sign"></td>
+                                <td class="outputvalue" style="width: 10%;" data-converter="float64bin2exp"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float64bin2mantissa"></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="outputgrouprow" style="text-align: left;">
+                        <div class="outputcelltitle">Unicode codepoint</div>
+                        <div class="outputcell" style="width: 30%; text-align: left;">
+                            <div class="outputcellsubtitle">Character</div>
                             <div class="outputvalue outputcellbigcharacter" data-converter="unicodecodepoint"></div>
                         </div>
-                        <div class="outputcell" style="width: 45%">
-                            <div class="outputcelltitle">UTF-8 encoding</div>
+                         <div class="outputcell" style="width: 40%;">
+                            <div class="outputcellsubtitle">UTF-8 encoding</div>
                             <div class="outputvalue" data-converter="utf8encoding"></div>
-                            <div class="outputcelltitle">UTF-16 encoding</div>
+                            <div class="outputcellsubtitle">UTF-16 encoding</div>
                             <div class="outputvalue" data-converter="utf16encoding"></div>
                         </div>
                     </div>
