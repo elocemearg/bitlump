@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Bitlump</title>
+        <meta name="description" content="Multi-purpose conversion tool." />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Inter:400,700%7CRoboto&display=swap" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="bitlump.css?bump=0" />
+    </head>
+    <body onload="initPage();">
+        <script src="binaryint.js?bump=0"></script>
+        <script src="conversions.js?bump=0"></script>
+        <script src="bitlump.js?bump=0"></script>
+        <h1>Bitlump</h1>
+        <noscript>
+            <p>
+                If you had JavaScript enabled in your browser, this tool might
+                be useful to you, but you haven't, so it isn't.
+            </p>
+        </noscript>
+
+        <div class="main" id="main">
+            <div class="maininput">
+                <textarea id="input"></textarea>
+            </div>
+            <div class="mainoutput">
+                <div class="outputgroup">
+                    <div class="outputgrouptitle">Integer input</div>
+                    <div class="outputgrouprow">
+                        <div class="outputcell" style="width: 45%">
+                            <div class="outputcelltitle">Decimal</div>
+                            <div class="outputvalue" data-converter="decimal"></div>
+                        </div>
+                        <div class="outputcell" style="width: 45%">
+                            <div class="outputcelltitle">Hex</div>
+                            <div class="outputvalue" data-converter="hex"></div>
+                        </div>
+                    </div>
+
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">Big-endian signed integer</div>
+                        <div class="outputgrouprow">
+                            <div class="outputcell" style="width: 9%">
+                                <div class="outputcelltitle">8-bit</div>
+                                <div class="outputvalue" data-converter="signed8"></div>
+                            </div>
+                            <div class="outputcell" style="width: 19%">
+                                <div class="outputcelltitle">16-bit</div>
+                                <div class="outputvalue" data-converter="signed16"></div>
+                            </div>
+                            <div class="outputcell" style="width: 29%">
+                                <div class="outputcelltitle">32-bit</div>
+                                <div class="outputvalue" data-converter="signed32"></div>
+                            </div>
+                            <div class="outputcell" style="width: 39%">
+                                <div class="outputcelltitle">64-bit</div>
+                                <div class="outputvalue" data-converter="signed64"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">Little-endian signed integer</div>
+                        <div class="outputgrouprow">
+                            <div class="outputcell" style="width: 9%">
+                                <div class="outputcelltitle">8-bit</div>
+                                <div class="outputvalue" data-converter="signed8le"></div>
+                            </div>
+                            <div class="outputcell" style="width: 19%">
+                                <div class="outputcelltitle">16-bit</div>
+                                <div class="outputvalue" data-converter="signed16le"></div>
+                            </div>
+                            <div class="outputcell" style="width: 29%">
+                                <div class="outputcelltitle">32-bit</div>
+                                <div class="outputvalue" data-converter="signed32le"></div>
+                            </div>
+                            <div class="outputcell" style="width: 39%">
+                                <div class="outputcelltitle">64-bit</div>
+                                <div class="outputvalue" data-converter="signed64le"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">Big-endian unsigned integer</div>
+                        <div class="outputgrouprow">
+                            <div class="outputcell" style="width: 9%">
+                                <div class="outputcelltitle">8-bit</div>
+                                <div class="outputvalue" data-converter="unsigned8"></div>
+                            </div>
+                            <div class="outputcell" style="width: 19%">
+                                <div class="outputcelltitle">16-bit</div>
+                                <div class="outputvalue" data-converter="unsigned16"></div>
+                            </div>
+                            <div class="outputcell" style="width: 29%">
+                                <div class="outputcelltitle">32-bit</div>
+                                <div class="outputvalue" data-converter="unsigned32"></div>
+                            </div>
+                            <div class="outputcell" style="width: 39%">
+                                <div class="outputcelltitle">64-bit</div>
+                                <div class="outputvalue" data-converter="unsigned64"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">Little-endian unsigned integer</div>
+                        <div class="outputgrouprow">
+                            <div class="outputcell" style="width: 9%">
+                                <div class="outputcelltitle">8-bit</div>
+                                <div class="outputvalue" data-converter="unsigned8le"></div>
+                            </div>
+                            <div class="outputcell" style="width: 19%">
+                                <div class="outputcelltitle">16-bit</div>
+                                <div class="outputvalue" data-converter="unsigned16le"></div>
+                            </div>
+                            <div class="outputcell" style="width: 29%">
+                                <div class="outputcelltitle">32-bit</div>
+                                <div class="outputvalue" data-converter="unsigned32le"></div>
+                            </div>
+                            <div class="outputcell" style="width: 39%">
+                                <div class="outputcelltitle">64-bit</div>
+                                <div class="outputvalue" data-converter="unsigned64le"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">Unix timestamp</div>
+                        <!-- <div>
+                            <input type="radio" name="unixts" value="auto" checked>Auto</input>
+                            <input type="radio" name="unixts" value="s">sec</input>
+                            <input type="radio" name="unixts" value="ms">msec</input>
+                            <input type="radio" name="unixts" value="us">µsec</input>
+                        </div> -->
+                        <div class="outputvalue" data-converter="fromunixutc"></div>
+                    </div>
+
+                    <div class="outputgrouprow">
+                        <div class="outputcell" style="width: 45%">
+                            <div class="outputcelltitle">Unicode codepoint</div>
+                            <div class="outputvalue outputcellbigcharacter" data-converter="unicodecodepoint"></div>
+                        </div>
+                        <div class="outputcell" style="width: 45%">
+                            <div class="outputcelltitle">UTF-8 encoding</div>
+                            <div class="outputvalue" data-converter="utf8encoding"></div>
+                            <div class="outputcelltitle">UTF-16 encoding</div>
+                            <div class="outputvalue" data-converter="utf16encoding"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
