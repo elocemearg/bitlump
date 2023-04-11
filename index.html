@@ -12,7 +12,6 @@
         <script src="binaryint.js?bump=0"></script>
         <script src="conversions.js?bump=0"></script>
         <script src="bitlump.js?bump=0"></script>
-        <h1>Bitlump</h1>
         <noscript>
             <p>
                 If you had JavaScript enabled in your browser, this tool might
@@ -21,12 +20,13 @@
         </noscript>
 
         <div class="main" id="main">
+            <h1>Bitlump</h1>
             <div class="maininput">
                 <input id="input" type="text"></input>
             </div>
             <div class="mainoutput">
-                <div class="outputgroup">
-                    <div class="outputgrouptitle">Binary integer</div>
+                <div class="outputgroup" data-category="binaryint">
+                    <div class="outputgrouptitle">Taking input as a <span class="inputtype">binary integer</span></div>
                     <div>
                         <div style="width: 55%; display: inline-block;">
                             <table style="width: 100%; text-align: right;">
@@ -117,7 +117,7 @@
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">IEEE-754 32-bit floating point</div>
+                        <div class="outputcelltitle">Type-punned to 32-bit floating point (IEEE 754)</div>
                         <table style="width: 100%; text-align: right;">
                             <colgroup>
                                 <col style="width: 5%; text-align: center;" />
@@ -143,7 +143,7 @@
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">IEEE-754 64-bit floating point</div>
+                        <div class="outputcelltitle">Type-punned to 64-bit floating point (IEEE 754)</div>
                         <table style="width: 100%; text-align: right;">
                             <colgroup>
                                 <col style="width: 5%; text-align: center;" />
@@ -182,6 +182,63 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="outputgroup" data-category="float">
+                    <div class="outputgrouptitle">Taking input as a <span class="inputtype">floating-point value</span></div>
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">IEEE 754 32-bit encoding</div>
+                        <table style="width: 100%; text-align: right;">
+                            <colgroup>
+                                <col style="width: 5%; text-align: center;" />
+                                <col style="width: 10%;" />
+                                <col style="width: 40%;" />
+                                <col style="width: 40%;" />
+                            </colgroup>
+                            <tr style="font-size: 10pt;">
+                                <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="text-align: center;" data-converter="float32tosignraw"></td>
+                                <td class="outputvalue" data-converter="float32toexpraw"></td>
+                                <td class="outputvalue" data-converter="float32tomantissaraw"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float32tohexvalue"></td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="width: 5%; text-align: center;" data-converter="float32tosign"></td>
+                                <td class="outputvalue" style="width: 10%;" data-converter="float32toexp"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float32tomantissa"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float32tovalue"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="outputgrouprow">
+                        <div class="outputcelltitle">IEEE 754 64-bit encoding</div>
+                        <table style="width: 100%; text-align: right;">
+                            <colgroup>
+                                <col style="width: 5%; text-align: center;" />
+                                <col style="width: 10%;" />
+                                <col style="width: 40%;" />
+                                <col style="width: 40%;" />
+                            </colgroup>
+                            <tr style="font-size: 10pt;">
+                                <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="text-align: center;" data-converter="float64tosignraw"></td>
+                                <td class="outputvalue" data-converter="float64toexpraw"></td>
+                                <td class="outputvalue" data-converter="float64tomantissaraw"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float64tohexvalue"></td>
+                            </tr>
+                            <tr>
+                                <td class="outputvalue" style="width: 5%; text-align: center;" data-converter="float64tosign"></td>
+                                <td class="outputvalue" style="width: 10%;" data-converter="float64toexp"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float64tomantissa"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float64tovalue"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </body>

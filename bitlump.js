@@ -9,6 +9,35 @@ function inputChanged(text) {
 }
 
 function refresh() {
+    let outputGroups = document.getElementsByClassName("outputgroup");
+    let enabledCategories = {};
+
+    /* For each "outputgroup" div, work out whether the input type that group
+     * deals with is compatible with the input. If it isn't, disable that
+     * group. */
+    for (let i = 0; i < outputGroups.length; i++) {
+        let og = outputGroups[i];
+        let categoryName = og.getAttribute("data-category");
+        let enable = true;
+        if (categoryName == "binaryint") {
+            enable = currentInputValue.getBinaryInt() != null;
+        }
+        else if (categoryName == "float") {
+            enable = currentInputValue.isFloat();
+        }
+
+        if (enable) {
+            og.classList.remove("outputgroupvoid");
+            enabledCategories[categoryName] = true;
+        }
+        else {
+            og.classList.add("outputgroupvoid");
+        }
+    }
+
+    /* Now for each "outputvalue" div, if its category is enabled, run that
+     * outputvalue's converter on the input value to get a string, and put
+     * that string in the outputvalue div. */
     let outputDivs = document.getElementsByClassName("outputvalue");
     for (let i = 0; i < outputDivs.length; i++) {
         let odiv = outputDivs[i];
@@ -18,6 +47,9 @@ function refresh() {
             let outputValue = null;
             if (converter == null) {
                 console.log("converter name " + converterName + " not found");
+            }
+            else if (!(converter.getInputTypeCategory() in enabledCategories)) {
+                outputValue = null;
             }
             else {
                 outputValue = converter.convert(currentInputValue);

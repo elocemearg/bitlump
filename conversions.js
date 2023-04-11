@@ -35,7 +35,10 @@ class InputValue {
         }
 
         /* Try to parse as a float */
-        this.floatValue = parseFloat(text);
+        if (text.trim().length > 0)
+            this.floatValue = Number(text);
+        else
+            this.floatValue = null;
     }
 
     getBinaryInt() {
@@ -53,7 +56,7 @@ class InputValue {
     }
 
     isInteger() {
-        return !isNaN(this.intValue) && this.intValue != null;
+        return this.intValue != null && !isNaN(this.intValue);
     }
 
     isHexInteger() {
@@ -61,7 +64,7 @@ class InputValue {
     }
 
     isFloat() {
-        return !isNaN(this.floatValue);
+        return this.floatValue != null && !isNaN(this.floatValue);
     }
 
     getInteger() {
@@ -78,18 +81,18 @@ class InputValue {
 }
 
 class Conversion {
-    constructor(name, heading, func) {
-        this.func = func;
+    constructor(category, name, func) {
+        this.inputTypeCategory = category;
         this.name = name;
-        this.heading = heading;
+        this.func = func;
     }
 
     getName() {
         return this.name;
     }
 
-    getHeading() {
-        return this.heading;
+    getInputTypeCategory() {
+        return this.inputTypeCategory;
     }
 
     convert(value, params) {
@@ -97,9 +100,31 @@ class Conversion {
     }
 }
 
-function createConversion(categoryName, conversionName, conversionHeading, func) {
-    let conversion = new Conversion(conversionName, conversionHeading, func);
+function createConversion(categoryName, conversionName, func) {
+    let conversion = new Conversion(categoryName, conversionName, func);
     conversions[conversionName] = conversion;
+}
+
+function createConversionFromBinaryInt(conversionName, func) {
+    return createConversion("binaryint", conversionName,
+        function(inputValue, params) {
+            let b = inputValue.getBinaryInt();
+            if (b == null)
+                return null;
+            return func(b, inputValue, params);
+        }
+    );
+}
+
+function createConversionFromFloat(conversionName, func) {
+    return createConversion("float", conversionName,
+        function(inputValue, params) {
+            if (inputValue.isFloat())
+                return func(inputValue.getFloat(), inputValue, params);
+            else
+                return null;
+        }
+    );
 }
 
 function getConversion(conversionName) {
@@ -145,56 +170,77 @@ function hexByteString(bytes) {
     return resultString;
 }
 
-function initConversions() {
-    createConversion("numbers", "hex", "Hex",
-        function(input, params) {
-            let binaryInt = input.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return "0x" + binaryInt.formatHex(false);
-        }
-    );
+function floatOrNull(inputValue, func) {
+    if (inputValue.isFloat()) {
+        return func(inputValue.getFloat());
+    }
+    else {
+        return null;
+    }
+}
 
-    createConversion("numbers", "decimal", "Decimal",
-        function(input, params) {
-            let binaryInt = input.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.formatDecimal();
-        }
-    );
+function getFloatSign(f, fBits) {
+    if (fBits == 32)
+        return createBinaryIntFromFloat32Bin(f).getBit(31);
+    else if (fBits == 64)
+        return createBinaryIntFromFloat64Bin(f).getBit(63);
+    else
+        throw new Error("getFloatSign() called with fBits=" + fBits);
+}
+
+function getFloatExponent(f, fBits, raw=false) {
+    if (fBits == 32)
+        return createBinaryIntFromFloat32Bin(f).getCastFloat32Exponent(raw);
+    else if (fBits == 64)
+        return createBinaryIntFromFloat64Bin(f).getCastFloat64Exponent(raw);
+    else
+        throw new Error("getFloatExponent() called with fBits=" + fBits);
+}
+
+function getFloatMantissa(f, fBits, raw=false) {
+    if (fBits == 32)
+        return createBinaryIntFromFloat32Bin(f).getCastFloat32Mantissa(raw);
+    else if (fBits == 64)
+        return createBinaryIntFromFloat64Bin(f).getCastFloat64Mantissa(raw);
+    else
+        throw new Error("getFloatMantissa() called with fBits=" + fBits);
+}
+
+function initConversions() {
+    createConversionFromBinaryInt("hex", binaryInt => "0x" + binaryInt.formatHex(false));
+
+    createConversionFromBinaryInt("decimal", binaryInt => binaryInt.formatDecimal());
 
     let signedness = [ "signed", "unsigned" ];
     let numBits = [ 8, 16, 32, 64 ];
     for (let i = 0; i < signedness.length; i++) {
         for (let j = 0; j < numBits.length; j++) {
-            createConversion("numbers",
+            createConversionFromBinaryInt(
                 signedness[i] + numBits[j].toString(),
-                signedness[i] + " " + numBits[j].toString() + "-bit integer",
-                function(inputValue) {
+                function(binaryInt, inputValue, params) {
                     return convertInt(inputValue, i == 0, numBits[j]);
                 }
             );
         }
     }
 
-    createConversion("numbers", "fromunixutc", "Unix timestamp (UTC)",
-        function(input) {
-            if (!input.isInteger()) {
+    createConversionFromBinaryInt("fromunixutc",
+        function(binaryInt, inputValue) {
+            if (!inputValue.isInteger()) {
                 return null;
             }
-            let t = input.getInteger();
+            let t = inputValue.getInteger();
             let d = new Date(t * 1000);
             return d.toUTCString();
         }
     );
 
-    createConversion("numbers", "fromunixlocal", "Unix timestamp (local)",
-        function(input) {
-            if (!input.isInteger()) {
+    createConversionFromBinaryInt("fromunixlocal",
+        function(binaryInt, inputValue) {
+            if (!inputValue.isInteger()) {
                 return null;
             }
-            let t = input.getInteger();
+            let t = inputValue.getInteger();
             let d = new Date(t * 1000);
             return d.toString();
         }
@@ -204,16 +250,16 @@ function initConversions() {
         return cp >= 0 && cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
     }
 
-    createConversion("numbers", "unicodecodepoint", "Unicode codepoint",
-        function(inputValue) {
+    createConversionFromBinaryInt("unicodecodepoint",
+        function(binaryInt, inputValue) {
             if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger())))
                 return null;
             return String.fromCodePoint(inputValue.getInteger());
         }
     );
 
-    createConversion("numbers", "utf8encoding", "UTF-8 encoding",
-        function(inputValue) {
+    createConversionFromBinaryInt("utf8encoding",
+        function(binaryInt, inputValue) {
             if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger())))
                 return null;
             let cp = inputValue.getInteger();
@@ -246,8 +292,8 @@ function initConversions() {
         }
     );
 
-    createConversion("numbers", "utf16encoding", "UTF-16 encoding",
-        function(inputValue) {
+    createConversionFromBinaryInt("utf16encoding",
+        function(binaryInt, inputValue) {
             if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger()))) {
                 return null;
             }
@@ -264,129 +310,105 @@ function initConversions() {
         }
     );
 
-    createConversion("numbers", "float32bin2sign", "32-bit float binary to sign",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat32Sign() ? "-" : "+";
-        }
+    createConversionFromBinaryInt("float32bin2sign",
+        binaryInt => binaryInt.getCastFloat32Sign() ? "-" : "+"
     );
 
-    createConversion("numbers", "float32bin2signraw", "32-bit float binary to sign",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat32Sign() ? "1" : "0";
-        }
+    createConversionFromBinaryInt("float32bin2signraw",
+        binaryInt => binaryInt.getCastFloat32Sign() ? "1" : "0"
     );
 
-    createConversion("numbers", "float32bin2exp", "32-bit float binary to exponent",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat32Exponent().toString();
-        }
+    createConversionFromBinaryInt("float32bin2exp",
+        binaryInt => binaryInt.getCastFloat32Exponent().toString()
     );
 
-    createConversion("numbers", "float32bin2expraw", "32-bit float binary to exponent",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return "0x" + leftPad(intToHex(binaryInt.getCastFloat32Exponent(true)), '0', 2);
-        }
+    createConversionFromBinaryInt("float32bin2expraw",
+        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat32Exponent(true)), '0', 2)
     );
 
-    createConversion("numbers", "float32bin2mantissa", "32-bit float binary to mantissa",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat32Mantissa().toFixed(9);
-        }
+    createConversionFromBinaryInt("float32bin2mantissa",
+        binaryInt => binaryInt.getCastFloat32Mantissa().toFixed(9)
     );
 
-    createConversion("numbers", "float32bin2mantissaraw", "32-bit float binary to mantissa",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return "0x" + leftPad(intToHex(binaryInt.getCastFloat32Mantissa(true)), '0', 6);
-        }
+    createConversionFromBinaryInt("float32bin2mantissaraw",
+        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat32Mantissa(true)), '0', 6)
     );
 
-    createConversion("numbers", "float32bin2value", "32-bit float evaluation",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat32().toPrecision(7);
-        }
+    createConversionFromBinaryInt("float32bin2value",
+        binaryInt => binaryInt.getCastFloat32().toPrecision(7)
     );
 
-    createConversion("numbers", "float64bin2sign", "64-bit float binary to sign",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat64Sign() ? "-" : "+";
-        }
+    createConversionFromBinaryInt("float64bin2sign",
+        binaryInt => binaryInt.getCastFloat64Sign() ? "-" : "+"
     );
 
-    createConversion("numbers", "float64bin2signraw", "64-bit float binary to sign",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat64Sign() ? "1" : "0";
-        }
+    createConversionFromBinaryInt("float64bin2signraw",
+        binaryInt => binaryInt.getCastFloat64Sign() ? "1" : "0"
     );
 
-    createConversion("numbers", "float64bin2exp", "64-bit float binary to exponent",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat64Exponent().toString();
-        }
+    createConversionFromBinaryInt("float64bin2exp",
+        binaryInt => binaryInt.getCastFloat64Exponent().toString()
     );
 
-    createConversion("numbers", "float64bin2expraw", "64-bit float binary to exponent",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return "0x" + leftPad(intToHex(binaryInt.getCastFloat64Exponent(true)), '0', 3);
-        }
+    createConversionFromBinaryInt("float64bin2expraw",
+        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat64Exponent(true)), '0', 3)
     );
 
-    createConversion("numbers", "float64bin2mantissa", "64-bit float binary to mantissa",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat64Mantissa().toFixed(17);
-        }
+    createConversionFromBinaryInt("float64bin2mantissa",
+        binaryInt => binaryInt.getCastFloat64Mantissa().toFixed(17)
     );
 
-    createConversion("numbers", "float64bin2mantissaraw", "64-bit float binary to mantissa",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return "0x" + leftPad(intToHex(binaryInt.getCastFloat64Mantissa(true)), '0', 13);
-        }
+    createConversionFromBinaryInt("float64bin2mantissaraw",
+        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat64Mantissa(true)), '0', 13)
     );
 
-    createConversion("numbers", "float64bin2value", "64-bit float evaluation",
-        function(inputValue) {
-            let binaryInt = inputValue.getBinaryInt();
-            if (binaryInt == null)
-                return null;
-            return binaryInt.getCastFloat64().toPrecision(15);
+    createConversionFromBinaryInt("float64bin2value",
+        binaryInt => binaryInt.getCastFloat64().toPrecision(15)
+    );
+
+    /* Generate float-to-bits conversions for 32-bit and 64-bit floats */
+    for (let fBits = 32; fBits <= 64; fBits += 32) {
+        let namePreamble = "float" + fBits.toString() + "to";
+        createConversionFromFloat(namePreamble + "signraw",
+            f => getFloatSign(f, fBits) ? "1" : "0"
+        );
+
+        createConversionFromFloat(namePreamble + "sign",
+            f => getFloatSign(f, fBits) ? "-" : "+"
+        );
+
+        createConversionFromFloat(namePreamble + "expraw",
+            f => "0x" + leftPad(intToHex(getFloatExponent(f, fBits, true)), '0', fBits == 32 ? 2 : 3)
+        );
+
+        createConversionFromFloat(namePreamble + "exp",
+            f => getFloatExponent(f, fBits, false).toString()
+        );
+
+        createConversionFromFloat(namePreamble + "mantissaraw",
+            f => "0x" + leftPad(intToHex(getFloatMantissa(f, fBits, true)), '0', fBits == 32 ? 6 : 13)
+        );
+
+        createConversionFromFloat(namePreamble + "mantissa",
+            f => getFloatMantissa(f, fBits, false).toFixed(fBits == 32 ? 9 : 17)
+        );
+
+        createConversionFromFloat(namePreamble + "hexvalue",
+            f => "0x" + createBinaryIntFromFloatBin(f, fBits).formatHex()
+        );
+
+    }
+
+    /* 64-bit float to value - just .toString() it */
+    createConversionFromFloat("float64tovalue", f => f.toString())
+
+    /* 32-bit float to value - drag it kicking and screaming through a Float32 */
+    createConversionFromFloat("float32tovalue",
+        function(f) {
+            let fa = new Float32Array(1);
+            fa[0] = f;
+            f = fa[0];
+            return f.toString();
         }
     );
 }

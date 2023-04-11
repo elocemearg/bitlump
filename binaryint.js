@@ -4,6 +4,20 @@ const HEX_DIGITS = "0123456789ABCDEF";
 const JS_MAX_SAFE_INTEGER = null;
 const JS_MIN_SAFE_INTEGER = null;
 
+let FLOATS_LITTLE_ENDIAN = null;
+
+function isFloatLittleEndian() {
+    if (FLOATS_LITTLE_ENDIAN === null) {
+        /* 64-bit float representation of 1 is 0x3ff0000000000000 */
+        let fa = new Float64Array(1);
+        fa[0] = 1.0;
+        let ba = new Uint8Array(fa.buffer);
+        FLOATS_LITTLE_ENDIAN = (ba[0] == 0);
+        console.log("Floats appear to be " + (FLOATS_LITTLE_ENDIAN ? "little" : "big") + "-endian.");
+    }
+    return FLOATS_LITTLE_ENDIAN;
+}
+
 function shiftLeft(bytes, numBits) {
     let overflow = false;
 
@@ -54,6 +68,14 @@ function negateBytes(bytes) {
         bytes[i] = (~bytes[i]) & 0xff;
     }
     addUnsignedBytes(bytes, [1]);
+}
+
+function bytesIsZero(bytes) {
+    for (let i = 0; i < bytes.length; i++) {
+        if (bytes[i] != 0)
+            return false;
+    }
+    return true;
 }
 
 function textToByteArray(text, numBytes, signed) {
@@ -114,8 +136,8 @@ function textToByteArray(text, numBytes, signed) {
     }
     if (minus) {
         negateBytes(bytes);
-        if ((bytes[0] & 0x80) == 0) {
-            /* If after making this negative it's positive, overflow. */
+        if ((bytes[0] & 0x80) == 0 && !bytesIsZero(bytes)) {
+            /* If after making this negative it's positive and nonzero, overflow. */
             return null;
         }
     }
@@ -569,6 +591,54 @@ function createBinaryIntFromString(text, numBytes, signed) {
     if (bytes == null)
         return null;
     return new BinaryInt(bytes, signed);
+}
+
+function createBinaryIntFromFloat64Bin(f) {
+    let fa = new Float64Array(1);
+    fa[0] = f;
+    let bytes = new Uint8Array(fa.buffer);
+    let bytesSwapped = [];
+    if (isFloatLittleEndian()) {
+        for (let i = 0; i < 8; i++) {
+            bytesSwapped.push(bytes[7 - i]);
+        }
+    }
+    else {
+        for (let i = 0; i < 8; i++) {
+            bytesSwapped.push(bytes[i]);
+        }
+    }
+    return new BinaryInt(bytesSwapped, false);
+}
+
+function createBinaryIntFromFloat32Bin(f) {
+    let fa = new Float32Array(1);
+    fa[0] = f;
+    let bytes = new Uint8Array(fa.buffer);
+    let bytesSwapped = [];
+    if (isFloatLittleEndian()) {
+        for (let i = 0; i < 4; i++) {
+            bytesSwapped.push(bytes[3 - i]);
+        }
+    }
+    else {
+        for (let i = 0; i < 4; i++) {
+            bytesSwapped.push(bytes[i]);
+        }
+    }
+    return new BinaryInt(bytesSwapped, false);
+}
+
+function createBinaryIntFromFloatBin(f, fBits) {
+    if (fBits == 32) {
+        return createBinaryIntFromFloat32Bin(f);
+    }
+    else if (fBits == 64) {
+        return createBinaryIntFromFloat64Bin(f);
+    }
+    else {
+        throw new Error("createBinaryIntFromFloatBin() called with fBits=" + fBits.toString());
+    }
 }
 
 BinaryInt.JS_MAX_SAFE_INTEGER = createBinaryIntFromString(Number.MAX_SAFE_INTEGER.toString(), 8, true);
