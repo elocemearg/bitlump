@@ -59,7 +59,7 @@ function initialiseConversionControls() {
                          * passed to the converter as parameters. */
                         let paramElementNames = odiv.getAttribute("data-param-element-names");
                         if (paramElementNames) {
-                            paramElementNames = paramElementNames.split(",");
+                            paramElementNames = paramElementNames.split(",").map(x => x.trim());
                         }
                         else {
                             paramElementNames = [];
