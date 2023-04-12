@@ -107,13 +107,16 @@
 
                     <div class="outputgrouprow">
                         <div class="outputcelltitle">Unix timestamp</div>
-                        <!-- <div>
-                            <input type="radio" name="unixts" value="auto" checked>Auto</input>
-                            <input type="radio" name="unixts" value="s">sec</input>
-                            <input type="radio" name="unixts" value="ms">msec</input>
-                            <input type="radio" name="unixts" value="us">µsec</input>
-                        </div> -->
-                        <div class="outputvalue" data-converter="fromunixutc"></div>
+                        <div style="text-align: left; font-size: 10pt;">
+                            Unit:
+                            <input type="checkbox" class="converter-param" name="unixtsscaleauto" id="unixtsscale-auto" onclick="unixTimestampUnitAutoDetectChanged();" checked><label for="unixtsscale-auto">Auto-guess</label>
+                            <input type="radio" class="converter-param" name="unixtsscale" value="s" id="unixtsscale-s" onclick="unixTimestampUnitChanged();" checked><label for="unixtsscale-s">sec</label>
+
+                            <input type="radio" class="converter-param" name="unixtsscale" value="ms" id="unixtsscale-ms" onclick="unixTimestampUnitChanged();"><label for="unixtsscale-ms">msec</label>
+
+                            <input type="radio" class="converter-param" name="unixtsscale" value="us" id="unixtsscale-us" onclick="unixTimestampUnitChanged();"><label for="unixtsscale-us">µsec</label>
+                        </div>
+                        <div class="outputvalue" data-converter="fromunixutc" data-param-element-names="unixtsscaleauto,unixtsscale"></div>
                     </div>
 
                     <div class="outputgrouprow">

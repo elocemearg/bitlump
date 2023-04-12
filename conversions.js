@@ -81,8 +81,8 @@ class InputValue {
 }
 
 class Conversion {
-    constructor(category, name, func) {
-        this.inputTypeCategory = category;
+    constructor(inputTypeName, name, func) {
+        this.inputTypeName = inputTypeName;
         this.name = name;
         this.func = func;
     }
@@ -91,8 +91,8 @@ class Conversion {
         return this.name;
     }
 
-    getInputTypeCategory() {
-        return this.inputTypeCategory;
+    getInputTypeName() {
+        return this.inputTypeName;
     }
 
     convert(value, params) {
@@ -225,13 +225,42 @@ function initConversions() {
     }
 
     createConversionFromBinaryInt("fromunixutc",
-        function(binaryInt, inputValue) {
+        function(binaryInt, inputValue, params) {
             if (!inputValue.isInteger()) {
                 return null;
             }
             let t = inputValue.getInteger();
-            let d = new Date(t * 1000);
-            return d.toUTCString();
+            let ms;
+            let unitAutoDetect = params["unixtsscaleauto"];
+            let unit = params["unixtsscale"];
+            if (unitAutoDetect) {
+                /* Auto-detect */
+                let tAbs = Math.abs(t);
+                if (tAbs <= 2 ** 32) {
+                    /* Assume seconds */
+                    unit = "s";
+                }
+                else if (tAbs / 1000 <= 2 ** 32) {
+                    /* Assume milliseconds */
+                    unit = "ms";
+                }
+                else {
+                    /* Assume microseconds */
+                    unit = "us";
+                }
+                document.getElementById("unixtsscale-" + unit).checked = true;
+            }
+            if (unit == "s") {
+                ms = t * 1000;
+            }
+            else if (unit == "ms") {
+                ms = t;
+            }
+            else if (unit == "us") {
+                ms = t / 1000;
+            }
+
+            return new Date(ms).toUTCString();
         }
     );
 

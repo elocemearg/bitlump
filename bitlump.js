@@ -3,56 +3,161 @@ let mainDiv = null;
 let inputBox = null;
 let currentInputValue = new InputValue("");
 
-function inputChanged(text) {
-    currentInputValue = new InputValue(text);
-    refresh();
+/* Data structure containing all the conversion output elements and their
+ * conversion functions.
+ *
+ * [
+ *     inputTypeName: input type name, e.g. "binaryint", "float"
+ *     outputGroupElement: <outputgroup HTML element>
+ *     paramControls: [ list of contained elements with class=converter-param ]
+ *     conversionOutputs: [
+ *         {
+ *             "converter": <Conversion object>,
+ *             "outputElement": <HTML element for output>
+ *         },
+ *     ]
+ * ]
+ */
+let conversionGroups = [];
+
+class ConversionOutput {
+    constructor(outputElement, converter) {
+        this.outputElement = outputElement;
+        this.converter = converter;
+    }
 }
 
-function refresh() {
+function initialiseConversionControls() {
     let outputGroups = document.getElementsByClassName("outputgroup");
-    let enabledCategories = {};
-
-    /* For each "outputgroup" div, work out whether the input type that group
-     * deals with is compatible with the input. If it isn't, disable that
-     * group. */
     for (let i = 0; i < outputGroups.length; i++) {
         let og = outputGroups[i];
-        let categoryName = og.getAttribute("data-category");
-        let enable = true;
-        if (categoryName == "binaryint") {
-            enable = currentInputValue.getBinaryInt() != null;
-        }
-        else if (categoryName == "float") {
-            enable = currentInputValue.isFloat();
-        }
-
-        if (enable) {
-            og.classList.remove("outputgroupvoid");
-            enabledCategories[categoryName] = true;
-        }
-        else {
-            og.classList.add("outputgroupvoid");
+        let inputTypeName = og.getAttribute("data-category");
+        if (inputTypeName) {
+            conversionGroups.push({
+                "inputTypeName" : inputTypeName,
+                "paramControls" : og.getElementsByClassName("converter-param"),
+                "outputGroupElement" : og,
+                "conversionOutputs" : []
+            });
         }
     }
 
-    /* Now for each "outputvalue" div, if its category is enabled, run that
-     * outputvalue's converter on the input value to get a string, and put
-     * that string in the outputvalue div. */
     let outputDivs = document.getElementsByClassName("outputvalue");
     for (let i = 0; i < outputDivs.length; i++) {
         let odiv = outputDivs[i];
         let converterName = odiv.getAttribute("data-converter");
         if (converterName) {
             let converter = getConversion(converterName);
-            let outputValue = null;
-            if (converter == null) {
-                console.log("converter name " + converterName + " not found");
+            if (converter) {
+                let inputTypeName = converter.getInputTypeName();
+                /* Find the output group element which contains this output */
+                for (let j = 0; j < conversionGroups.length; j++) {
+                    if (conversionGroups[j].outputGroupElement.contains(odiv)) {
+                        let cg = conversionGroups[j];
+                        /* output element may contain a data-param-element-names
+                         * attribute, which lists the names of controls to be
+                         * passed to the converter as parameters. */
+                        let paramElementNames = odiv.getAttribute("data-param-element-names");
+                        if (paramElementNames) {
+                            paramElementNames = paramElementNames.split(",");
+                        }
+                        else {
+                            paramElementNames = [];
+                        }
+                        cg.conversionOutputs.push({
+                            "converter" : converter,
+                            "converterParamElements" : paramElementNames,
+                            "outputElement" : odiv,
+                        });
+                        break;
+                    }
+                }
             }
-            else if (!(converter.getInputTypeCategory() in enabledCategories)) {
-                outputValue = null;
+        }
+    }
+}
+
+function inputChanged(text) {
+    currentInputValue = new InputValue(text);
+    refresh();
+}
+
+function paramElementNameToValue(name) {
+    let value = null;
+    let elements = document.getElementsByName(name);
+
+    /* Choose the first element in the list which:
+     *    is a radio button and checked (return its value)
+     *    is a select element (return the value of the selected option)
+     *    is a checkbox (return true or false)
+     *    is any other input (return its value)
+     */
+    for (let i = 0; value === null && i < elements.length; i++) {
+        let e = elements[i];
+        let tagName = e.tagName.toLowerCase();
+        if (tagName == "select") {
+            value = e.options[e.selectedIndex].value;
+        }
+        else if (tagName == "input") {
+            if (e.type == "radio") {
+                if (e.checked)
+                    value = e.value;
+            }
+            else if (e.type == "checkbox") {
+                value = e.checked;
             }
             else {
-                outputValue = converter.convert(currentInputValue);
+                value = e.value;
+            }
+        }
+    }
+    return value;
+}
+
+/* Return an object whose names are the parameter names given in the array
+ * "names", and each value is the value of the HTML element with that name,
+ * as defined by paramElementNameToValue(). */
+function paramElementNamesToParams(names) {
+    let params = {};
+    for (let i = 0; i < names.length; i++) {
+        params[names[i]] = paramElementNameToValue(names[i]);
+    }
+    return params;
+}
+
+function refresh() {
+    for (let groupIndex = 0; groupIndex < conversionGroups.length; groupIndex++) {
+        let inputTypeName = conversionGroups[groupIndex].inputTypeName;
+        let outputGroupElement = conversionGroups[groupIndex].outputGroupElement;
+        let groupParamControls = conversionGroups[groupIndex].paramControls;
+        let conversionOutputs = conversionGroups[groupIndex].conversionOutputs;
+        let groupEnable = true;
+
+        if (inputTypeName == "binaryint")
+            groupEnable = currentInputValue.getBinaryInt() != null;
+        else if (inputTypeName == "float")
+            groupEnable = currentInputValue.getFloat() != null;
+
+        /* Put this output group in its enabled/disabled colours */
+        if (groupEnable) {
+            outputGroupElement.classList.remove("outputgroupvoid");
+        }
+        else {
+            outputGroupElement.classList.add("outputgroupvoid");
+        }
+
+        /* Enable/disable any parameter controls in this group */
+        for (let paramIndex = 0; paramIndex < groupParamControls.length; paramIndex++) {
+            groupParamControls[paramIndex].disabled = !groupEnable;
+        }
+
+        for (let outputIndex = 0; outputIndex < conversionOutputs.length; outputIndex++) {
+            let co = conversionOutputs[outputIndex];
+            let odiv = co.outputElement;
+            let outputValue = null;
+            let params = paramElementNamesToParams(co.converterParamElements);
+            if (groupEnable) {
+                outputValue = co.converter.convert(currentInputValue, params);
             }
             if (outputValue !== null) {
                 odiv.innerHTML = outputValue;
@@ -99,6 +204,15 @@ function endianSwapInputValue(numBytes) {
     modifyBinaryInt(function(x) { return x.endianSwap(numBytes); });
 }
 
+function unixTimestampUnitChanged() {
+    document.getElementById("unixtsscale-auto").checked = false;
+    refresh();
+}
+
+function unixTimestampUnitAutoDetectChanged() {
+    refresh();
+}
+
 function initPage() {
     initConversions();
     mainDiv = document.getElementById("main");
@@ -108,5 +222,6 @@ function initPage() {
     });
 
     inputBox.focus();
-    inputChanged("");
+    initialiseConversionControls();
+    inputChanged(inputBox.value);
 }
