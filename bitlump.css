@@ -20,8 +20,24 @@ input[type=text] {
 #main {
 }
 
+.mono {
+    font-family: monospace;
+}
+
 div.maininput {
     margin-bottom: 10px;
+}
+
+#input {
+}
+
+div.maininputcolumn {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+div.maininputcolumn button {
+    font-size: 12pt;
 }
 
 div.mainoutput {
@@ -29,6 +45,7 @@ div.mainoutput {
 }
 
 div.outputgroup {
+    position: relative;
     display: inline-block;
     vertical-align: top;
     width: 600px;
@@ -75,6 +92,7 @@ div.outputcellsubtitle {
 }
 
 div.outputgrouprow {
+    position: relative;
     display: block;
     width: 100%;
     text-align: center;
@@ -115,4 +133,36 @@ div.buttonblock {
 
 div.buttonrow {
     margin-bottom: 5px;
+}
+
+div.flagrow {
+    display: block;
+    text-align: right;
+    width: 100%;
+    font-size: 10pt;
+}
+
+div.cornerflags {
+    display: block;
+    position: absolute;
+    text-align: right;
+    right: 2px;
+    top: 2px;
+    font-size: 10pt;
+}
+
+div.flag {
+    display: inline-block;
+    visibility: hidden;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    background-color: hsl(60deg, 100%, 80%);
+}
+
+div.flagactive {
+    visibility: visible;
+}
+
+a {
+    text-decoration: none;
 }

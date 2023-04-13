@@ -20,6 +20,15 @@ function leftPad(s, padChar, desiredLength) {
     }
 }
 
+function setFlagActive(flags, name, active) {
+    if (name in flags) {
+        if (active)
+            flags[name].classList.add("flagactive");
+        else
+            flags[name].classList.remove("flagactive");
+    }
+}
+
 class InputValue {
     constructor(text) {
         this.text = text;
@@ -95,8 +104,8 @@ class Conversion {
         return this.inputTypeName;
     }
 
-    convert(value, params) {
-        return this.func(value, params);
+    convert(value, params, outputFlags) {
+        return this.func(value, params, outputFlags);
     }
 }
 
@@ -107,20 +116,20 @@ function createConversion(categoryName, conversionName, func) {
 
 function createConversionFromBinaryInt(conversionName, func) {
     return createConversion("binaryint", conversionName,
-        function(inputValue, params) {
+        function(inputValue, params, outputFlags) {
             let b = inputValue.getBinaryInt();
             if (b == null)
                 return null;
-            return func(b, inputValue, params);
+            return func(b, inputValue, params, outputFlags);
         }
     );
 }
 
 function createConversionFromFloat(conversionName, func) {
     return createConversion("float", conversionName,
-        function(inputValue, params) {
+        function(inputValue, params, flags) {
             if (inputValue.isFloat())
-                return func(inputValue.getFloat(), inputValue, params);
+                return func(inputValue.getFloat(), inputValue, params, flags);
             else
                 return null;
         }
@@ -206,6 +215,11 @@ function getFloatMantissa(f, fBits, raw=false) {
         throw new Error("getFloatMantissa() called with fBits=" + fBits);
 }
 
+const weekDayNames = [ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" ];
+function weekDayName(n) {
+    return weekDayNames[n];
+}
+
 function initConversions() {
     createConversionFromBinaryInt("hex", binaryInt => "0x" + binaryInt.formatHex(false));
 
@@ -260,7 +274,8 @@ function initConversions() {
                 ms = t / 1000;
             }
 
-            return new Date(ms).toUTCString();
+            let d = new Date(ms);
+            return weekDayName(d.getUTCDay()) + " " + d.toISOString().replace("T", " ").replace("Z", "") + " UTC";
         }
     );
 
@@ -364,7 +379,10 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float32bin2value",
-        binaryInt => binaryInt.getCastFloat32().toPrecision(7)
+        function(binaryInt, inputValue, params, flags) {
+            setFlagActive(flags, "float32binsubnormal", binaryInt.isFloat32Subnormal());
+            return binaryInt.getCastFloat32().toPrecision(7);
+        }
     );
 
     createConversionFromBinaryInt("float64bin2sign",
@@ -392,7 +410,10 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float64bin2value",
-        binaryInt => binaryInt.getCastFloat64().toPrecision(15)
+        function(binaryInt, inputValue, params, flags) {
+            setFlagActive(flags, "float64binsubnormal", binaryInt.isFloat64Subnormal());
+            return binaryInt.getCastFloat64().toPrecision(15);
+        }
     );
 
     /* Generate float-to-bits conversions for 32-bit and 64-bit floats */
@@ -429,14 +450,22 @@ function initConversions() {
     }
 
     /* 64-bit float to value - just .toString() it */
-    createConversionFromFloat("float64tovalue", f => f.toString())
+    createConversionFromFloat("float64tovalue",
+        function(f, inputValue, params, flags) {
+            setFlagActive(flags, "float64subnormal",
+                getFloatExponent(f, 64, true) == 0 && getFloatMantissa(f, 64, true) != 0);
+            return f.toString();
+        }
+    );
 
     /* 32-bit float to value - drag it kicking and screaming through a Float32 */
     createConversionFromFloat("float32tovalue",
-        function(f) {
+        function(f, inputValue, params, flags) {
             let fa = new Float32Array(1);
             fa[0] = f;
             f = fa[0];
+            setFlagActive(flags, "float32subnormal",
+                getFloatExponent(f, 32, true) == 0 && getFloatMantissa(f, 32, true) != 0);
             return f.toString();
         }
     );

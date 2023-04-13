@@ -13,7 +13,9 @@ let currentInputValue = new InputValue("");
  *     conversionOutputs: [
  *         {
  *             "converter": <Conversion object>,
- *             "outputElement": <HTML element for output>
+ *             "converterParamElements": [ list of names of HTML elements of parameters of this converter ],
+ *             "outputElement": <HTML element for output>,
+ *             "flagElements": { name -> HTML elements of flag associated with this converter }
  *         },
  *     ]
  * ]
@@ -43,17 +45,17 @@ function initialiseConversionControls() {
     }
 
     let outputDivs = document.getElementsByClassName("outputvalue");
-    for (let i = 0; i < outputDivs.length; i++) {
-        let odiv = outputDivs[i];
+    for (let outputDivIndex = 0; outputDivIndex < outputDivs.length; outputDivIndex++) {
+        let odiv = outputDivs[outputDivIndex];
         let converterName = odiv.getAttribute("data-converter");
         if (converterName) {
             let converter = getConversion(converterName);
             if (converter) {
                 let inputTypeName = converter.getInputTypeName();
                 /* Find the output group element which contains this output */
-                for (let j = 0; j < conversionGroups.length; j++) {
-                    if (conversionGroups[j].outputGroupElement.contains(odiv)) {
-                        let cg = conversionGroups[j];
+                for (let cgIndex = 0; cgIndex < conversionGroups.length; cgIndex++) {
+                    if (conversionGroups[cgIndex].outputGroupElement.contains(odiv)) {
+                        let cg = conversionGroups[cgIndex];
                         /* output element may contain a data-param-element-names
                          * attribute, which lists the names of controls to be
                          * passed to the converter as parameters. */
@@ -64,10 +66,27 @@ function initialiseConversionControls() {
                         else {
                             paramElementNames = [];
                         }
+
+                        /* A converter may have a number of flag elements
+                         * associated with it, which we must reset if the
+                         * converter fails to convert. */
+                        let flags = odiv.getAttribute("data-flags");
+                        let flagElements = {};
+                        if (flags) {
+                            flags = flags.split(",").map(x => x.trim());
+                            for (let i = 0; i < flags.length; i++) {
+                                let el = document.getElementById(flags[i]);
+                                if (el) {
+                                    flagElements[flags[i]] = el;
+                                }
+                            }
+                        }
+
                         cg.conversionOutputs.push({
                             "converter" : converter,
                             "converterParamElements" : paramElementNames,
                             "outputElement" : odiv,
+                            "flagElements" : flagElements,
                         });
                         break;
                     }
@@ -136,7 +155,7 @@ function refresh() {
         if (inputTypeName == "binaryint")
             groupEnable = currentInputValue.getBinaryInt() != null;
         else if (inputTypeName == "float")
-            groupEnable = currentInputValue.getFloat() != null;
+            groupEnable = currentInputValue.isFloat();
 
         /* Put this output group in its enabled/disabled colours */
         if (groupEnable) {
@@ -157,7 +176,7 @@ function refresh() {
             let outputValue = null;
             let params = paramElementNamesToParams(co.converterParamElements);
             if (groupEnable) {
-                outputValue = co.converter.convert(currentInputValue, params);
+                outputValue = co.converter.convert(currentInputValue, params, co.flagElements);
             }
             if (outputValue !== null) {
                 odiv.innerHTML = outputValue;
@@ -167,6 +186,9 @@ function refresh() {
                 odiv.innerHTML = "&nbsp;";
                 odiv.disabled = true;
                 odiv.classList.add("outputvaluevoid");
+                for (let flagId in co.flagElements) {
+                    co.flagElements[flagId].classList.remove("flagactive");
+                }
             }
         }
     }
@@ -211,6 +233,12 @@ function unixTimestampUnitChanged() {
 
 function unixTimestampUnitAutoDetectChanged() {
     refresh();
+}
+
+function clearInput() {
+    inputBox.value = "";
+    inputBox.focus();
+    inputChanged(inputBox.value);
 }
 
 function initPage() {

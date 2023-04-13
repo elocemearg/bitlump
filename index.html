@@ -21,8 +21,19 @@
 
         <div class="main" id="main">
             <h1>Bitlump</h1>
+            <p>
+            Enter a decimal number such as <span class="mono">960</span>,
+            a hex number preceded with <span class="mono">0x</span> such as
+            <span class="mono">0x1f346</span>, or a floating point number such
+            as <span class="mono">6.0221408e23</span>.
+            </p>
             <div class="maininput">
-                <input id="input" type="text"></input>
+                <div class="maininputcolumn">
+                    <input id="input" type="text"></input>
+                </div>
+                <div class="maininputcolumn">
+                    <button onclick="clearInput();">Clear</button>
+                </div>
             </div>
             <div class="mainoutput">
                 <div class="outputgroup" data-category="binaryint">
@@ -106,7 +117,7 @@
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">Unix timestamp</div>
+                        <div class="outputcelltitle">Time since Unix epoch (1970-01-01)</div>
                         <div style="text-align: left; font-size: 10pt;">
                             Unit:
                             <input type="checkbox" class="converter-param" name="unixtsscaleauto" id="unixtsscale-auto" onclick="unixTimestampUnitAutoDetectChanged();" checked><label for="unixtsscale-auto">Auto-guess</label>
@@ -120,7 +131,13 @@
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">Type-punned to 32-bit floating point (IEEE 754)</div>
+                        <div class="outputcelltitle">
+                            Type-punned to <a href="https://en.wikipedia.org/wiki/Single-precision_floating-point_format" target="_blank">32-bit floating point</a>
+                            (IEEE 754)
+                        </div>
+                        <div class="cornerflags">
+                            <div class="flag" id="float32binsubnormal"><a href="https://en.wikipedia.org/wiki/Subnormal_number" target="_blank">Subnormal</a></div>
+                        </div>
                         <table style="width: 100%; text-align: right;">
                             <colgroup>
                                 <col style="width: 5%; text-align: center;" />
@@ -135,7 +152,7 @@
                                 <td class="outputvalue" style="text-align: center;" data-converter="float32bin2signraw"></td>
                                 <td class="outputvalue" data-converter="float32bin2expraw"></td>
                                 <td class="outputvalue" data-converter="float32bin2mantissaraw"></td>
-                                <td class="outputvalue" rowspan="2" data-converter="float32bin2value"></td>
+                                <td class="outputvalue" rowspan="2" data-converter="float32bin2value" data-flags="float32binsubnormal"></td>
                             </tr>
                             <tr>
                                 <td class="outputvalue" style="text-align: center;" data-converter="float32bin2sign"></td>
@@ -146,7 +163,14 @@
                     </div>
 
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">Type-punned to 64-bit floating point (IEEE 754)</div>
+                        <div class="outputcelltitle">
+                            Type-punned to
+                            <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">64-bit floating point</a>
+                            (IEEE 754)
+                        </div>
+                        <div class="cornerflags">
+                            <div class="flag" id="float64binsubnormal"><a href="https://en.wikipedia.org/wiki/Subnormal_number" target="_blank">Subnormal</a></div>
+                        </div>
                         <table style="width: 100%; text-align: right;">
                             <colgroup>
                                 <col style="width: 5%; text-align: center;" />
@@ -161,7 +185,7 @@
                                 <td class="outputvalue" style="text-align: center;" data-converter="float64bin2signraw"></td>
                                 <td class="outputvalue" data-converter="float64bin2expraw"></td>
                                 <td class="outputvalue" data-converter="float64bin2mantissaraw"></td>
-                                <td class="outputvalue" rowspan="2" style="width: 40%;" data-converter="float64bin2value"></td>
+                                <td class="outputvalue" rowspan="2" style="width: 40%;" data-converter="float64bin2value" data-flags="float64binsubnormal"></td>
                             </tr>
                             <tr>
                                 <td class="outputvalue" style="width: 5%; text-align: center;" data-converter="float64bin2sign"></td>
@@ -189,7 +213,12 @@
                 <div class="outputgroup" data-category="float">
                     <div class="outputgrouptitle">Taking input as a <span class="inputtype">floating-point value</span></div>
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">IEEE 754 32-bit encoding</div>
+                        <div class="outputcelltitle">
+                            <a href="https://en.wikipedia.org/wiki/Single-precision_floating-point_format" target="_blank">IEEE 754 32-bit encoding</a>
+                        </div>
+                        <div class="cornerflags">
+                            <div class="flag" id="float32subnormal"><a href="https://en.wikipedia.org/wiki/Subnormal_number" target="_blank">Subnormal</a></div>
+                        </div>
                         <table style="width: 100%; text-align: right;">
                             <colgroup>
                                 <col style="width: 5%; text-align: center;" />
@@ -210,12 +239,17 @@
                                 <td class="outputvalue" style="width: 5%; text-align: center;" data-converter="float32tosign"></td>
                                 <td class="outputvalue" style="width: 10%;" data-converter="float32toexp"></td>
                                 <td class="outputvalue" style="width: 40%;" data-converter="float32tomantissa"></td>
-                                <td class="outputvalue" style="width: 40%;" data-converter="float32tovalue"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float32tovalue" data-flags="float32subnormal"></td>
                             </tr>
                         </table>
                     </div>
                     <div class="outputgrouprow">
-                        <div class="outputcelltitle">IEEE 754 64-bit encoding</div>
+                        <div class="outputcelltitle">
+                            <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">IEEE 754 64-bit encoding</a>
+                        </div>
+                        <div class="cornerflags">
+                            <div class="flag" id="float64subnormal"><a href="https://en.wikipedia.org/wiki/Subnormal_number" target="_blank">Subnormal</a></div>
+                        </div>
                         <table style="width: 100%; text-align: right;">
                             <colgroup>
                                 <col style="width: 5%; text-align: center;" />
@@ -236,7 +270,7 @@
                                 <td class="outputvalue" style="width: 5%; text-align: center;" data-converter="float64tosign"></td>
                                 <td class="outputvalue" style="width: 10%;" data-converter="float64toexp"></td>
                                 <td class="outputvalue" style="width: 40%;" data-converter="float64tomantissa"></td>
-                                <td class="outputvalue" style="width: 40%;" data-converter="float64tovalue"></td>
+                                <td class="outputvalue" style="width: 40%;" data-converter="float64tovalue" data-flags="float64subnormal"></td>
                             </tr>
                         </table>
                     </div>

@@ -158,7 +158,7 @@ function buildFloat(sign, exponent, rawMantissa, mantissa, maxExp) {
     if (exponent == maxExp) {
         if (rawMantissa != 0)
             return NaN;
-        else if (s)
+        else if (sign)
             return -Infinity;
         else
             return Infinity;
@@ -573,12 +573,20 @@ class BinaryInt {
         return buildFloat(sign, exponent, rawMantissa, mantissa, 128);
     }
 
+    isFloat32Subnormal() {
+        return this.getCastFloat32Exponent(true) == 0 && this.getCastFloat32Mantissa(true) != 0;
+    }
+
     getCastFloat64() {
         let sign = this.getCastFloat64Sign();
         let exponent = this.getCastFloat64Exponent();
         let rawMantissa = this.getCastFloat64Mantissa(true);
         let mantissa = this.getCastFloat64Mantissa();
         return buildFloat(sign, exponent, rawMantissa, mantissa, 1024);
+    }
+
+    isFloat64Subnormal() {
+        return this.getCastFloat64Exponent(true) == 0 && this.getCastFloat64Mantissa(true) != 0;
     }
 
     copy() {
