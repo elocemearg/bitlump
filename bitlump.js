@@ -96,8 +96,35 @@ function initialiseConversionControls() {
     }
 }
 
+function buildQueryString(namesValues) {
+    let q = "";
+    for (let name in namesValues) {
+        if (q.length > 0)
+            q += "&";
+        q += encodeURIComponent(name) + "=" + encodeURIComponent(namesValues[name].toString());
+    }
+    return q;
+}
+
 function inputChanged(text) {
+    /* Change the URL query string to reflect the new input */
+    let newUrl;
+    if (text.trim().length > 0) {
+        newUrl = "?" + buildQueryString({
+            "i" : text
+        });
+    }
+    else {
+        newUrl = "?";
+    }
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, newUrl);
+    }
+
+    /* Create an InputValue from our text set currentInputValue to it */
     currentInputValue = new InputValue(text);
+
+    /* Start all the fancy machinery */
     refresh();
 }
 
@@ -241,6 +268,49 @@ function clearInput() {
     inputChanged(inputBox.value);
 }
 
+function queryStringToDict(queryString) {
+    let dict = {};
+    if (queryString == null || queryString.length == 0) {
+        return dict;
+    }
+
+    if (queryString[0] == '?') {
+        queryString = queryString.substring(1);
+    }
+
+    let components = queryString.split("&");
+    for (let i = 0; i < components.length; ++i) {
+        let nameEqualsValue = components[i];
+        let equalsPos = nameEqualsValue.search("=");
+
+        if (equalsPos >= 0) {
+            name = nameEqualsValue.substring(0, equalsPos);
+            value = nameEqualsValue.substring(equalsPos + 1);
+        }
+        else {
+            name = nameEqualsValue;
+            value = "";
+        }
+
+        name = decodeURIComponent(name.replace(/\+/g, " "));
+        value = decodeURIComponent(value.replace(/\+/g, " "));
+        dict[name] = value;
+    }
+
+    return dict;
+}
+
+function parseQueryString() {
+    let url = window.location.href;
+    let qPos = url.indexOf('?');
+    if (qPos >= 0) {
+        return queryStringToDict(url.substr(qPos + 1));
+    }
+    else {
+        return {};
+    }
+}
+
 function initPage() {
     initConversions();
     mainDiv = document.getElementById("main");
@@ -248,6 +318,11 @@ function initPage() {
     inputBox.addEventListener("input", function() {
         inputChanged(inputBox.value);
     });
+
+    let queryString = parseQueryString();
+    if ("i" in queryString) {
+        inputBox.value = queryString["i"];
+    }
 
     inputBox.focus();
     initialiseConversionControls();
