@@ -390,25 +390,22 @@ class BinaryInt {
     }
 
     endianSwap(numBytes) {
-        if (numBytes > this.bytes.length)
+        if (numBytes > this.bytes.length) {
             return false;
-
-        let padByte = this.isNegative() ? 0xff : 0;
-
-        /* If numBytes < this.bytes.length, discard the top unswapped bytes and
-         * set them all to 0 of 0xff depending on the value's sign. */
-        for (let i = 0; i < this.bytes.length - numBytes; i++) {
-            this.bytes[i] = padByte;
         }
 
-        let l = this.bytes.length - numBytes;
-        let r = this.bytes.length - 1;
-        while (l < r) {
-            let tmp = this.bytes[l];
-            this.bytes[l] = this.bytes[r];
-            this.bytes[r] = tmp;
-            l++;
-            r--;
+        /* Divide the binaryint into chunks of numBytes bytes each and swap
+         * the order of the bytes within each chunk. */
+        for (let startByte = this.bytes.length - numBytes; startByte >= 0; startByte -= numBytes) {
+            let l = startByte;
+            let r = startByte + numBytes - 1;
+            while (l < r) {
+                let tmp = this.bytes[l];
+                this.bytes[l] = this.bytes[r];
+                this.bytes[r] = tmp;
+                l++;
+                r--;
+            }
         }
 
         return true;
