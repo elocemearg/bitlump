@@ -179,10 +179,16 @@ function refresh() {
         let conversionOutputs = conversionGroups[groupIndex].conversionOutputs;
         let groupEnable = true;
 
-        if (inputTypeName == "binaryint")
+        if (inputTypeName == "binaryint") {
             groupEnable = currentInputValue.getBinaryInt() != null;
-        else if (inputTypeName == "float")
+        }
+        else if (inputTypeName == "float") {
             groupEnable = currentInputValue.isFloat();
+        }
+        else if (inputTypeName == "text") {
+            /* Everything is valid text */
+            groupEnabled = true;
+        }
 
         /* Put this output group in its enabled/disabled colours */
         if (groupEnable) {
@@ -199,20 +205,16 @@ function refresh() {
 
         for (let outputIndex = 0; outputIndex < conversionOutputs.length; outputIndex++) {
             let co = conversionOutputs[outputIndex];
-            let odiv = co.outputElement;
+            let oe = co.outputElement;
             let outputValue = null;
             let params = paramElementNamesToParams(co.converterParamElements);
-            if (groupEnable) {
-                outputValue = co.converter.convert(currentInputValue, params, co.flagElements);
-            }
-            if (outputValue !== null) {
-                odiv.innerHTML = outputValue;
-                odiv.classList.remove("outputvaluevoid");
+            let conversionSuccess = co.converter.convert(currentInputValue, params, co.flagElements, oe);
+            if (conversionSuccess) {
+                oe.classList.remove("outputvaluevoid");
             }
             else {
-                odiv.innerHTML = "&nbsp;";
-                odiv.disabled = true;
-                odiv.classList.add("outputvaluevoid");
+                oe.disabled = true;
+                oe.classList.add("outputvaluevoid");
                 for (let flagId in co.flagElements) {
                     co.flagElements[flagId].classList.remove("flagactive");
                 }
@@ -310,6 +312,7 @@ function parseQueryString() {
         return {};
     }
 }
+
 
 function initPage() {
     initConversions();

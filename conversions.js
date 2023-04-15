@@ -104,18 +104,48 @@ class Conversion {
         return this.inputTypeName;
     }
 
-    convert(value, params, outputFlags) {
-        return this.func(value, params, outputFlags);
+    /* Converts inputValue to whatever the output should be and puts that in
+     * outputElement if the conversion is successful.
+     * Returns true if the conversion was successful and false otherwise. */
+    convert(inputValue, params, outputFlags, outputElement) {
+        return this.func(inputValue, params, outputFlags, outputElement);
     }
 }
 
-function createConversion(categoryName, conversionName, func) {
-    let conversion = new Conversion(categoryName, conversionName, func);
+class StringConversion extends Conversion {
+    constructor(inputTypeName, name, func) {
+        super(inputTypeName, name,
+            function (inputValue, params, outputFlags, outputElement) {
+                if (outputElement) {
+                    let outputValue = func(inputValue, params, outputFlags);
+                    if (outputValue === null) {
+                        outputElement.innerHTML = "&nbsp;";
+                        return false;
+                    }
+                    else {
+                        outputElement.innerText = outputValue;
+                        return true;
+                    }
+                }
+                else {
+                    return false;
+                }
+            }
+        );
+    }
+}
+
+/* Create a Conversion object.
+ * func returns the output as a string rather than putting it into an HTML
+ * element itself. The Conversion object we create will deal with putting the
+ * result into an element. */
+function createStringConversion(categoryName, conversionName, func) {
+    let conversion = new StringConversion(categoryName, conversionName, func);
     conversions[conversionName] = conversion;
 }
 
 function createConversionFromBinaryInt(conversionName, func) {
-    return createConversion("binaryint", conversionName,
+    return createStringConversion("binaryint", conversionName,
         function(inputValue, params, outputFlags) {
             let b = inputValue.getBinaryInt();
             if (b == null)
@@ -126,7 +156,7 @@ function createConversionFromBinaryInt(conversionName, func) {
 }
 
 function createConversionFromFloat(conversionName, func) {
-    return createConversion("float", conversionName,
+    return createStringConversion("float", conversionName,
         function(inputValue, params, flags) {
             if (inputValue.isFloat())
                 return func(inputValue.getFloat(), inputValue, params, flags);
@@ -220,6 +250,125 @@ function weekDayName(n) {
     return weekDayNames[n];
 }
 
+function codepointToUTF8Hex(cp) {
+    let leadingBits = 0;
+    let byteCount = 0;
+    let utf8Bytes = [];
+    if (cp < 0x80) {
+        leadingBits = 0;
+        byteCount = 1;
+    }
+    else if (cp < 0x800) {
+        leadingBits = 0xc0;
+        byteCount = 2;
+    }
+    else if (cp < 0x10000) {
+        leadingBits = 0xe0;
+        byteCount = 3;
+    }
+    else {
+        leadingBits = 0xf0;
+        byteCount = 4;
+    }
+
+    for (let i = 0; i < byteCount - 1; i++) {
+        utf8Bytes.unshift(0x80 | (cp & 0x3f));
+        cp >>= 6;
+    }
+    utf8Bytes.unshift(leadingBits | cp);
+    return hexByteString(utf8Bytes);
+}
+
+function isHighSurrogate(cp) {
+    return cp >= 0xd800 && cp < 0xdc00;
+}
+
+function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
+    let text = inputValue.getText();
+    const maxRows = 20;
+    let pos = 0;
+    let rowNum = 0;
+
+    /* Find the table in the div */
+    let table = outputElement.getElementsByTagName("TABLE");
+    if (table.length == 0) {
+        console.log("wot no table?");
+        return false;
+    }
+    else {
+        table = table[0];
+    }
+
+    for (let rowNum = 0; rowNum < maxRows; rowNum++) {
+        /* Find the tr element for this row */
+        let tr = table.getElementsByClassName("text2unicode-row-" + rowNum.toString());
+        if (tr.length == 0) {
+            /* This row doesn't exist yet - create it */
+            tr = document.createElement("TR");
+            tr.classList.add("text2unicode");
+            tr.classList.add("text2unicode-row-" + rowNum.toString());
+
+            let tds = [];
+            for (let i = 0; i < 4; i++) {
+                tds.push(document.createElement("TD"));
+            }
+            tds[0].classList.add("text2unicode-char");
+            tds[1].classList.add("text2unicode-cp");
+            tds[2].classList.add("text2unicode-dec");
+            tds[3].classList.add("text2unicode-utf8");
+            for (let i = 0; i < tds.length; i++) {
+                tr.appendChild(tds[i]);
+            }
+            table.appendChild(tr);
+        }
+        else {
+            /* We only expect one row for each position */
+            tr = tr[0];
+        }
+
+        if (pos < text.length) {
+            let character = text.charAt(pos);
+            let cc = text.charCodeAt(pos);
+            let cp = text.codePointAt(pos);
+            let tds = tr.getElementsByTagName("TD");
+            if (isHighSurrogate(cc) && pos + 1 < text.length) {
+                /* This codepoint takes up two characters. */
+                character += text.charAt(++pos);
+            }
+            if (tds[0]) {
+                tds[0].innerText = character;
+            }
+            if (tds[1]) {
+                tds[1].innerText = "U+" + leftPad(cp.toString(16).toUpperCase(), '0', 4);
+            }
+            if (tds[2]) {
+                tds[2].innerText = cp;
+            }
+            if (tds[3]) {
+                tds[3].innerText = codepointToUTF8Hex(cp);
+            }
+            tr.style.display = null;
+        }
+        else {
+            tr.style.display = "none";
+        }
+        pos++;
+    }
+
+    let overflowDiv = outputElement.getElementsByClassName("text2unicodeoverflowreport");
+    if (overflowDiv.length > 0) {
+        overflowDiv = overflowDiv[0];
+        if (pos < text.length) {
+            overflowDiv.innerText = "Only the first " + maxRows.toString() + " characters are shown.";
+            overflowDiv.style.display = "block";
+        }
+        else {
+            overflowDiv.style.display = "none";
+        }
+    }
+    return true;
+}
+
 function initConversions() {
     createConversionFromBinaryInt("hex", binaryInt => "0x" + binaryInt.formatHex(false));
 
@@ -306,33 +455,7 @@ function initConversions() {
         function(binaryInt, inputValue) {
             if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger())))
                 return null;
-            let cp = inputValue.getInteger();
-            let leadingBits = 0;
-            let byteCount = 0;
-            let utf8Bytes = [];
-            if (cp < 0x80) {
-                leadingBits = 0;
-                byteCount = 1;
-            }
-            else if (cp < 0x800) {
-                leadingBits = 0xc0;
-                byteCount = 2;
-            }
-            else if (cp < 0x10000) {
-                leadingBits = 0xe0;
-                byteCount = 3;
-            }
-            else {
-                leadingBits = 0xf0;
-                byteCount = 4;
-            }
-
-            for (let i = 0; i < byteCount - 1; i++) {
-                utf8Bytes.unshift(0x80 | (cp & 0x3f));
-                cp >>= 6;
-            }
-            utf8Bytes.unshift(leadingBits | cp);
-            return hexByteString(utf8Bytes);
+            return codepointToUTF8Hex(inputValue.getInteger());
         }
     );
 
@@ -344,12 +467,12 @@ function initConversions() {
 
             let cp = inputValue.getInteger();
             if (cp <= 0xffff) {
-                return hexByteString([cp >> 8, cp & 0xff]);
+                return leftPad(cp.toString(16).toUpperCase(), '0', 4);
             }
             else {
                 cp -= 0x10000;
                 let pairs = [ 0xD800 | ((cp >> 10) & 0x3ff), 0xDC00 | (cp & 0x3ff) ];
-                return hexByteString([pairs[0] >> 8, pairs[0] & 0xff, pairs[1] >> 8, pairs[1] & 0xff]);
+                return (leftPad(pairs[0].toString(16), '0', 4) + " " + leftPad(pairs[1].toString(16), '0', 4)).toUpperCase();
             }
         }
     );
@@ -469,4 +592,8 @@ function initConversions() {
             return f.toString();
         }
     );
+
+
+    /* Text to individual Unicode codepoints */
+    conversions["text2unicode"] = new Conversion("text", "text2unicode", text2UnicodeFunc);
 }

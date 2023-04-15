@@ -44,9 +44,14 @@ div.mainoutput {
     font-size: 12pt;
 }
 
+div.outputgroupcolumn {
+    display: inline-block;
+    vertical-align: top;
+}
+
 div.outputgroup {
     position: relative;
-    display: inline-block;
+    display: block;
     vertical-align: top;
     width: 600px;
     border: 2px inset silver;
@@ -106,7 +111,7 @@ div.outputcell {
 
 .outputvalue {
     font-family: monospace;
-    height: 16pt;
+    min-height: 16pt;
     line-height: 16pt;
     background-color: white;
     border: 1px solid silver;
@@ -114,6 +119,11 @@ div.outputcell {
 
 .outputvaluevoid {
     background-color: silver;
+}
+
+.outputvaluetable {
+    border: none;
+    background-color: transparent;
 }
 
 div.outputcellbigcharacter {
@@ -165,4 +175,48 @@ div.flagactive {
 
 a {
     text-decoration: none;
+}
+
+.outputtablefootnote {
+    font-family: "Inter", sans-serif;
+    font-style: italic;
+    text-align: right;
+    font-size: 10pt;
+    background-color: none;
+    margin-right: 0.5em;
+    color: gray;
+}
+
+table.text2unicodetable {
+    border-collapse: collapse;
+}
+
+table.text2unicodetable th {
+    font-weight: normal;
+    font-size: 10pt;
+    text-align: left;
+    border-left: 1px solid transparent;
+}
+
+table.text2unicodetable td {
+    border: 1px solid silver;
+    background-color: white;
+    padding: 2px;
+}
+
+td.text2unicode-char {
+    text-align: center;
+    font-family: sans-serif;
+}
+
+td.text2unicode-cp {
+    text-align: left;
+}
+
+td.text2unicode-dec {
+    text-align: left;
+}
+
+td.text2unicode-utf8 {
+    text-align: left;
 }
