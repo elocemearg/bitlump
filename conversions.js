@@ -29,6 +29,98 @@ function setFlagActive(flags, name, active) {
     }
 }
 
+const fractionValues = {
+    0xBC: 1/4, /* ¼ */
+    0xBD: 1/2, /* ½ */
+    0xBE: 3/4,  /* ¾ */
+    0x2150: 1/7,
+    0x2151: 1/9,
+    0x2152: 1/10,
+    0x2153: 1/3,
+    0x2154: 2/3,
+    0x2155: 1/5,
+    0x2156: 2/5,
+    0x2157: 3/5,
+    0x2158: 4/5,
+    0x2159: 1/6,
+    0x215A: 5/6,
+    0x215B: 1/8,
+    0x215C: 3/8,
+    0x215D: 5/8,
+    0x215E: 7/8,
+    0x2189: 0 /* 0/3 */
+};
+const simpleFractionRegex = /^([0-9]*)\s*(.)$/;
+const oneOverDenomRegex = /^([0-9]*)\s*\u215f([0-9]+)$/; // U+215F: one-over...
+const intNumDenomRegex = /^([0-9]+)\s+([0-9]+)[\u2044\/]([0-9]+)$/; // U+2044: fraction slash
+const numDenomRegex = /^([0-9]+)[\u2044\/]([0-9]+)$/;
+
+/* Try to parse text as a fractional number matching any of the four regexes
+ * above. Return a floating-point number or null. */
+function parseFraction(text) {
+    let fractionValue = null;
+    let minus = false;
+    let integerPart = null;
+    let fractionPart = null;
+
+    text = text.trim();
+    if (text.charAt(0) == '-') {
+        minus = true;
+        text = text.substr(1);
+    }
+
+    let m;
+    if ((m = text.match(simpleFractionRegex)) != null) {
+        /* An optional integer followed by a single fraction character such
+         * as ½ */
+        let f = m[2];
+        integerPart = (m[1].length == 0 ? 0 : parseInt(m[1]));
+        f = m[2].codePointAt(0);
+        if (f in fractionValues) {
+            fractionPart = fractionValues[f];
+        }
+        else {
+            return null;
+        }
+        return (integerPart + fractionPart) * (minus ? -1 : 1);
+    }
+    else if ((m = text.match(oneOverDenomRegex)) != null) {
+        /* An optional integer, followed by U+215F ("1/") followed by a
+         * positive integer denominator. */
+        let d = parseInt(m[2]);
+        integerPart = (m[1].length == 0 ? 0 : parseInt(m[1]));
+        if (isNaN(d) || d == 0)
+            return null;
+        fractionPart = 1.0 / d;
+    }
+    else if ((m = text.match(intNumDenomRegex)) != null) {
+        /* An integer, followed by at least one space, followed by a
+         * non-negative integer numerator, then U+2044 (fraction slash) or
+         * U+002F (ordinary slash), then a positive integer denominator. */
+        let n = parseInt(m[2]);
+        let d = parseInt(m[3]);
+        integerPart = parseInt(m[1]);
+        if (isNaN(n) || isNaN(d) || d == 0)
+            return null;
+        fractionPart = n / d;
+    }
+    else if ((m = text.match(numDenomRegex)) != null) {
+        /* The same as above but without the leading integer. Numerator
+         * followed by slash followed by denominator. */
+        let n = parseInt(m[1]);
+        let d = parseInt(m[2]);
+        integerPart = 0;
+        if (isNaN(n) || isNaN(d) || d == 0)
+            return null;
+        fractionPart = n / d;
+    }
+
+    if (isNaN(integerPart) || integerPart == null || fractionPart == null)
+        return null;
+
+    return (integerPart + fractionPart) * (minus ? -1 : 1);
+}
+
 class InputValue {
     constructor(text) {
         this.text = text;
@@ -44,8 +136,13 @@ class InputValue {
         }
 
         /* Try to parse as a float */
-        if (text.trim().length > 0)
+        if (text.trim().length > 0) {
             this.floatValue = Number(text);
+            if (isNaN(this.floatValue)) {
+                /* Perhaps it's some sort of fancy fraction thing */
+                this.floatValue = parseFraction(text);
+            }
+        }
         else
             this.floatValue = null;
     }
