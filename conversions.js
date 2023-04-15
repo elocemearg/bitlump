@@ -125,8 +125,12 @@ class InputValue {
     constructor(text) {
         this.text = text;
 
+        /* Before parsing as a number, change any minus signs to plain old
+         * hyphens and lose leading and trailing spaces. */
+        text = text.trim().replace("−", "-");
+
         /* Put the value into a binary integer */
-        this.binaryIntValue = createBinaryIntFromString(text, 8, text.trim().startsWith("-"));
+        this.binaryIntValue = createBinaryIntFromString(text, 8, text.startsWith("-"));
 
         if (this.binaryIntValue != null) {
             this.intValue = this.binaryIntValue.getJSInt();
@@ -137,10 +141,20 @@ class InputValue {
 
         /* Try to parse as a float */
         if (text.trim().length > 0) {
+            /* Try to parse as a JavaScript number */
             this.floatValue = Number(text);
+
+            /* If it's not that, then maybe it's some sort of fancy fraction */
             if (isNaN(this.floatValue)) {
-                /* Perhaps it's some sort of fancy fraction thing */
                 this.floatValue = parseFraction(text);
+            }
+
+            /* What about infinity? */
+            if (this.floatValue == null) {
+                if (text == "∞")
+                    this.floatValue = Infinity;
+                else if (text == "-∞")
+                    this.floatValue = -Infinity;
             }
         }
         else
