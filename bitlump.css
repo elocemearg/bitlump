@@ -109,6 +109,9 @@ div.outputcell {
     vertical-align: top;
 }
 
+.outputcontainer {
+}
+
 .outputvalue {
     font-family: monospace;
     min-height: 16pt;
@@ -117,13 +120,8 @@ div.outputcell {
     border: 1px solid silver;
 }
 
-.outputvaluevoid {
+.outputcontainervoid {
     background-color: silver;
-}
-
-.outputvaluetable {
-    border: none;
-    background-color: transparent;
 }
 
 div.outputcellbigcharacter {

@@ -44,7 +44,7 @@ function initialiseConversionControls() {
         }
     }
 
-    let outputDivs = document.getElementsByClassName("outputvalue");
+    let outputDivs = document.getElementsByClassName("outputcontainer");
     for (let outputDivIndex = 0; outputDivIndex < outputDivs.length; outputDivIndex++) {
         let odiv = outputDivs[outputDivIndex];
         let converterName = odiv.getAttribute("data-converter");
@@ -210,11 +210,11 @@ function refresh() {
             let params = paramElementNamesToParams(co.converterParamElements);
             let conversionSuccess = co.converter.convert(currentInputValue, params, co.flagElements, oe);
             if (conversionSuccess) {
-                oe.classList.remove("outputvaluevoid");
+                oe.classList.remove("outputcontainervoid");
             }
             else {
                 oe.disabled = true;
-                oe.classList.add("outputvaluevoid");
+                oe.classList.add("outputcontainervoid");
                 for (let flagId in co.flagElements) {
                     co.flagElements[flagId].classList.remove("flagactive");
                 }
