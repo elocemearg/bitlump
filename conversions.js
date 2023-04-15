@@ -6,10 +6,6 @@ function isHexInteger(input) {
     return input.match(/^ *0x[0-9a-fA-F]+ *$/) != null;
 }
 
-function intToHex(i) {
-    return i.toString(16).toUpperCase();
-}
-
 function leftPad(s, padChar, desiredLength) {
     let numPads = desiredLength - s.length;
     if (numPads > 0) {
@@ -18,6 +14,10 @@ function leftPad(s, padChar, desiredLength) {
     else {
         return s;
     }
+}
+
+function intToHex(i, fieldWidth=0) {
+    return leftPad(i.toString(16).toUpperCase(), '0', fieldWidth);
 }
 
 function setFlagActive(flags, name, active) {
@@ -279,6 +279,17 @@ function codepointToUTF8Hex(cp) {
     return hexByteString(utf8Bytes);
 }
 
+function codepointToUTF16Hex(cp) {
+    if (cp >= 0x10000) {
+        cp -= 0x10000;
+        return intToHex(0xD800 + ((cp >> 10) & 0x3ff), 4) + " " +
+            intToHex(0xDC00 + (cp & 0x3ff), 4);
+    }
+    else {
+        return intToHex(cp, 4);
+    }
+}
+
 function isHighSurrogate(cp) {
     return cp >= 0xd800 && cp < 0xdc00;
 }
@@ -309,13 +320,14 @@ function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
             tr.classList.add("text2unicode-row-" + rowNum.toString());
 
             let tds = [];
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 5; i++) {
                 tds.push(document.createElement("TD"));
             }
             tds[0].classList.add("text2unicode-char");
             tds[1].classList.add("text2unicode-cp");
             tds[2].classList.add("text2unicode-dec");
             tds[3].classList.add("text2unicode-utf8");
+            tds[4].classList.add("text2unicode-utf16");
             for (let i = 0; i < tds.length; i++) {
                 tr.appendChild(tds[i]);
             }
@@ -339,13 +351,16 @@ function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
                 tds[0].innerText = character;
             }
             if (tds[1]) {
-                tds[1].innerText = "U+" + leftPad(cp.toString(16).toUpperCase(), '0', 4);
+                tds[1].innerText = "U+" + intToHex(cp, 4);
             }
             if (tds[2]) {
                 tds[2].innerText = cp;
             }
             if (tds[3]) {
                 tds[3].innerText = codepointToUTF8Hex(cp);
+            }
+            if (tds[4]) {
+                tds[4].innerText = codepointToUTF16Hex(cp);
             }
             tr.style.display = null;
         }
@@ -443,11 +458,19 @@ function initConversions() {
         return cp >= 0 && cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
     }
 
-    createConversionFromBinaryInt("unicodecodepoint",
+    createConversionFromBinaryInt("unicodecharacter",
         function(binaryInt, inputValue) {
             if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger())))
                 return null;
             return String.fromCodePoint(inputValue.getInteger());
+        }
+    );
+
+    createConversionFromBinaryInt("unicodecodepoint",
+        function(binaryInt, inputValue) {
+            if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger())))
+                return null;
+            return "U+" + intToHex(inputValue.getInteger(), 4);
         }
     );
 
@@ -464,16 +487,30 @@ function initConversions() {
             if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger()))) {
                 return null;
             }
+            return codepointToUTF16Hex(inputValue.getInteger());
+        }
+    );
 
+    createConversionFromBinaryInt("codepointblock",
+        function(binaryInt, inputValue) {
+            if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger()))) {
+                return null;
+            }
             let cp = inputValue.getInteger();
-            if (cp <= 0xffff) {
-                return leftPad(cp.toString(16).toUpperCase(), '0', 4);
+            return getUnicodeCodepointBlock(cp);
+        }
+    );
+
+    conversions["codepointlink"] = new Conversion("binaryint", "codepointlink",
+        function(inputValue, params, outputFlags, outputElement) {
+            if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger()))) {
+                outputElement.innerHTML = "";
+                return false;
             }
-            else {
-                cp -= 0x10000;
-                let pairs = [ 0xD800 | ((cp >> 10) & 0x3ff), 0xDC00 | (cp & 0x3ff) ];
-                return (leftPad(pairs[0].toString(16), '0', 4) + " " + leftPad(pairs[1].toString(16), '0', 4)).toUpperCase();
-            }
+            let cpString = "U+" + intToHex(inputValue.getInteger(), 4);
+            outputElement.innerHTML = "<a href=\"https://codepoints.net/" + cpString + "\" target=\"_blank\">" +
+                "See " + cpString + " on codepoints.net</a> (opens in new window)";
+            return true;
         }
     );
 
@@ -490,7 +527,7 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float32bin2expraw",
-        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat32Exponent(true)), '0', 2)
+        binaryInt => "0x" + intToHex(binaryInt.getCastFloat32Exponent(true), 2)
     );
 
     createConversionFromBinaryInt("float32bin2mantissa",
@@ -498,7 +535,7 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float32bin2mantissaraw",
-        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat32Mantissa(true)), '0', 6)
+        binaryInt => "0x" + intToHex(binaryInt.getCastFloat32Mantissa(true), 6)
     );
 
     createConversionFromBinaryInt("float32bin2value",
@@ -521,7 +558,7 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float64bin2expraw",
-        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat64Exponent(true)), '0', 3)
+        binaryInt => "0x" + intToHex(binaryInt.getCastFloat64Exponent(true), 3)
     );
 
     createConversionFromBinaryInt("float64bin2mantissa",
@@ -529,7 +566,7 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float64bin2mantissaraw",
-        binaryInt => "0x" + leftPad(intToHex(binaryInt.getCastFloat64Mantissa(true)), '0', 13)
+        binaryInt => "0x" + intToHex(binaryInt.getCastFloat64Mantissa(true), 13)
     );
 
     createConversionFromBinaryInt("float64bin2value",
@@ -551,7 +588,7 @@ function initConversions() {
         );
 
         createConversionFromFloat(namePreamble + "expraw",
-            f => "0x" + leftPad(intToHex(getFloatExponent(f, fBits, true)), '0', fBits == 32 ? 2 : 3)
+            f => "0x" + intToHex(getFloatExponent(f, fBits, true), fBits == 32 ? 2 : 3)
         );
 
         createConversionFromFloat(namePreamble + "exp",
@@ -559,7 +596,7 @@ function initConversions() {
         );
 
         createConversionFromFloat(namePreamble + "mantissaraw",
-            f => "0x" + leftPad(intToHex(getFloatMantissa(f, fBits, true)), '0', fBits == 32 ? 6 : 13)
+            f => "0x" + intToHex(getFloatMantissa(f, fBits, true), fBits == 32 ? 6 : 13)
         );
 
         createConversionFromFloat(namePreamble + "mantissa",

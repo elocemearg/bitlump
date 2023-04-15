@@ -82,7 +82,7 @@ div.outputgrouptitle {
     font-weight: bold;
 }
 
-div.outputcelltitle {
+div.outputgrouprowtitle {
     display: block;
     width: 100%;
     text-align: left;
@@ -101,6 +101,11 @@ div.outputgrouprow {
     display: block;
     width: 100%;
     text-align: center;
+}
+
+div.outputcellrow {
+    display: block;
+    margin-bottom: 5px;
 }
 
 div.outputcell {
@@ -209,12 +214,20 @@ td.text2unicode-char {
 
 td.text2unicode-cp {
     text-align: left;
+    font-family: monospace;
 }
 
 td.text2unicode-dec {
     text-align: left;
+    font-family: monospace;
 }
 
 td.text2unicode-utf8 {
     text-align: left;
+    font-family: monospace;
+}
+
+td.text2unicode-utf16 {
+    text-align: left;
+    font-family: monospace;
 }

@@ -9,6 +9,7 @@
         <link rel="stylesheet" type="text/css" href="bitlump.css?bump=0" />
     </head>
     <body onload="initPage();">
+        <script src="unicodedata.js?bump=0"></script>
         <script src="binaryint.js?bump=0"></script>
         <script src="conversions.js?bump=0"></script>
         <script src="bitlump.js?bump=0"></script>
@@ -74,7 +75,7 @@
                         </div>
 
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">Signed integer</div>
+                            <div class="outputgrouprowtitle">Signed integer</div>
                             <div class="outputgrouprow">
                                 <div class="outputcell" style="width: 9%">
                                     <div class="outputcellsubtitle">8-bit</div>
@@ -96,7 +97,7 @@
                         </div>
 
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">Unsigned integer</div>
+                            <div class="outputgrouprowtitle">Unsigned integer</div>
                             <div class="outputgrouprow">
                                 <div class="outputcell" style="width: 9%">
                                     <div class="outputcellsubtitle">8-bit</div>
@@ -118,7 +119,7 @@
                         </div>
 
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">Time since Unix epoch (1970-01-01)</div>
+                            <div class="outputgrouprowtitle">Time since Unix epoch (1970-01-01)</div>
                             <div style="text-align: left; font-size: 10pt;">
                                 Unit:
                                 <input type="checkbox" class="converter-param" name="unixtsscaleauto" id="unixtsscale-auto" onclick="unixTimestampUnitAutoDetectChanged();" checked><label for="unixtsscale-auto">Auto-guess</label>
@@ -132,7 +133,7 @@
                         </div>
 
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">
+                            <div class="outputgrouprowtitle">
                                 Type-punned to <a href="https://en.wikipedia.org/wiki/Single-precision_floating-point_format" target="_blank">32-bit floating point</a>
                                 (IEEE 754)
                             </div>
@@ -164,7 +165,7 @@
                         </div>
 
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">
+                            <div class="outputgrouprowtitle">
                                 Type-punned to
                                 <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">64-bit floating point</a>
                                 (IEEE 754)
@@ -197,16 +198,37 @@
                         </div>
 
                         <div class="outputgrouprow" style="text-align: left;">
-                            <div class="outputcelltitle">Unicode codepoint</div>
-                            <div class="outputcell" style="width: 30%; text-align: left;">
+                            <div class="outputgrouprowtitle">Unicode codepoint</div>
+                            <div class="outputcell" style="text-align: left;">
                                 <div class="outputcellsubtitle">Character</div>
-                                <div class="outputcontainer outputvalue outputcellbigcharacter" data-converter="unicodecodepoint"></div>
+                                <div class="outputcontainer outputvalue outputcellbigcharacter" data-converter="unicodecharacter"></div>
                             </div>
-                             <div class="outputcell" style="width: 40%;">
-                                <div class="outputcellsubtitle">UTF-8 encoding</div>
-                                <div class="outputcontainer outputvalue" data-converter="utf8encoding"></div>
-                                <div class="outputcellsubtitle">UTF-16 encoding</div>
-                                <div class="outputcontainer outputvalue" data-converter="utf16encoding"></div>
+                            <div style="display: inline-block; margin-right: auto;">
+                                <div class="outputcellrow">
+                                    <div class="outputcell" style="width: 100px;">
+                                        <div class="outputcellsubtitle">Codepoint</div>
+                                        <div class="outputcontainer outputvalue" data-converter="unicodecodepoint"></div>
+                                    </div>
+                                    <div class="outputcell" style="width: 150px;">
+                                        <div class="outputcellsubtitle">UTF-8 encoding</div>
+                                        <div class="outputcontainer outputvalue" data-converter="utf8encoding"></div>
+                                    </div>
+                                    <div class="outputcell" style="width: 150px;">
+                                        <div class="outputcellsubtitle">UTF-16 encoding</div>
+                                        <div class="outputcontainer outputvalue" data-converter="utf16encoding"></div>
+                                    </div>
+                                </div>
+                                <div class="outputcellrow">
+                                    <div class="outputcell" style="width: 100%;">
+                                        <div class="outputcellsubtitle" style="text-align: left;">Block</div>
+                                        <div class="outputcontainer outputvalue" style="text-align: left; font-family: Inter, sans-serif;" data-converter="codepointblock"></div>
+                                    </div>
+                                </div>
+                                <div class="outputcellrow">
+                                    <div class="outputcell">
+                                        <div class="outputcontainer" style="font-size: 10pt;" data-converter="codepointlink"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div> <!-- outputgroup binaryint -->
@@ -216,7 +238,7 @@
                     <div class="outputgroup" data-category="float">
                         <div class="outputgrouptitle">Taking input as a <span class="inputtype">floating-point value</span></div>
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">
+                            <div class="outputgrouprowtitle">
                                 <a href="https://en.wikipedia.org/wiki/Single-precision_floating-point_format" target="_blank">IEEE 754 32-bit encoding</a>
                             </div>
                             <div class="cornerflags">
@@ -247,7 +269,7 @@
                             </table>
                         </div>
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">
+                            <div class="outputgrouprowtitle">
                                 <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">IEEE 754 64-bit encoding</a>
                             </div>
                             <div class="cornerflags">
@@ -282,7 +304,7 @@
                     <div class="outputgroup" data-category="text">
                         <div class="outputgrouptitle">Taking input as <span class="inputtype">text</span></div>
                         <div class="outputgrouprow">
-                            <div class="outputcelltitle">Unicode characters</div>
+                            <div class="outputgrouprowtitle">Unicode characters</div>
                             <div class="outputcontainer outputvaluetable" data-converter="text2unicode">
                                 <table class="text2unicodetable" style="width: 100%;">
                                     <colgroup>
@@ -293,6 +315,7 @@
                                         <th>Codepoint</th>
                                         <th>Decimal</th>
                                         <th>UTF-8 encoding</th>
+                                        <th>UTF-16 encoding</th>
                                     </tr>
                                     <!-- tr-td rows added at runtime -->
                                 </table>
