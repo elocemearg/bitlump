@@ -33,6 +33,9 @@
                     <input id="input" type="text"></input>
                 </div>
                 <div class="maininputcolumn">
+                    <button onclick="copyInput();">Copy to clipboard</button>
+                </div>
+                <div class="maininputcolumn">
                     <button onclick="clearInput();">Clear</button>
                 </div>
             </div>
@@ -207,26 +210,21 @@
                                 <div class="outputcellrow">
                                     <div class="outputcell" style="width: 100px;">
                                         <div class="outputcellsubtitle">Codepoint</div>
-                                        <div class="outputcontainer outputvalue" data-converter="unicodecodepoint"></div>
+                                        <div class="outputcontainer outputvalue outputvaluenoautolink" data-converter="unicodecodepoint"></div>
                                     </div>
                                     <div class="outputcell" style="width: 150px;">
                                         <div class="outputcellsubtitle">UTF-8 encoding</div>
-                                        <div class="outputcontainer outputvalue" data-converter="utf8encoding"></div>
+                                        <div class="outputcontainer outputvalue outputvaluehex" data-converter="utf8encoding"></div>
                                     </div>
                                     <div class="outputcell" style="width: 150px;">
                                         <div class="outputcellsubtitle">UTF-16 encoding</div>
-                                        <div class="outputcontainer outputvalue" data-converter="utf16encoding"></div>
+                                        <div class="outputcontainer outputvalue outputvaluehex" data-converter="utf16encoding"></div>
                                     </div>
                                 </div>
                                 <div class="outputcellrow">
                                     <div class="outputcell" style="width: 100%;">
                                         <div class="outputcellsubtitle" style="text-align: left;">Block</div>
                                         <div class="outputcontainer outputvalue" style="text-align: left; font-family: Inter, sans-serif;" data-converter="codepointblock"></div>
-                                    </div>
-                                </div>
-                                <div class="outputcellrow">
-                                    <div class="outputcell">
-                                        <div class="outputcontainer" style="font-size: 10pt;" data-converter="codepointlink"></div>
                                     </div>
                                 </div>
                             </div>

@@ -125,6 +125,17 @@ div.outputcell {
     border: 1px solid silver;
 }
 
+/* Ordinary output values don't look like links, but if you click them they'll
+ * bring you to index.html?i=[output value as new input] */
+a.outputvaluelink {
+    text-decoration: none;
+    color: black;
+}
+
+a.outputvaluelink:hover {
+    background-color: hsl(60deg, 100%, 80%);
+}
+
 .outputcontainervoid {
     background-color: silver;
 }

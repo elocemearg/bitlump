@@ -405,6 +405,16 @@ function isHighSurrogate(cp) {
     return cp >= 0xd800 && cp < 0xdc00;
 }
 
+function makeCodepointLinkElement(cp) {
+    let a = document.createElement("A");
+    let cpText = "U+" + intToHex(cp, 4);
+    a.href = "https://codepoints.net/" + cpText;
+    a.target = "_blank";
+    a.innerText = cpText;
+    a.title = "See " + cpText + " on codepoints.net (new tab)";
+    return a;
+}
+
 function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
     let text = inputValue.getText();
     const maxRows = 20;
@@ -435,11 +445,20 @@ function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
                 tds.push(document.createElement("TD"));
             }
             tds[0].classList.add("text2unicode-char");
+
+            /* Codepoint column: we don't want bitlump.js to add an automatic
+             * link for this one, because we're putting in our own link to the
+             * codepoint's page on codepoints.net. */
             tds[1].classList.add("text2unicode-cp");
+            tds[1].classList.add("outputvaluenoautolink");
+
             tds[2].classList.add("text2unicode-dec");
             tds[3].classList.add("text2unicode-utf8");
+            tds[3].classList.add("outputvaluehex");
             tds[4].classList.add("text2unicode-utf16");
+            tds[4].classList.add("outputvaluehex");
             for (let i = 0; i < tds.length; i++) {
+                tds[i].classList.add("outputvalue");
                 tr.appendChild(tds[i]);
             }
             table.appendChild(tr);
@@ -462,7 +481,8 @@ function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
                 tds[0].innerText = character;
             }
             if (tds[1]) {
-                tds[1].innerText = "U+" + intToHex(cp, 4);
+                tds[1].innerHTML = "";
+                tds[1].appendChild(makeCodepointLinkElement(cp));
             }
             if (tds[2]) {
                 tds[2].innerText = cp;
@@ -577,11 +597,16 @@ function initConversions() {
         }
     );
 
-    createConversionFromBinaryInt("unicodecodepoint",
-        function(binaryInt, inputValue) {
-            if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger())))
-                return null;
-            return "U+" + intToHex(inputValue.getInteger(), 4);
+    /* unicodecodepoint value is a link, so we can't use the helper function
+     * which expects a convert function returning a string. */
+    conversions["unicodecodepoint"] = new Conversion("binaryint", "unicodecodepooint",
+        function(inputValue, params, outputFlags, outputElement) {
+            outputElement.innerHTML = "";
+            if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger()))) {
+                return false;
+            }
+            outputElement.appendChild(makeCodepointLinkElement(inputValue.getInteger()));
+            return true;
         }
     );
 
@@ -609,19 +634,6 @@ function initConversions() {
             }
             let cp = inputValue.getInteger();
             return getUnicodeCodepointBlock(cp);
-        }
-    );
-
-    conversions["codepointlink"] = new Conversion("binaryint", "codepointlink",
-        function(inputValue, params, outputFlags, outputElement) {
-            if (!(inputValue.isInteger() && isUnicodeCodepoint(inputValue.getInteger()))) {
-                outputElement.innerHTML = "";
-                return false;
-            }
-            let cpString = "U+" + intToHex(inputValue.getInteger(), 4);
-            outputElement.innerHTML = "<a href=\"https://codepoints.net/" + cpString + "\" target=\"_blank\">" +
-                "See " + cpString + " on codepoints.net</a> (opens in new window)";
-            return true;
         }
     );
 

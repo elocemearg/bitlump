@@ -211,6 +211,7 @@ function refresh() {
             let conversionSuccess = co.converter.convert(currentInputValue, params, co.flagElements, oe);
             if (conversionSuccess) {
                 oe.classList.remove("outputcontainervoid");
+                oe.disabled = false;
             }
             else {
                 oe.disabled = true;
@@ -221,6 +222,33 @@ function refresh() {
             }
         }
     }
+
+    /* Anything with the class outputvalue, which does not have the class
+     * outputvaluenoautolink, has its contents automatically linkified.
+     * Clicking the link feeds in the output value as the input. */
+    let outputElements = document.getElementsByClassName("outputvalue");
+    for (let outputIndex = 0; outputIndex < outputElements.length; outputIndex++) {
+        let oe = outputElements[outputIndex];
+        if (!oe.disabled && !oe.classList.contains("outputvaluenoautolink")) {
+            let valueText = oe.innerText;
+            let linkValueText = valueText;
+            let link = document.createElement("A");
+
+            if (oe.classList.contains("outputvaluehex")) {
+                /* Value is a series of hex numbers (at least two digits each),
+                 * possibly without the leading 0x, separated by spaces. We
+                 * must add the 0x so that if the user clicks, the numbers
+                 * don't get interpreted as base-10. */
+                linkValueText = valueText.replace(/\b([0-9a-fA-F][0-9a-fA-F])/g, "0x$1");
+            }
+            link.href = "?i=" + encodeURIComponent(linkValueText);
+            link.classList.add("outputvaluelink");
+            link.innerText = valueText;
+            oe.innerHTML = "";
+            oe.appendChild(link);
+        }
+    }
+
 }
 
 function modifyBinaryInt(func) {
@@ -268,6 +296,12 @@ function clearInput() {
     inputBox.value = "";
     inputBox.focus();
     inputChanged(inputBox.value);
+}
+
+function copyInput() {
+    inputBox.select();
+    inputBox.setSelectionRange(0, 99999);
+    document.execCommand("copy");
 }
 
 function queryStringToDict(queryString) {
