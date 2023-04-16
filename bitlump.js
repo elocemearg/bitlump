@@ -248,9 +248,9 @@ function refresh() {
             if (oe.classList.contains("outputvaluehex")) {
                 /* Value is a series of hex numbers (at least two digits each),
                  * possibly without the leading 0x, separated by spaces. We
-                 * must add the 0x so that if the user clicks, the numbers
-                 * don't get interpreted as base-10. */
-                linkValueText = valueText.replace(/\b([0-9a-fA-F][0-9a-fA-F])/g, "0x$1");
+                 * must add the 0x before the first one so that if the user
+                 * clicks, the numbers don't get interpreted as base-10. */
+                linkValueText = valueText.replace(/\b([0-9a-fA-F][0-9a-fA-F])/, "0x$1");
             }
 
             /* Create the link, and add the element's old children */

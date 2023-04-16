@@ -78,12 +78,77 @@ function bytesIsZero(bytes) {
     return true;
 }
 
+/* text must be a single hex number or multiple hex numbers separated by
+ * spaces. Each one is treated as a whole number of bytes. Each one may
+ * optionally start with "0x" or "0X".
+ *
+ * If any number can't be parsed as a hex number, that's an error.
+ *
+ * If numBytes < 0, the returned array contains only the number of entries
+ * required to hold the whole array. If numBytes > 0, the returned array is
+ * always numBytes entries along, padded on the left with zeroes if necessary.
+ * If numBytes > 0 and more than numBytes bytes would be required, it's an
+ * error.
+ *
+ * Return the byte array, or null if there's an error.
+ */
+function hexToByteArray(text, numBytes=-1) {
+    let bytes = [];
+    let words = text.split(/\s+/);
+
+    for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
+        let word = words[wordIndex];
+        let pos = 0;
+        if (word.startsWith("0x") || word.startsWith("0X")) {
+            pos += 2;
+        }
+        if (word.length % 2 == 1) {
+            /* If there are an odd number of hex digits, imagine an extra
+             * '0' at the start. */
+            word = word.substr(0, pos) + '0' + word.substr(pos);
+        }
+        while (pos < word.length) {
+            let highNibble = word[pos];
+            let lowNibble = word[pos + 1];
+            let byteValue = parseInt(highNibble + lowNibble, 16);
+
+            if (isNaN(byteValue))
+                return null;
+
+            bytes.push(byteValue);
+            pos += 2;
+        }
+    }
+
+    if (bytes.length == 0) {
+        /* Empty byte array? */
+        return null;
+    }
+
+    if (numBytes >= 0) {
+        if (bytes.length > numBytes) {
+            /* More than numBytes bytes required */
+            return null;
+        }
+        else {
+            while (bytes.length < numBytes) {
+                bytes.unshift(0);
+            }
+        }
+    }
+    return bytes;
+}
+
+/* Interpret text as a decimal number, or a hexadecimal number or byte array,
+ * and return a two-element array:
+ *  [ the resulting byte array, true if it was hex and false if not ]
+ */
 function textToByteArray(text, numBytes, signed) {
     let pos = 0;
-    let base = 10;
     let minus = false;
+    let bytes = [];
+    let isHex = false;
 
-    bytes = [];
     for (let i = 0; i < numBytes; i++) {
         bytes.push(0);
     }
@@ -95,33 +160,29 @@ function textToByteArray(text, numBytes, signed) {
     }
 
     if (text.substr(pos, 2) == "0X") {
-        base = 16;
-        pos += 2;
+        /* We're using base 16 */
+        isHex = true;
+        bytes = hexToByteArray(text.substr(pos), numBytes);
+        if (bytes == null)
+            return null;
     }
-
-    if (pos >= text.length) {
-        /* No digits? */
-        return null;
-    }
-
-    for (; pos < text.length; pos++) {
-        let c = text.charCodeAt(pos);
-        let digit;
-        if (c >= 0x30 && c <= 0x39) {
-            digit = c - 0x30;
-        }
-        else if (base == 16 && c >= 0x41 && c <= 0x46) {
-            digit = 10 + c - 0x41;
-        }
-        else {
+    else {
+        /* We're using base 10 */
+        if (pos >= text.length) {
+            /* No digits? */
             return null;
         }
 
-        if (base == 16) {
-            if (shiftLeft(bytes, 4))
+        for (; pos < text.length; pos++) {
+            let c = text.charCodeAt(pos);
+            let digit;
+            if (c >= 0x30 && c <= 0x39) {
+                digit = c - 0x30;
+            }
+            else {
                 return null;
-        }
-        else {
+            }
+
             /* Multiply by 10 */
             if (shiftLeft(bytes, 1))
                 return null;
@@ -130,9 +191,9 @@ function textToByteArray(text, numBytes, signed) {
                 return null;
             if (addUnsignedBytes(bytes, x))
                 return null;
+            if (addUnsignedBytes(bytes, [digit]))
+                return null;
         }
-        if (addUnsignedBytes(bytes, [digit]))
-            return null;
     }
     if (minus) {
         negateBytes(bytes);
@@ -146,11 +207,11 @@ function textToByteArray(text, numBytes, signed) {
      * was in base 10, and the top bit is now set, return null. This is what
      * happens when you input, say, "128" to an 8-bit signed integer. We get
      * 0x80 but 128 can't be expressed in an 8-bit signed integer. */
-    if (signed && !minus && base == 10 && (this.bytes[0] & 0x80) != 0) {
+    if (signed && !minus && !isHex &&(bytes[0] & 0x80) != 0) {
         return null;
     }
 
-    return bytes;
+    return [ bytes, isHex ];
 }
 
 function buildFloat(sign, exponent, rawMantissa, mantissa, maxExp) {
@@ -175,9 +236,10 @@ function buildFloat(sign, exponent, rawMantissa, mantissa, maxExp) {
 
 /* Binary integer of arbitrary fixed size. */
 class BinaryInt {
-    constructor(bytes, signed) {
+    constructor(bytes, signed, wasHex=false) {
         this.bytes = bytes;
         this.signed = signed;
+        this.wasHex = wasHex;
     }
 
     isNegative() {
@@ -190,6 +252,10 @@ class BinaryInt {
                 return false;
         }
         return true;
+    }
+
+    isConvertedFromHex() {
+        return this.wasHex;
     }
 
     negate() {
@@ -587,15 +653,17 @@ class BinaryInt {
     }
 
     copy() {
-        return new BinaryInt([...this.bytes], this.signed);
+        return new BinaryInt([...this.bytes], this.signed, this.wasHex);
     }
 }
 
 function createBinaryIntFromString(text, numBytes, signed) {
-    let bytes = textToByteArray(text, numBytes, signed);
-    if (bytes == null)
+    let result = textToByteArray(text, numBytes, signed);
+    if (result == null)
         return null;
-    return new BinaryInt(bytes, signed);
+    let bytes = result[0];
+    let wasHex = result[1];
+    return new BinaryInt(bytes, signed, wasHex);
 }
 
 function createBinaryIntFromFloat64Bin(f) {

@@ -232,4 +232,10 @@ table.dyntable td.unicodechar {
 
 span.invalidbyte {
     color: red;
+    border-bottom: 1pt dotted red;
+}
+
+span.invalidutf8 {
+    color: red;
+    border-bottom: 1pt dotted red;
 }

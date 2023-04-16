@@ -2,10 +2,6 @@
 /* conversion name -> Conversion */
 let conversions = {};
 
-function isHexInteger(input) {
-    return input.match(/^ *0x[0-9a-fA-F]+ *$/) != null;
-}
-
 function leftPad(s, padChar, desiredLength) {
     let numPads = desiredLength - s.length;
     if (numPads > 0) {
@@ -28,6 +24,11 @@ function setFlagActive(flags, name, active) {
             flags[name].classList.remove("flagactive");
     }
 }
+
+function isUnicodeCodepoint(cp) {
+    return cp >= 0 && cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
+}
+
 
 const fractionValues = {
     0xBC: 1/4, /* ¼ */
@@ -121,37 +122,6 @@ function parseFraction(text) {
     return (integerPart + fractionPart) * (minus ? -1 : 1);
 }
 
-/* Convert a hex string to an array of values 0-255. The input may be preceded
- * with 0x, but if it isn't, it's taken as hex anyway. If the input (after the
- * optional 0x) contains a non-hex digit, null is returned. If there are an
- * odd number of hex digits, a leading '0' digit is implied. */
-function hexToBytes(input) {
-    let bytes = [];
-    let pos = 0;
-    if (input.startsWith("0x") || input.startsWith("0X")) {
-        pos += 2;
-    }
-    if (input.length % 2 == 1) {
-        input = input.substr(0, pos) + "0" + input.substr(pos);
-    }
-    while (pos < input.length) {
-        let highDigit = input.charAt(pos);
-        if (pos + 1 >= input.length)
-            return null;
-        let lowDigit = input.charAt(pos + 1);
-
-        let value = parseInt(highDigit + lowDigit, 16);
-        if (!isNaN(value)) {
-            bytes.push(value);
-        }
-        else {
-            return null;
-        }
-        pos += 2;
-    }
-    return bytes;
-}
-
 class InputValue {
     constructor(text) {
         this.text = text;
@@ -195,20 +165,12 @@ class InputValue {
         /* Try to parse the text as a sequence of bytes, which is either
          * one or more 0x-prefixed hex numbers, or two or more space-separated
          * possibly-0x-prefixed hex numbers. */
-        let words = text.split(/\s/);
-        this.bytes = null;
+        let words = text.split(/\s+/);
         if (words.length > 1 || (words.length == 1 && words[0].toLowerCase().startsWith("0x"))) {
-            this.bytes = [];
-            for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
-                let newBytes = hexToBytes(words[wordIndex]);
-                if (newBytes == null) {
-                    this.bytes = null;
-                    break;
-                }
-                for (let i = 0; i < newBytes.length; i++) {
-                    this.bytes.push(newBytes[i]);
-                }
-            }
+            this.bytes = hexToByteArray(text);
+        }
+        else {
+            this.bytes = null;
         }
     }
 
@@ -226,7 +188,7 @@ class InputValue {
 
     /* Format a supplied BinaryInt the same way this one is formatted. */
     formatBinaryInt(binaryInt) {
-        if (this.isHexInteger()) {
+        if (binaryInt.isConvertedFromHex()) {
             return "0x" + binaryInt.formatHex(false);
         }
         else {
@@ -239,7 +201,7 @@ class InputValue {
     }
 
     isHexInteger() {
-        return isHexInteger(this.text);
+        return this.binaryInt != null && this.binaryInt.isConvertedFromHex();
     }
 
     isFloat() {
@@ -575,7 +537,7 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
         this.bytes = inputValue.getBytes();
     }
 
-    makeHexBytesNode(bytes, errorByteIndex, furtherBytesExpected) {
+    makeHexBytesNode(bytes, errorByteIndex, furtherBytesExpected, isOverlongEncoding, isInvalidCodepoint) {
         let beforeErrValue = null;
         let errValue = null;
         let afterErrValue = null;
@@ -602,11 +564,24 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
         }
 
         let node = document.createElement("SPAN");
+        if (isInvalidCodepoint) {
+            node.classList.add("invalidutf8");
+            node.title = "This UTF-8 sequence is not valid because it decodes to an invalid codepoint.";
+        }
+        else if (isOverlongEncoding) {
+            node.classList.add("invalidutf8");
+            node.title = "This UTF-8 sequence is not valid because the codepoint is not encoded in its shortest possible form.";
+        }
+
         node.appendChild(document.createTextNode(beforeErrValue));
         if (errValue != null) {
             let errSpan = document.createElement("SPAN");
             errSpan.classList.add("invalidbyte");
             errSpan.innerText = errValue;
+            if (furtherBytesExpected)
+                errSpan.title = "This UTF-8 sequence is not valid because it is incomplete.";
+            else
+                errSpan.title = "This UTF-8 sequence is not valid because this byte isn't allowed to appear here.";
             node.appendChild(errSpan);
         }
         if (afterErrValue != null) {
@@ -630,6 +605,7 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
         let charBytes = [];
         let errorByteIndex = -1;
         let missingBytes = 0;
+        let isOverlongEncoding = false;
 
         charBytes.push(firstByte);
         if ((firstByte & 0x80) == 0) {
@@ -685,6 +661,19 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
             }
         }
 
+        /* Check that the codepoint produced from this UTF-8 sequence is
+         * encoded using its shortest possible form. If not, mark it as an
+         * overlong encoding. */
+        if (errorByteIndex < 0) {
+            let contBytesRequired = 0;
+            contBytesRequired += (cp >= 0x80) ? 1 : 0;
+            contBytesRequired += (cp >= 0x800) ? 1 : 0;
+            contBytesRequired += (cp >= 0x10000) ? 1 : 0;
+            contBytesRequired += (cp >= 0x200000) ? 1 : 0;
+            contBytesRequired += (cp >= 0x4000000) ? 1 : 0;
+            isOverlongEncoding = (numContBytes > contBytesRequired);
+        }
+
         if (errorByteIndex >= 0) {
             /* Unicode replacement character */
             charDisplayCodepoint = 0xfffd;
@@ -694,7 +683,7 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
         }
 
         /* Not a codepoint */
-        if (cp > 0x10ffff) {
+        if (!isUnicodeCodepoint(cp)) {
             charDisplayCodepoint = 0xfffd;
         }
 
@@ -705,7 +694,8 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
             document.createTextNode(String.fromCodePoint(charDisplayCodepoint)),
             errorByteIndex >= 0 ? document.createTextNode("(invalid)") : makeCodepointLinkElement(cp),
             document.createTextNode(errorByteIndex >= 0 ? "" : cp.toString()),
-            this.makeHexBytesNode(charBytes, errorByteIndex, missingBytes)
+            this.makeHexBytesNode(charBytes, errorByteIndex, missingBytes,
+                isOverlongEncoding, errorByteIndex < 0 && !isUnicodeCodepoint(cp))
         ];
     }
 
@@ -887,10 +877,6 @@ function initConversions() {
             return d.toString();
         }
     );
-
-    function isUnicodeCodepoint(cp) {
-        return cp >= 0 && cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
-    }
 
     createConversionFromBinaryInt("unicodecharacter",
         function(binaryInt, inputValue) {
