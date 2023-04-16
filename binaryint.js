@@ -78,6 +78,21 @@ function bytesIsZero(bytes) {
     return true;
 }
 
+const hexDigitValues = {
+    "0" : 0, "1" : 1, "2" : 2, "3" : 3, "4" : 4, "5" : 5, "6" : 6, "7" : 7,
+    "8" : 8, "9" : 9, "A" : 10, "B" : 11, "C" : 12, "D" : 13, "E" : 14,
+    "F" : 15, "a" : 10, "b" : 11, "c" : 12, "d" : 13, "e" : 14, "f" : 15
+};
+
+function hexValue(digit) {
+    if (digit in hexDigitValues) {
+        return hexDigitValues[digit];
+    }
+    else {
+        return null;
+    }
+}
+
 /* text must be a single hex number or multiple hex numbers separated by
  * spaces. Each one is treated as a whole number of bytes. Each one may
  * optionally start with "0x" or "0X".
@@ -108,14 +123,11 @@ function hexToByteArray(text, numBytes=-1) {
             word = word.substr(0, pos) + '0' + word.substr(pos);
         }
         while (pos < word.length) {
-            let highNibble = word[pos];
-            let lowNibble = word[pos + 1];
-            let byteValue = parseInt(highNibble + lowNibble, 16);
-
-            if (isNaN(byteValue))
+            let highNibble = hexValue(word.charAt(pos));
+            let lowNibble = hexValue(word.charAt(pos + 1));
+            if (highNibble == null || lowNibble == null)
                 return null;
-
-            bytes.push(byteValue);
+            bytes.push(highNibble * 16 + lowNibble);
             pos += 2;
         }
     }
