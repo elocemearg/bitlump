@@ -125,6 +125,12 @@ div.outputcell {
     border: 1px solid silver;
 }
 
+.bigoutputvalue {
+    min-height: 24pt;
+    line-height: 24pt;
+    font-size: 16pt;
+}
+
 /* Ordinary output values don't look like links, but if you click them they'll
  * bring you to index.html?i=[output value as new input] */
 a.outputvaluelink {
@@ -201,44 +207,29 @@ a {
     color: gray;
 }
 
-table.text2unicodetable {
+table.dyntable {
     border-collapse: collapse;
 }
 
-table.text2unicodetable th {
+table.dyntable th {
     font-weight: normal;
     font-size: 10pt;
     text-align: left;
     border-left: 1px solid transparent;
 }
 
-table.text2unicodetable td {
+table.dyntable td {
     border: 1px solid silver;
     background-color: white;
     padding: 2px;
+    text-align: left;
 }
 
-td.text2unicode-char {
-    text-align: center;
+table.dyntable td.unicodechar {
     font-family: sans-serif;
+    text-align: center;
 }
 
-td.text2unicode-cp {
-    text-align: left;
-    font-family: monospace;
-}
-
-td.text2unicode-dec {
-    text-align: left;
-    font-family: monospace;
-}
-
-td.text2unicode-utf8 {
-    text-align: left;
-    font-family: monospace;
-}
-
-td.text2unicode-utf16 {
-    text-align: left;
-    font-family: monospace;
+span.invalidbyte {
+    color: red;
 }

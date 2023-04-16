@@ -187,7 +187,10 @@ function refresh() {
         }
         else if (inputTypeName == "text") {
             /* Everything is valid text */
-            groupEnabled = true;
+            groupEnable = true;
+        }
+        else if (inputTypeName == "bytes") {
+            groupEnable = currentInputValue.isBytes();
         }
 
         /* Put this output group in its enabled/disabled colours */
@@ -234,6 +237,14 @@ function refresh() {
             let linkValueText = valueText;
             let link = document.createElement("A");
 
+            /* Store oe's existing child elements here - we'll put them inside
+             * a link and replace oe's contents with the link. */
+            let existingChildren = [];
+            while (oe.firstChild) {
+                existingChildren.push(oe.firstChild);
+                oe.removeChild(oe.firstChild);
+            }
+
             if (oe.classList.contains("outputvaluehex")) {
                 /* Value is a series of hex numbers (at least two digits each),
                  * possibly without the leading 0x, separated by spaces. We
@@ -241,10 +252,15 @@ function refresh() {
                  * don't get interpreted as base-10. */
                 linkValueText = valueText.replace(/\b([0-9a-fA-F][0-9a-fA-F])/g, "0x$1");
             }
+
+            /* Create the link, and add the element's old children */
             link.href = "?i=" + encodeURIComponent(linkValueText);
             link.classList.add("outputvaluelink");
-            link.innerText = valueText;
-            oe.innerHTML = "";
+            for (let i = 0; i < existingChildren.length; i++) {
+                link.appendChild(existingChildren[i]);
+            }
+
+            /* Make the link the only child of the output element */
             oe.appendChild(link);
         }
     }

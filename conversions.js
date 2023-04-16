@@ -121,6 +121,37 @@ function parseFraction(text) {
     return (integerPart + fractionPart) * (minus ? -1 : 1);
 }
 
+/* Convert a hex string to an array of values 0-255. The input may be preceded
+ * with 0x, but if it isn't, it's taken as hex anyway. If the input (after the
+ * optional 0x) contains a non-hex digit, null is returned. If there are an
+ * odd number of hex digits, a leading '0' digit is implied. */
+function hexToBytes(input) {
+    let bytes = [];
+    let pos = 0;
+    if (input.startsWith("0x") || input.startsWith("0X")) {
+        pos += 2;
+    }
+    if (input.length % 2 == 1) {
+        input = input.substr(0, pos) + "0" + input.substr(pos);
+    }
+    while (pos < input.length) {
+        let highDigit = input.charAt(pos);
+        if (pos + 1 >= input.length)
+            return null;
+        let lowDigit = input.charAt(pos + 1);
+
+        let value = parseInt(highDigit + lowDigit, 16);
+        if (!isNaN(value)) {
+            bytes.push(value);
+        }
+        else {
+            return null;
+        }
+        pos += 2;
+    }
+    return bytes;
+}
+
 class InputValue {
     constructor(text) {
         this.text = text;
@@ -157,12 +188,40 @@ class InputValue {
                     this.floatValue = -Infinity;
             }
         }
-        else
+        else {
             this.floatValue = null;
+        }
+
+        /* Try to parse the text as a sequence of bytes, which is either
+         * one or more 0x-prefixed hex numbers, or two or more space-separated
+         * possibly-0x-prefixed hex numbers. */
+        let words = text.split(/\s/);
+        this.bytes = null;
+        if (words.length > 1 || (words.length == 1 && words[0].toLowerCase().startsWith("0x"))) {
+            this.bytes = [];
+            for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
+                let newBytes = hexToBytes(words[wordIndex]);
+                if (newBytes == null) {
+                    this.bytes = null;
+                    break;
+                }
+                for (let i = 0; i < newBytes.length; i++) {
+                    this.bytes.push(newBytes[i]);
+                }
+            }
+        }
     }
 
     getBinaryInt() {
         return this.binaryIntValue;
+    }
+
+    getBytes() {
+        return this.bytes;
+    }
+
+    isBytes() {
+        return this.bytes != null;
     }
 
     /* Format a supplied BinaryInt the same way this one is formatted. */
@@ -415,16 +474,261 @@ function makeCodepointLinkElement(cp) {
     return a;
 }
 
-function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
-    let text = inputValue.getText();
+class DynamicTableFiller {
+    constructor(inputValue, outputElement) {
+        this.inputValue = inputValue;
+        this.outputElement = outputElement;
+    }
+
+    nextRow() {
+    }
+
+
+    getOverflowText(maxRows) {
+        return "Only the first " + maxRows.toString() + " rows are shown.";
+    }
+
+    finished(maxRows, overflowed) {
+        let text = this.inputValue.getText();
+        let overflowDiv = this.outputElement.getElementsByClassName("dyntableoverflowreport");
+        if (overflowDiv.length > 0) {
+            overflowDiv = overflowDiv[0];
+            if (overflowed) {
+                overflowDiv.innerText = this.getOverflowText(maxRows);
+                overflowDiv.style.display = "block";
+            }
+            else {
+                overflowDiv.style.display = "none";
+            }
+        }
+    }
+}
+
+class Text2UnicodeDynamicTableFiller extends DynamicTableFiller {
+    constructor(inputValue, outputElement) {
+        super(inputValue, outputElement);
+        this.pos = 0;
+        this.text = inputValue.getText();
+        this.utf8Sequences = [];
+    }
+
+    nextRow() {
+        let text = this.text;
+        let rowContents = null;
+
+        if (this.pos < text.length) {
+            let character = text.charAt(this.pos);
+            let cc = text.charCodeAt(this.pos);
+            let cp = text.codePointAt(this.pos);
+            if (isHighSurrogate(cc) && this.pos + 1 < text.length) {
+                /* This codepoint takes up two characters. */
+                character += text.charAt(++this.pos);
+            }
+
+            this.utf8Sequences.push(codepointToUTF8Hex(cp));
+
+            rowContents = [
+                /* Character */
+                document.createTextNode(character),
+
+                /* Link to codepoint */
+                makeCodepointLinkElement(cp),
+
+                /* Codepoint in decimal */
+                document.createTextNode(cp.toString()),
+
+                /* UTF-8 encoding */
+                document.createTextNode(codepointToUTF8Hex(cp)),
+
+                /* UTF-16 encoding */
+                document.createTextNode(codepointToUTF16Hex(cp))
+            ];
+            this.pos++;
+        }
+        return rowContents;
+    }
+
+    getOverflowText(maxRows) {
+        return "Only the first " + maxRows.toString() + " characters are shown.";
+    }
+
+    finished(maxRows) {
+        super.finished(maxRows, this.pos < this.text.length);
+
+        /* Set the href value of the "UTF-8 encoding" table heading link
+         * so that it points to the hex encoding of the whole thing (up to
+         * maxRows) in UTF-8. Then it's easy to switch between the text
+         * and binary representation of a UTF-8 string. */
+        let utf8Link = this.outputElement.getElementsByClassName("text2unicodeutf8encodingheader");
+        if (utf8Link.length > 0) {
+            utf8Link = utf8Link[0];
+            utf8Link.href = "?i=" + encodeURIComponent("0x" + this.utf8Sequences.join(" "));
+        }
+    }
+}
+
+class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
+    constructor(inputValue, outputElement) {
+        super(inputValue, outputElement);
+        this.pos = 0;
+        this.utf8Chars = [];
+        this.bytes = inputValue.getBytes();
+    }
+
+    makeHexBytesNode(bytes, errorByteIndex, furtherBytesExpected) {
+        let beforeErrValue = null;
+        let errValue = null;
+        let afterErrValue = null;
+
+        if (errorByteIndex < 0 || (errorByteIndex >= bytes.length && furtherBytesExpected == 0)) {
+            beforeErrValue = bytes.map(x => intToHex(x, 2)).join(" ");
+            afterErrValue = null;
+        }
+        else if (furtherBytesExpected > 0) {
+            /* All the bytes are valid but there are bytes missing. */
+            beforeErrValue = bytes.map(x => intToHex(x, 2)).join(" ") + " ";
+            errValue = "";
+            for (let i = 0; i < furtherBytesExpected; i++) {
+                if (i > 0)
+                    errValue += " ";
+                errValue += "??";
+            }
+        }
+        else {
+            /* The byte at position errorByteIndex is invalid */
+            beforeErrValue = bytes.slice(0, errorByteIndex).map(x => intToHex(x, 2)).join(" ") + " ";
+            errValue = intToHex(bytes[errorByteIndex], 2);
+            afterErrValue = " " + bytes.slice(errorByteIndex + 1).map(x => intToHex(x, 2)).join(" ");
+        }
+
+        let node = document.createElement("SPAN");
+        node.appendChild(document.createTextNode(beforeErrValue));
+        if (errValue != null) {
+            let errSpan = document.createElement("SPAN");
+            errSpan.classList.add("invalidbyte");
+            errSpan.innerText = errValue;
+            node.appendChild(errSpan);
+        }
+        if (afterErrValue != null) {
+            node.appendChild(document.createTextNode(afterErrValue));
+        }
+        return node;
+    }
+
+    nextRow() {
+        let bytes = this.bytes;
+        let startByteIndex = this.pos;
+
+        if (bytes == null || this.pos >= bytes.length) {
+            return null;
+        }
+
+        let firstByte = bytes[this.pos++];
+        let numContBytes = 0;
+        let cp = 0;
+        let charDisplayCodepoint = 0;
+        let charBytes = [];
+        let errorByteIndex = -1;
+        let missingBytes = 0;
+
+        charBytes.push(firstByte);
+        if ((firstByte & 0x80) == 0) {
+            numContBytes = 0;
+            cp = firstByte;
+        }
+        else if ((firstByte & 0xe0) == 0xc0) {
+            numContBytes = 1;
+            cp = firstByte & 0x1f;
+        }
+        else if ((firstByte & 0xf0) == 0xe0) {
+            numContBytes = 2;
+            cp = firstByte & 0x0f;
+        }
+        else if ((firstByte & 0xf8) == 0xf0) {
+            numContBytes = 3;
+            cp = firstByte & 0x07;
+        }
+        else if ((firstByte & 0xfc) == 0xf8) {
+            numContBytes = 4;
+            cp = firstByte & 0x03;
+        }
+        else if ((firstByte & 0xfe) == 0xfc) {
+            numContBytes = 5;
+            cp = firstByte & 0x01;
+        }
+        else {
+            /* Invalid first byte */
+            errorByteIndex = 0;
+        }
+
+        if (errorByteIndex < 0) {
+            for (let i = 0; i < numContBytes; i++) {
+                if (this.pos >= bytes.length) {
+                    /* Unexpected end of sequence */
+                    errorByteIndex = charBytes.length;
+                    missingBytes = numContBytes - i;
+                    break;
+                }
+                let contByte = bytes[this.pos++];
+
+                charBytes.push(contByte);
+
+                if ((contByte & 0xc0) != 0x80) {
+                    /* Invalid continuation byte */
+                    errorByteIndex = charBytes.length - 1;
+                    break;
+                }
+
+                /* Shift in another six bits to cp */
+                cp <<= 6;
+                cp |= contByte & 0x3f;
+            }
+        }
+
+        if (errorByteIndex >= 0) {
+            /* Unicode replacement character */
+            charDisplayCodepoint = 0xfffd;
+        }
+        else {
+            charDisplayCodepoint = cp;
+        }
+
+        /* Not a codepoint */
+        if (cp > 0x10ffff) {
+            charDisplayCodepoint = 0xfffd;
+        }
+
+        this.utf8Chars.push(String.fromCodePoint(charDisplayCodepoint));
+
+        return [
+            document.createTextNode(startByteIndex.toString()),
+            document.createTextNode(String.fromCodePoint(charDisplayCodepoint)),
+            errorByteIndex >= 0 ? document.createTextNode("(invalid)") : makeCodepointLinkElement(cp),
+            document.createTextNode(errorByteIndex >= 0 ? "" : cp.toString()),
+            this.makeHexBytesNode(charBytes, errorByteIndex, missingBytes)
+        ];
+    }
+
+    finished(maxRows) {
+        super.finished(maxRows, this.bytes != null && this.pos < this.bytes.length);
+        let stringOutputElement = this.outputElement.getElementsByClassName("bytes2utf8string");
+        if (stringOutputElement.length > 0) {
+            stringOutputElement = stringOutputElement[0];
+            stringOutputElement.innerText = this.utf8Chars.join("");
+        }
+    }
+
+    getOverflowText(maxRows) {
+        return "Only the first " + maxRows.toString() + " characters are shown.";
+    }
+}
+
+function fillTable(outputElement, dynamicTableFiller) {
     const maxRows = 20;
-    let pos = 0;
-    let rowNum = 0;
 
     /* Find the table in the div */
     let table = outputElement.getElementsByTagName("TABLE");
     if (table.length == 0) {
-        console.log("wot no table?");
         return false;
     }
     else {
@@ -433,87 +737,86 @@ function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
 
     for (let rowNum = 0; rowNum < maxRows; rowNum++) {
         /* Find the tr element for this row */
-        let tr = table.getElementsByClassName("text2unicode-row-" + rowNum.toString());
-        if (tr.length == 0) {
+        let tr = table.getElementsByClassName("dyntable-row-" + rowNum.toString());
+        let tdContents = dynamicTableFiller.nextRow();
+        let tds = [];
+        if (tdContents == null) {
+            /* Get a reference to the table row but don't add anything to it */
+            if (tr.length == 0) {
+                tr = null;
+            }
+            else {
+                tr = tr[0];
+            }
+        }
+        else if (tr.length == 0) {
             /* This row doesn't exist yet - create it */
             tr = document.createElement("TR");
-            tr.classList.add("text2unicode");
-            tr.classList.add("text2unicode-row-" + rowNum.toString());
+            tr.classList.add("dyntable");
+            tr.classList.add("dyntable-row-" + rowNum.toString());
 
-            let tds = [];
-            for (let i = 0; i < 5; i++) {
-                tds.push(document.createElement("TD"));
+            let colgroup = table.getElementsByTagName("COLGROUP");
+            let colTags = null;
+            if (colgroup.length > 0) {
+                colgroup = colgroup[0];
+                colTags = colgroup.getElementsByTagName("COL");
             }
-            tds[0].classList.add("text2unicode-char");
 
-            /* Codepoint column: we don't want bitlump.js to add an automatic
-             * link for this one, because we're putting in our own link to the
-             * codepoint's page on codepoints.net. */
-            tds[1].classList.add("text2unicode-cp");
-            tds[1].classList.add("outputvaluenoautolink");
+            for (let i = 0; i < tdContents.length; i++) {
+                let td = document.createElement("TD");
+                td.classList.add("outputvalue");
 
-            tds[2].classList.add("text2unicode-dec");
-            tds[3].classList.add("text2unicode-utf8");
-            tds[3].classList.add("outputvaluehex");
-            tds[4].classList.add("text2unicode-utf16");
-            tds[4].classList.add("outputvaluehex");
-            for (let i = 0; i < tds.length; i++) {
-                tds[i].classList.add("outputvalue");
-                tr.appendChild(tds[i]);
+                /* List the classes which apply to the relevant <col> tag
+                 * and apply them to the new <td> tag. */
+                if (colTags != null && i < colTags.length) {
+                    let cl = colTags[i].classList;
+                    for (let j = 0; j < cl.length; j++) {
+                        td.classList.add(cl[j]);
+                    }
+                    td.style.textAlign = colTags[i].style.textAlign;
+                }
+                tds.push(td);
+                tr.appendChild(td);
             }
             table.appendChild(tr);
         }
         else {
             /* We only expect one row for each position */
             tr = tr[0];
+            tds = tr.getElementsByTagName("TD");
         }
 
-        if (pos < text.length) {
-            let character = text.charAt(pos);
-            let cc = text.charCodeAt(pos);
-            let cp = text.codePointAt(pos);
-            let tds = tr.getElementsByTagName("TD");
-            if (isHighSurrogate(cc) && pos + 1 < text.length) {
-                /* This codepoint takes up two characters. */
-                character += text.charAt(++pos);
+        if (tdContents == null) {
+            if (tr) {
+                tr.style.display = "none";
             }
-            if (tds[0]) {
-                tds[0].innerText = character;
-            }
-            if (tds[1]) {
-                tds[1].innerHTML = "";
-                tds[1].appendChild(makeCodepointLinkElement(cp));
-            }
-            if (tds[2]) {
-                tds[2].innerText = cp;
-            }
-            if (tds[3]) {
-                tds[3].innerText = codepointToUTF8Hex(cp);
-            }
-            if (tds[4]) {
-                tds[4].innerText = codepointToUTF16Hex(cp);
-            }
+        }
+        else {
             tr.style.display = null;
+            for (let i = 0; i < tdContents.length; i++) {
+                tds[i].innerHTML = "";
+                tds[i].appendChild(tdContents[i]);
+            }
         }
-        else {
-            tr.style.display = "none";
-        }
-        pos++;
     }
 
-    let overflowDiv = outputElement.getElementsByClassName("text2unicodeoverflowreport");
-    if (overflowDiv.length > 0) {
-        overflowDiv = overflowDiv[0];
-        if (pos < text.length) {
-            overflowDiv.innerText = "Only the first " + maxRows.toString() + " characters are shown.";
-            overflowDiv.style.display = "block";
-        }
-        else {
-            overflowDiv.style.display = "none";
-        }
-    }
+    dynamicTableFiller.finished(maxRows);
+
     return true;
 }
+
+function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
+    return fillTable(outputElement,
+            new Text2UnicodeDynamicTableFiller(inputValue, outputElement)
+    );
+}
+
+function bytes2UTF8Func(inputValue, params, outputFlags, outputElement) {
+    return fillTable(outputElement,
+            new Bytes2UTF8DynamicTableFiller(inputValue, outputElement)
+    );
+}
+
 
 function initConversions() {
     createConversionFromBinaryInt("hex", binaryInt => "0x" + binaryInt.formatHex(false));
@@ -756,4 +1059,7 @@ function initConversions() {
 
     /* Text to individual Unicode codepoints */
     conversions["text2unicode"] = new Conversion("text", "text2unicode", text2UnicodeFunc);
+
+    /* Byte string to UTF-8 decoding */
+    conversions["bytes2utf8"] = new Conversion("bytes", "bytes2utf8", bytes2UTF8Func);
 }
