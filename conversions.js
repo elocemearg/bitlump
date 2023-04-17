@@ -131,7 +131,7 @@ class InputValue {
         text = text.trim().replace("−", "-");
 
         /* Put the value into a binary integer */
-        this.binaryIntValue = createBinaryIntFromString(text, 8, text.startsWith("-"));
+        this.binaryIntValue = createBinaryIntFromString(text, -1, text.startsWith("-"));
 
         if (this.binaryIntValue != null) {
             this.intValue = this.binaryIntValue.getJSInt();

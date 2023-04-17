@@ -18,14 +18,32 @@ function isFloatLittleEndian() {
     return FLOATS_LITTLE_ENDIAN;
 }
 
-function shiftLeft(bytes, numBits) {
+/* Shift the array of byte values left by numBits bits. It is treated as an
+ * unsigned integer of arbitrary size.
+ * If extend is true, then bytes is extended as necessary to accommodate any
+ * 1-bits which would otherwise be shifted out. Otherwise, any bits shifted
+ * out are lost.
+ * Return true on overflow or if the byte array was extended. */
+function shiftLeft(bytes, numBits, extend=false) {
     let overflow = false;
 
     if (numBits > 8) {
         /* Shift whole bytes first */
         for (let i = 0; i < numBits / 8; i++) {
-            let b = bytes.shift();
-            overflow = (b != 0);
+            let topByte;
+            if (!extend) {
+                /* Lose the top byte */
+                topByte = bytes.shift();
+                overflow = (overflow || topByte != 0);
+            }
+            else {
+                /* Lose the top byte only if it's zero */
+                topByte = bytes[0];
+                if (topByte == 0)
+                    bytes.shift();
+            }
+
+            /* Put a new zero byte on the end */
             bytes.push(0);
         }
         bits %= 8;
@@ -44,12 +62,19 @@ function shiftLeft(bytes, numBits) {
         bytes[i] = b & 0xff;
     }
 
-    overflow = overflow || (carry != 0);
+    /* If we carried out and are extending, extend the array */
+    if (extend && carry != 0)
+        bytes.unshift(carry);
 
+    overflow = (overflow || carry != 0);
     return overflow;
 }
 
-function addUnsignedBytes(bytes, x) {
+/* Add the byte array x to the byte array bytes, putting the result in bytes.
+ * If extend is true, bytes is extended if necessary to accommodate any
+ * overflow. Otherwise, we just overflow.
+ * Return true on overflow or if the byte array was extended. */
+function addUnsignedBytes(bytes, x, extend=false) {
     let carry = 0;
     let thisPos = bytes.length - 1;
     let xPos = x.length - 1;
@@ -59,6 +84,11 @@ function addUnsignedBytes(bytes, x) {
         carry = sum >> 8;
         xPos--;
         thisPos--;
+    }
+
+    if (extend && carry != 0) {
+        /* If we carried out, and extend is true, create a new byte. */
+        bytes.unshift(carry);
     }
     return carry != 0;
 }
@@ -72,6 +102,16 @@ function negateBytes(bytes) {
 
 function bytesIsZero(bytes) {
     for (let i = 0; i < bytes.length; i++) {
+        if (bytes[i] != 0)
+            return false;
+    }
+    return true;
+}
+
+function bytesIsMostNegativeInteger(bytes) {
+    if (bytes[0] != 0x80)
+        return false;
+    for (let i = 1; i < bytes.length; i++) {
         if (bytes[i] != 0)
             return false;
     }
@@ -160,8 +200,15 @@ function textToByteArray(text, numBytes, signed) {
     let minus = false;
     let bytes = [];
     let isHex = false;
+    let extend = (numBytes < 0);
 
+    /* If numBytes > 0, create that many bytes */
     for (let i = 0; i < numBytes; i++) {
+        bytes.push(0);
+    }
+
+    /* We must have at least one byte */
+    if (bytes.length < 1) {
         bytes.push(0);
     }
 
@@ -196,18 +243,23 @@ function textToByteArray(text, numBytes, signed) {
             }
 
             /* Multiply by 10 */
-            if (shiftLeft(bytes, 1))
-                return null;
+            let overflow = shiftLeft(bytes, 1, extend);
             let x = [...bytes];
-            if (shiftLeft(bytes, 2))
+            overflow = shiftLeft(bytes, 2, extend) || overflow;
+            overflow = addUnsignedBytes(bytes, x, extend) || overflow;
+            overflow = addUnsignedBytes(bytes, [digit], extend) || overflow;
+            if (!extend && overflow) {
+                /* If we overflowed a finitely-long array, fail. */
                 return null;
-            if (addUnsignedBytes(bytes, x))
-                return null;
-            if (addUnsignedBytes(bytes, [digit]))
-                return null;
+            }
         }
     }
     if (minus) {
+        if (extend && (bytes[0] & 0x80) != 0 && !bytesIsMostNegativeInteger(bytes)) {
+            /* To negate something with the top bit and any other bit set,
+             * we're going to need another byte. */
+            bytes.unshift(0);
+        }
         negateBytes(bytes);
         if ((bytes[0] & 0x80) == 0 && !bytesIsZero(bytes)) {
             /* If after making this negative it's positive and nonzero, overflow. */
@@ -216,11 +268,15 @@ function textToByteArray(text, numBytes, signed) {
     }
 
     /* If we're a signed integer, and there was no minus sign, and the input
-     * was in base 10, and the top bit is now set, return null. This is what
+     * was in base 10, and the top bit is now set, then if we can extend the
+     * byte array then prepend a zero byte, otherwise return null. This is what
      * happens when you input, say, "128" to an 8-bit signed integer. We get
      * 0x80 but 128 can't be expressed in an 8-bit signed integer. */
-    if (signed && !minus && !isHex &&(bytes[0] & 0x80) != 0) {
-        return null;
+    if (signed && !minus && !isHex && (bytes[0] & 0x80) != 0) {
+        if (extend)
+            bytes.unshift(0);
+        else
+            return null;
     }
 
     return [ bytes, isHex ];
@@ -444,7 +500,7 @@ class BinaryInt {
     }
 
     shiftLeft(bits) {
-        return !shiftLeft(this.bytes, bits);
+        return !shiftLeft(this.bytes, bits, true);
     }
 
     shiftRight(bits) {
@@ -675,6 +731,13 @@ function createBinaryIntFromString(text, numBytes, signed) {
         return null;
     let bytes = result[0];
     let wasHex = result[1];
+
+    /* If we made a flexibly-sized integer, extend to at least 8 bytes. */
+    if (numBytes < 0) {
+        let padByte = (signed && (bytes[0] & 0x80) != 0) ? 0xff : 0;
+        while (bytes.length < 8)
+            bytes.unshift(padByte);
+    }
     return new BinaryInt(bytes, signed, wasHex);
 }
 
@@ -736,9 +799,21 @@ function testBinaryIntCase(n, numBytes, signed) {
     let b = createBinaryIntFromString(n.toString(), numBytes, signed);
     let expectedDecimal = n.toString();
     let expectedHex = (n < 0 ? (256 ** numBytes + n) : n).toString(16).toUpperCase();
-    while (expectedHex.length < numBytes * 2) {
-        expectedHex = "0" + expectedHex;
+
+    if (b == null) {
+        console.log("createBinaryIntFromString() returned null. n " +
+            n.toString() + ", numBytes " + numBytes.toString() + ", signed " +
+            signed.toString());
+        return false;
     }
+    if (n >= 0) {
+        /* Expect numBytes * 2 hex digits, padding the output on the left
+         * with zeroes if necessary. */
+        while (expectedHex.length < numBytes * 2) {
+            expectedHex = "0" + expectedHex;
+        }
+    }
+
     let observedDecimal = b.formatDecimal();
     let observedHex = b.formatHex();
     if (observedDecimal != expectedDecimal) {
