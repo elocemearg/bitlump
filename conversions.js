@@ -201,7 +201,7 @@ class InputValue {
     }
 
     isHexInteger() {
-        return this.binaryInt != null && this.binaryInt.isConvertedFromHex();
+        return this.binaryIntValue != null && this.binaryIntValue.isConvertedFromHex();
     }
 
     isFloat() {
