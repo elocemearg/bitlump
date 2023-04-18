@@ -3,6 +3,13 @@ let mainDiv = null;
 let inputBox = null;
 let currentInputValue = new InputValue("");
 
+let intTypeRadioButtons = {};
+let endianSwap16Button = null;
+let endianSwap32Button = null;
+let endianSwap64Button = null;
+
+let intManipulationButtons = [];
+
 /* Data structure containing all the conversion output elements and their
  * conversion functions.
  *
@@ -171,6 +178,50 @@ function paramElementNamesToParams(names) {
     return params;
 }
 
+function getIntTypeFromButtonValue(value) {
+    let fields = value.split("-");
+    if (fields.length != 2)
+        return null;
+    let bits = parseInt(fields[1]);
+    if (isNaN(bits))
+        return null;
+    return {
+        "signed": fields[0] == "signed",
+        "bits": bits
+    };
+}
+
+function setButtonsEnabledState() {
+    let selectedIntTypeDisabled = true;
+    let selectedIntType = null;
+
+    /* Find which radio button is selected */
+    for (let key in intTypeRadioButtons) {
+        let intType = getIntTypeFromButtonValue(key);
+        let b = currentInputValue.getConvertedBinaryInt(intType["signed"], intType["bits"]);
+        intTypeRadioButtons[key].disabled = (b == null);
+        if (intTypeRadioButtons[key].checked) {
+            if (b != null)
+                selectedIntTypeDisabled = false;
+            selectedIntType = intType;
+        }
+    }
+
+    /* Disable all buttons if the selected int type is unavailable */
+    for (let i = 0; i < intManipulationButtons.length; i++) {
+        intManipulationButtons[i].disabled = selectedIntTypeDisabled;
+    }
+
+    if (!selectedIntTypeDisabled && selectedIntType) {
+        /* Enable only the endian swap buttons that make sense for the
+         * selected int type. */
+        let bits = selectedIntType["bits"];
+        endianSwap16Button.disabled = bits < 16;
+        endianSwap32Button.disabled = bits < 32;
+        endianSwap64Button.disabled = bits < 64;
+    }
+}
+
 function refresh() {
     for (let groupIndex = 0; groupIndex < conversionGroups.length; groupIndex++) {
         let inputTypeName = conversionGroups[groupIndex].inputTypeName;
@@ -265,18 +316,42 @@ function refresh() {
         }
     }
 
+    setButtonsEnabledState();
+}
+
+function getSelectedIntType() {
+    let radioButtons = document.getElementsByName("inttype");
+    let intTypeStr = null;
+    let intType = {};
+    for (let i = 0; i < radioButtons.length; i++) {
+        if (radioButtons[i].checked) {
+            intTypeStr = radioButtons[i].value;
+            break;
+        }
+    }
+    if (intTypeStr == null)
+        return null;
+
+    return getIntTypeFromButtonValue(intTypeStr);
 }
 
 function modifyBinaryInt(func) {
-    let binaryInt = currentInputValue.getBinaryInt();
-    if (binaryInt) {
-        binaryInt = binaryInt.copy();
-        if (func(binaryInt)) {
-            let text = currentInputValue.formatBinaryInt(binaryInt);
-            inputBox.value = text;
-            inputChanged(text);
-        }
+    let selectedIntType = getSelectedIntType();
+    if (selectedIntType == null) {
+        return false;
     }
+
+    let binaryInt = createBinaryIntFromString(inputBox.value,
+        Math.floor(selectedIntType["bits"] / 8), selectedIntType["signed"]);
+    if (binaryInt) {
+        func(binaryInt);
+        let text = currentInputValue.formatBinaryInt(binaryInt);
+        inputBox.value = text;
+        inputChanged(text);
+        return true;
+    }
+
+    return false;
 }
 
 function decrementInputValue() {
@@ -363,6 +438,9 @@ function parseQueryString() {
     }
 }
 
+function intTypeRadioButtonClicked(e) {
+    setButtonsEnabledState();
+}
 
 function initPage() {
     initConversions();
@@ -379,5 +457,25 @@ function initPage() {
 
     inputBox.focus();
     initialiseConversionControls();
+
+    /* Do some button setup admin */
+    let intRadioButtons = document.getElementsByName("inttype");
+    for (let i = 0; i < intRadioButtons.length; i++) {
+        intTypeRadioButtons[intRadioButtons[i].value] = intRadioButtons[i];
+        intRadioButtons[i].addEventListener("click", intTypeRadioButtonClicked);
+    }
+
+    endianSwap16Button = document.getElementById("endianswap16int");
+    endianSwap32Button = document.getElementById("endianswap32int");
+    endianSwap64Button = document.getElementById("endianswap64int");
+
+    intManipulationButtons.push(endianSwap16Button);
+    intManipulationButtons.push(endianSwap32Button);
+    intManipulationButtons.push(endianSwap64Button);
+    intManipulationButtons.push(document.getElementById("incrementint"));
+    intManipulationButtons.push(document.getElementById("decrementint"));
+    intManipulationButtons.push(document.getElementById("shiftleftint"));
+    intManipulationButtons.push(document.getElementById("shiftrightint"));
+
     inputChanged(inputBox.value);
 }

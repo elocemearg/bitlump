@@ -165,6 +165,20 @@ div.buttonrow {
     margin-bottom: 5px;
 }
 
+div.buttongroup {
+    display: inline-block;
+    vertical-align: bottom;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+div.buttongrouplegend {
+    font-size: 10pt;
+    color: gray;
+    border-bottom: 1px solid gray;
+    margin-bottom: 2px;
+}
+
 div.flagrow {
     display: block;
     text-align: right;
@@ -205,6 +219,37 @@ a {
     background-color: none;
     margin-right: 0.5em;
     color: gray;
+}
+
+table.inttable th {
+    font-weight: normal;
+    font-size: 10pt;
+}
+
+table.inttable td.rowtitle {
+    text-align: center;
+    font-weight: normal;
+    font-size: 10pt;
+}
+
+table.inttable td label {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+table.inttable td input[type=radio] {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+table.inttable td input[type=radio]:hover {
+}
+
+table.inttable tr.radiobuttonrow td:hover {
 }
 
 table.dyntable {

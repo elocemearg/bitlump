@@ -44,79 +44,103 @@
                     <div class="outputgroup" data-category="binaryint">
                         <div class="outputgrouptitle">Interpreting input as a <span class="inputtype">binary integer</span></div>
                         <div>
-                            <div style="width: 55%; display: inline-block; overflow-x: auto;">
+                            <div style="width: 100%; overflow-x: auto;">
                                 <table style="width: 100%; text-align: right;">
                                     <colgroup>
-                                        <col style="width: 3em;" />
+                                        <col />
+                                        <col style="width: 5em;" />
                                     </colgroup>
                                     <tr>
-                                        <td>Dec</td>
                                         <td class="outputcontainer outputvalue" data-converter="decimal"></td>
+                                        <td>Decimal</td>
                                     </tr>
                                     <tr>
-                                        <td>Hex</td>
                                         <td class="outputcontainer outputvalue" data-converter="hex"></td>
+                                        <td>Hex</td>
                                     </tr>
                                 </table>
                             </div>
-                            <div style="width: 40%; display: inline-block; text-align: center; vertical-align: top;">
-                                <div class="buttonblock">
-                                    <div class="buttonrow">
-                                        <button id="decrementinput" onclick="decrementInputValue();">-1</button>
-                                        <button id="incrementinput" onclick="incrementInputValue();">+1</button>
-                                        <button id="shiftleftinput" onclick="shiftLeftInputValue();">Shift left</button>
-                                        <button id="shiftrightinput" onclick="shiftRightInputValue();">Shift right</button>
-                                    </div>
-                                    <div class="buttonrow">
-                                        <span style="font-size: 10pt;">Endian swap</span>
-                                        <button id="endianswap16input" onclick="endianSwapInputValue(2);">16</button>
-                                        <button id="endianswap32input" onclick="endianSwapInputValue(4);">32</button>
-                                        <button id="endianswap64input" onclick="endianSwapInputValue(8);">64</button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="outputgrouprow">
-                            <div class="outputgrouprowtitle">Signed integer</div>
-                            <div class="outputgrouprow">
-                                <div class="outputcell" style="width: 9%">
-                                    <div class="outputcellsubtitle">8-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="signed8"></div>
-                                </div>
-                                <div class="outputcell" style="width: 19%">
-                                    <div class="outputcellsubtitle">16-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="signed16"></div>
-                                </div>
-                                <div class="outputcell" style="width: 29%">
-                                    <div class="outputcellsubtitle">32-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="signed32"></div>
-                                </div>
-                                <div class="outputcell" style="width: 39%">
-                                    <div class="outputcellsubtitle">64-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="signed64"></div>
-                                </div>
-                            </div>
-                        </div>
+                            <div class="outputgrouprowtitle">Integer</div>
+                            <table style="width: 100%;" class="inttable">
+                                <colgroup>
+                                    <col style="width: 8%;" />
+                                    <col style="width: 8%;" />
+                                    <col style="width: 15%;" />
+                                    <col style="width: 25%;" />
+                                    <col style="width: 35%;" />
+                                </colgroup>
+                                <tr>
+                                    <th></th>
+                                    <th>8-bit</th>
+                                    <th>16-bit</th>
+                                    <th>32-bit</th>
+                                    <th>64-bit</th>
+                                </tr>
+                                <tr class="radiobuttonrow">
+                                    <td></td>
+                                    <td><input type="radio" name="inttype" value="signed-8"></td>
+                                    <td><input type="radio" name="inttype" value="signed-16"></td>
+                                    <td><input type="radio" name="inttype" value="signed-32"></td>
+                                    <td><input type="radio" name="inttype" value="signed-64" checked></td>
+                                </tr>
+                                <tr>
+                                    <td class="rowtitle">Signed</td>
+                                    <td class="outputcontainer outputvalue" data-converter="signed8dec"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="signed16dec"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="signed32dec"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="signed64dec"></td>
+                                </tr>
+                                <tr>
+                                    <td class="rowtitle"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned8hex"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned16hex"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned32hex"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned64hex"></td>
+                                </tr>
+                                <tr>
+                                    <td class="rowtitle">Unsigned</td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned8dec"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned16dec"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned32dec"></td>
+                                    <td class="outputcontainer outputvalue" data-converter="unsigned64dec"></td>
+                                </tr>
+                                <tr class="radiobuttonrow">
+                                    <td></td>
+                                    <td><input type="radio" name="inttype" value="unsigned-8"></td>
+                                    <td><input type="radio" name="inttype" value="unsigned-16"></td>
+                                    <td><input type="radio" name="inttype" value="unsigned-32"></td>
+                                    <td><input type="radio" name="inttype" value="unsigned-64"></td>
+                                </tr>
+                            </table>
 
-                        <div class="outputgrouprow">
-                            <div class="outputgrouprowtitle">Unsigned integer</div>
-                            <div class="outputgrouprow">
-                                <div class="outputcell" style="width: 9%">
-                                    <div class="outputcellsubtitle">8-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="unsigned8"></div>
-                                </div>
-                                <div class="outputcell" style="width: 19%">
-                                    <div class="outputcellsubtitle">16-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="unsigned16"></div>
-                                </div>
-                                <div class="outputcell" style="width: 29%">
-                                    <div class="outputcellsubtitle">32-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="unsigned32"></div>
-                                </div>
-                                <div class="outputcell" style="width: 39%">
-                                    <div class="outputcellsubtitle">64-bit</div>
-                                    <div class="outputcontainer outputvalue" data-converter="unsigned64"></div>
+                            <div class="buttonblock">
+                                <div class="buttonrow">
+                                    <div class="buttongroup">
+                                        <button id="decrementint" onclick="decrementInputValue();">-1</button>
+                                        <button id="incrementint" onclick="incrementInputValue();">+1</button>
+                                    </div>
+                                    <div class="buttongroup">
+                                        <div class="buttongrouplegend">
+                                            Shift
+                                        </div>
+                                        <div>
+                                            <button id="shiftleftint" onclick="shiftLeftInputValue();">Left</button>
+                                            <button id="shiftrightint" onclick="shiftRightInputValue();">Right</button>
+                                        </div>
+                                    </div>
+                                    <div class="buttongroup">
+                                        <div class="buttongrouplegend">
+                                            Byte order swap
+                                        </div>
+                                        <div>
+                                            <button id="endianswap16int" onclick="endianSwapInputValue(2);">16</button>
+                                            <button id="endianswap32int" onclick="endianSwapInputValue(4);">32</button>
+                                            <button id="endianswap64int" onclick="endianSwapInputValue(8);">64</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

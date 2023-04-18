@@ -140,6 +140,18 @@ class InputValue {
             this.intValue = null;
         }
 
+        /* Create some other BinaryInt values as signed/unsigned 8/16/32/64-bit
+         * integers. */
+        this.binaryIntConversions = {};
+        if (this.binaryIntValue) {
+            for (let s = 0; s < 2; s++) {
+                for (let n = 8; n <= 64; n *= 2) {
+                    let key = (s ? "signed" : "unsigned") + n.toString();
+                    this.binaryIntConversions[key] = createBinaryIntFromString(text, Math.floor(n / 8), s != 0);
+                }
+            }
+        }
+
         /* Try to parse as a float */
         if (text.trim().length > 0) {
             /* Try to parse as a JavaScript number */
@@ -176,6 +188,15 @@ class InputValue {
 
     getBinaryInt() {
         return this.binaryIntValue;
+    }
+
+    getConvertedBinaryInt(signed, bits) {
+        let key = (signed ? "signed" : "unsigned") + bits.toString();
+        let value = this.binaryIntConversions[key];
+        if (value == null)
+            return null;
+        else
+            return value;
     }
 
     getBytes() {
@@ -302,30 +323,17 @@ function getConversion(conversionName) {
     return conversions[conversionName];
 }
 
-function convertInt(inputValue, signed, bits) {
-    let binaryInt = createBinaryIntFromString(inputValue.getText(), Math.floor(bits / 8), signed);
+function convertInt(inputValue, signed, bits, hex) {
+    let binaryInt = inputValue.getConvertedBinaryInt(signed, bits);
 
     if (binaryInt == null)
         return null;
 
-    if (inputValue.isHexInteger()) {
-        /* Format the answer in base 10 */
-        return binaryInt.formatDecimal();
+    if (hex) {
+        return "0x" + binaryInt.formatHex();
     }
     else {
-        if (signed) {
-            /* Format the answer in hex */
-            return "0x" + binaryInt.formatHex();
-        }
-        else {
-            /* Format the answer in hex if positive, unsigned decimal if negative */
-            if (binaryInt.isNegative()) {
-                return binaryInt.formatDecimal();
-            }
-            else {
-                return "0x" + binaryInt.formatHex();
-            }
-        }
+        return binaryInt.formatDecimal();
     }
 }
 
@@ -817,12 +825,14 @@ function initConversions() {
     let numBits = [ 8, 16, 32, 64 ];
     for (let i = 0; i < signedness.length; i++) {
         for (let j = 0; j < numBits.length; j++) {
-            createConversionFromBinaryInt(
-                signedness[i] + numBits[j].toString(),
-                function(binaryInt, inputValue, params) {
-                    return convertInt(inputValue, i == 0, numBits[j]);
-                }
-            );
+            for (let k = 0; k < 2; k++) {
+                createConversionFromBinaryInt(
+                    signedness[i] + numBits[j].toString() + (k == 0 ? "hex" : "dec"),
+                    function(binaryInt, inputValue, params) {
+                        return convertInt(inputValue, i == 0, numBits[j], k == 0);
+                    }
+                );
+            }
         }
     }
 

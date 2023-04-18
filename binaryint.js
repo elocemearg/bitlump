@@ -267,18 +267,6 @@ function textToByteArray(text, numBytes, signed) {
         }
     }
 
-    /* If we're a signed integer, and there was no minus sign, and the input
-     * was in base 10, and the top bit is now set, then if we can extend the
-     * byte array then prepend a zero byte, otherwise return null. This is what
-     * happens when you input, say, "128" to an 8-bit signed integer. We get
-     * 0x80 but 128 can't be expressed in an 8-bit signed integer. */
-    if (signed && !minus && !isHex && (bytes[0] & 0x80) != 0) {
-        if (extend)
-            bytes.unshift(0);
-        else
-            return null;
-    }
-
     return [ bytes, isHex ];
 }
 
@@ -500,7 +488,7 @@ class BinaryInt {
     }
 
     shiftLeft(bits) {
-        return !shiftLeft(this.bytes, bits, true);
+        return !shiftLeft(this.bytes, bits, false);
     }
 
     shiftRight(bits) {
