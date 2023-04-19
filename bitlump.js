@@ -352,7 +352,6 @@ function refresh() {
                 !oe.classList.contains("clicktocopy")) {
             oe.addEventListener("click", outputValueClickHandler);
             oe.classList.add("clicktocopy");
-            console.log("Added click handler");
         }
     }
 
