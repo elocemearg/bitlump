@@ -261,6 +261,11 @@ function outputValueClickHandler(event) {
         outputValue = outputValue.parentElement;
     }
 
+    /* Don't allow click-to-copy on a void output element */
+    if (outputValue.classList.contains("outputcontainervoid")) {
+        return;
+    }
+
     /* Wherever the floating copy indicator is, remove it. */
     killCopyIndicator();
     if (copyIndicatorTimeout) {
@@ -348,8 +353,7 @@ function refresh() {
     let outputElements = document.getElementsByClassName("outputvalue");
     for (let outputIndex = 0; outputIndex < outputElements.length; outputIndex++) {
         let oe = outputElements[outputIndex];
-        if (!oe.disabled && !oe.classList.contains("outputvaluenoautocopy") &&
-                !oe.classList.contains("clicktocopy")) {
+        if (!oe.classList.contains("clicktocopy") && !oe.classList.contains("outputvaluenoautocopy")) {
             oe.addEventListener("click", outputValueClickHandler);
             oe.classList.add("clicktocopy");
         }

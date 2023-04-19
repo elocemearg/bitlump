@@ -126,11 +126,11 @@ div.outputcell {
     border: 1px solid silver;
 }
 
-.outputvalue.clicktocopy {
+.outputvalue.clicktocopy:not(.outputcontainervoid) {
     cursor: pointer;
 }
 
-.outputvalue.clicktocopy:hover {
+.outputvalue.clicktocopy:not(.outputcontainervoid):hover {
     background-color: hsl(60deg, 100%, 80%);
 }
 
