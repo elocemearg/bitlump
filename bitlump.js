@@ -428,12 +428,6 @@ function clearInput() {
     inputChanged(inputBox.value);
 }
 
-function copyInput() {
-    inputBox.select();
-    inputBox.setSelectionRange(0, 99999);
-    document.execCommand("copy");
-}
-
 function queryStringToDict(queryString) {
     let dict = {};
     if (queryString == null || queryString.length == 0) {
