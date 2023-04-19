@@ -235,6 +235,21 @@ function killCopyIndicator() {
     }
 }
 
+function startCopyIndicator(indicatorText, posX, posY, parentElement) {
+    if (copyIndicator == null) {
+        copyIndicator = document.createElement("DIV");
+        copyIndicator.classList.add("copyindicator");
+        copyIndicator.innerText = indicatorText;
+        copyIndicator.style.left = posX.toString() + "px";
+        copyIndicator.style.top = posY.toString() + "px";
+
+        /* Add the copy indicator to the outputvalue element and kill it in
+         * 1000ms from now. In that time it will animate. */
+        parentElement.appendChild(copyIndicator);
+        copyIndicatorTimeout = setTimeout(killCopyIndicator, 1000);
+    }
+}
+
 function outputValueClickHandler(event) {
     let outputValue = event.target;
 
@@ -254,24 +269,22 @@ function outputValueClickHandler(event) {
 
     /* Now copy the text from the outputvalue. */
     if (outputValue) {
-        navigator.clipboard.writeText(outputValue.innerText);
+        /* When the Promise resolves, make the indicator start at the position
+         * of the mouse click. */
+        let p = navigator.clipboard.writeText(outputValue.innerText);
+        let rect = outputValue.getBoundingClientRect();
+        let indicatorY = event.clientY - rect.top;
+        let indicatorX = event.clientX - rect.left;
+        p.then(
+            function() {
+                /* Create a new floating copy indicator, to tell the user they
+                 * copied * something to the clipboard. */
+                startCopyIndicator("Copied", indicatorX, indicatorY, outputValue);
+            },
+            function() {
+            }
+        );
     }
-
-    /* Create a new floating copy indicator, to tell the user they copied
-     * something to the clipboard. */
-    copyIndicator = document.createElement("DIV");
-    copyIndicator.classList.add("copyindicator");
-    copyIndicator.innerText = "Copied";
-
-    /* Start the indicator where the mouse click was. */
-    let rect = outputValue.getBoundingClientRect();
-    copyIndicator.style.top = (event.clientY - rect.top).toString() + "px";
-    copyIndicator.style.left = (event.clientX - rect.left).toString() + "px";
-
-    /* Add the copy indicator to the outputvalue element and kill it in 1000ms
-     * from now. In that time it will animate. */
-    outputValue.appendChild(copyIndicator);
-    copyIndicatorTimeout = setTimeout(killCopyIndicator, 1000);
 }
 
 function refresh() {
