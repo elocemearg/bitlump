@@ -156,7 +156,26 @@
 
                                 <input type="radio" class="converter-param" name="unixtsscale" value="us" id="unixtsscale-us" onclick="unixTimestampUnitChanged();"><label for="unixtsscale-us">µsec</label>
                             </div>
-                            <div class="outputcontainer outputvalue" data-converter="fromunixutc" data-param-element-names="unixtsscaleauto, unixtsscale"></div>
+                            <table style="width: 100%;">
+                                <colgroup>
+                                    <col style="width: 10%;" />
+                                    <col />
+                                </colgroup>
+                                <tr>
+                                    <td class="rowtitle">UTC</td>
+                                    <td class="outputcontainer outputvalue"
+                                        style="text-align: left;"
+                                        data-converter="fromunixutc"
+                                        data-param-element-names="unixtsscaleauto, unixtsscale"></td>
+                                </tr>
+                                <tr>
+                                    <td class="rowtitle">Local</td>
+                                    <td class="outputcontainer outputvalue"
+                                        style="text-align: left;"
+                                        data-converter="fromunixlocal"
+                                        data-param-element-names="unixtsscaleauto, unixtsscale"></td>
+                                </tr>
+                            </table>
                         </div>
 
                         <div class="outputgrouprow">

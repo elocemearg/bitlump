@@ -820,6 +820,102 @@ function bytes2UTF8Func(inputValue, params, outputFlags, outputElement) {
     );
 }
 
+function formatInt(n, fieldWidth) {
+    let minus = (n < 0);
+    return (minus ? "-" : "") + leftPad(Math.abs(n).toString(), '0', fieldWidth - (minus ? 1 : 0));
+}
+
+function dateToString(d, utc) {
+    let year = utc ? d.getUTCFullYear() : d.getFullYear();
+    let month = utc ? d.getUTCMonth() : d.getMonth();
+    let date = utc ? d.getUTCDate() : d.getDate();
+    let day = utc ? d.getUTCDay() : d.getDay();
+    let hour = utc ? d.getUTCHours() : d.getHours();
+    let minute = utc ? d.getUTCMinutes() : d.getMinutes();
+    let second = utc ? d.getUTCSeconds() : d.getSeconds();
+    let millisecond = utc ? d.getUTCMilliseconds() : d.getMilliseconds();
+
+    if (isNaN(year)) {
+        return null;
+    }
+
+    let timeZoneOffsetMinutes = utc ? 0 : d.getTimezoneOffset();
+
+    /* Note that getTimezoneOffset() returns a positive number if your local
+     * time zone is behind UTC, and negative if it's ahead, for reasons. */
+    let timeZone = utc ? "+0000" : ((timeZoneOffsetMinutes <= 0 ? "+" : "-") +
+        formatInt(Math.floor(Math.abs(timeZoneOffsetMinutes) / 60), 2) +
+        formatInt(Math.floor(Math.abs(timeZoneOffsetMinutes) % 60), 2));
+
+    return weekDayName(day) + " " +
+        formatInt(year, 4) + "-" +
+        formatInt(month + 1, 2) + "-" +
+        formatInt(date, 2) + " " +
+        formatInt(hour, 2) + ":" +
+        formatInt(minute, 2) + ":" +
+        formatInt(second, 2) + "." +
+        formatInt(millisecond, 3) + " " +
+        timeZone;
+}
+
+function dateValueToString(binaryInt, inputValue, params, utc) {
+    if (!inputValue.isInteger()) {
+        return null;
+    }
+    let t = inputValue.getInteger();
+    let ms;
+    let unitAutoDetect = params["unixtsscaleauto"];
+    let unit = params["unixtsscale"];
+    if (unitAutoDetect) {
+        /* Auto-detect */
+        let tAbs = Math.abs(t);
+        if (tAbs <= 2 ** 32) {
+            /* Assume seconds */
+            unit = "s";
+        }
+        else if (tAbs / 1000 <= 2 ** 32) {
+            /* Assume milliseconds */
+            unit = "ms";
+        }
+        else {
+            /* Assume microseconds */
+            unit = "us";
+        }
+        document.getElementById("unixtsscale-" + unit).checked = true;
+    }
+    if (unit == "s") {
+        ms = t * 1000;
+    }
+    else if (unit == "ms") {
+        ms = t;
+    }
+    else if (unit == "us") {
+        ms = t / 1000;
+    }
+
+    try {
+        let d = new Date(ms);
+        return dateToString(d, utc);
+    }
+    catch (e) {
+        if (e instanceof RangeError) {
+            /* If it's more than 8640000000000 seconds (100 million
+             * days) since the Unix epoch, we get a RangeError */
+            return null;
+        }
+        else {
+            throw e;
+        }
+    }
+}
+
+function dateValueToUTCString(binaryInt, inputValue, params) {
+    return dateValueToString(binaryInt, inputValue, params, true);
+}
+
+function dateValueToLocalString(binaryInt, inputValue, params) {
+    return dateValueToString(binaryInt, inputValue, params, false);
+}
 
 function initConversions() {
     createConversionFromBinaryInt("hex", binaryInt => "0x" + binaryInt.formatHex(false));
@@ -841,57 +937,8 @@ function initConversions() {
         }
     }
 
-    createConversionFromBinaryInt("fromunixutc",
-        function(binaryInt, inputValue, params) {
-            if (!inputValue.isInteger()) {
-                return null;
-            }
-            let t = inputValue.getInteger();
-            let ms;
-            let unitAutoDetect = params["unixtsscaleauto"];
-            let unit = params["unixtsscale"];
-            if (unitAutoDetect) {
-                /* Auto-detect */
-                let tAbs = Math.abs(t);
-                if (tAbs <= 2 ** 32) {
-                    /* Assume seconds */
-                    unit = "s";
-                }
-                else if (tAbs / 1000 <= 2 ** 32) {
-                    /* Assume milliseconds */
-                    unit = "ms";
-                }
-                else {
-                    /* Assume microseconds */
-                    unit = "us";
-                }
-                document.getElementById("unixtsscale-" + unit).checked = true;
-            }
-            if (unit == "s") {
-                ms = t * 1000;
-            }
-            else if (unit == "ms") {
-                ms = t;
-            }
-            else if (unit == "us") {
-                ms = t / 1000;
-            }
-
-            let d = new Date(ms);
-            return weekDayName(d.getUTCDay()) + " " + d.toISOString().replace("T", " ").replace("Z", "") + " UTC";
-        }
-    );
-
-    createConversionFromBinaryInt("fromunixlocal",
-        function(binaryInt, inputValue) {
-            if (!inputValue.isInteger()) {
-                return null;
-            }
-            let t = inputValue.getInteger();
-            let d = new Date(t * 1000);
-            return d.toString();
-        }
-    );
+    createConversionFromBinaryInt("fromunixutc", dateValueToUTCString);
+    createConversionFromBinaryInt("fromunixlocal", dateValueToLocalString);
 
     createConversionFromBinaryInt("unicodecharacter",
         function(binaryInt, inputValue) {

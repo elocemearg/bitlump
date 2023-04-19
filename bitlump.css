@@ -226,7 +226,7 @@ table.inttable th {
     font-size: 10pt;
 }
 
-table.inttable td.rowtitle {
+td.rowtitle {
     text-align: center;
     font-weight: normal;
     font-size: 10pt;
