@@ -155,7 +155,12 @@ class InputValue {
         /* Try to parse as a float */
         if (text.trim().length > 0) {
             /* Try to parse as a JavaScript number */
-            this.floatValue = Number(text);
+            let floatText = text;
+            if (floatText.toLowerCase().startsWith("0x")) {
+                /* Ignore spaces in hex input */
+                floatText = floatText.replace(/\s+/g, "");
+            }
+            this.floatValue = Number(floatText);
 
             /* If it's not that, then maybe it's some sort of fancy fraction */
             if (isNaN(this.floatValue)) {
