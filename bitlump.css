@@ -118,11 +118,20 @@ div.outputcell {
 }
 
 .outputvalue {
+    position: relative;
     font-family: monospace;
     min-height: 16pt;
     line-height: 16pt;
     background-color: white;
     border: 1px solid silver;
+}
+
+.outputvalue.clicktocopy {
+    cursor: pointer;
+}
+
+.outputvalue.clicktocopy:hover {
+    background-color: hsl(60deg, 100%, 80%);
 }
 
 .bigoutputvalue {
@@ -283,4 +292,35 @@ span.invalidbyte {
 span.invalidutf8 {
     color: red;
     border-bottom: 1pt dotted red;
+}
+
+@keyframes floatup {
+    0% {
+        opacity: 100%;
+        transform: translate(-50%, -50%);
+    }
+    100% {
+        opacity: 0%;
+        transform: translate(-50%, -150%);
+    }
+}
+
+div.copyindicator {
+    position: absolute;
+    transform: translate(-50%, 50%);
+    text-align: center;
+    font-family: Inter, sans-serif;
+    font-size: 10pt;
+    height: 16pt;
+    line-height: 16pt;
+    animation-name: floatup;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-out;
+    animation-duration: 1s;
+    z-index: 10;
+    padding: 5px 10px 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+    background: gray;
 }

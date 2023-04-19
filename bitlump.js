@@ -10,6 +10,9 @@ let endianSwap64Button = null;
 
 let intManipulationButtons = [];
 
+let copyIndicator = null;
+let copyIndicatorTimeout = null;
+
 /* Data structure containing all the conversion output elements and their
  * conversion functions.
  *
@@ -222,6 +225,55 @@ function setButtonsEnabledState() {
     }
 }
 
+function killCopyIndicator() {
+    if (copyIndicator) {
+        if (copyIndicator.parentElement) {
+            copyIndicator.parentElement.removeChild(copyIndicator);
+        }
+        copyIndicator.style.display = "none";
+        copyIndicator = null;
+    }
+}
+
+function outputValueClickHandler(event) {
+    let outputValue = event.target;
+
+    /* The event might have been delivered to a tag contained within the
+     * outputvalue, or it might even be the copy indicator itself if it's
+     * still there, but we want the innerText property of the nearest
+     * containing outputvalue. */
+    while (outputValue != null && !outputValue.classList.contains("outputvalue")) {
+        outputValue = outputValue.parentElement;
+    }
+
+    /* Wherever the floating copy indicator is, remove it. */
+    killCopyIndicator();
+    if (copyIndicatorTimeout) {
+        clearTimeout(copyIndicatorTimeout);
+    }
+
+    /* Now copy the text from the outputvalue. */
+    if (outputValue) {
+        navigator.clipboard.writeText(outputValue.innerText);
+    }
+
+    /* Create a new floating copy indicator, to tell the user they copied
+     * something to the clipboard. */
+    copyIndicator = document.createElement("DIV");
+    copyIndicator.classList.add("copyindicator");
+    copyIndicator.innerText = "Copied";
+
+    /* Start the indicator where the mouse click was. */
+    let rect = outputValue.getBoundingClientRect();
+    copyIndicator.style.top = (event.clientY - rect.top).toString() + "px";
+    copyIndicator.style.left = (event.clientX - rect.left).toString() + "px";
+
+    /* Add the copy indicator to the outputvalue element and kill it in 1000ms
+     * from now. In that time it will animate. */
+    outputValue.appendChild(copyIndicator);
+    copyIndicatorTimeout = setTimeout(killCopyIndicator, 1000);
+}
+
 function refresh() {
     for (let groupIndex = 0; groupIndex < conversionGroups.length; groupIndex++) {
         let inputTypeName = conversionGroups[groupIndex].inputTypeName;
@@ -278,41 +330,16 @@ function refresh() {
     }
 
     /* Anything with the class outputvalue, which does not have the class
-     * outputvaluenoautolink, has its contents automatically linkified.
+     * outputvaluenoautocopy, has its contents automatically linkified.
      * Clicking the link feeds in the output value as the input. */
     let outputElements = document.getElementsByClassName("outputvalue");
     for (let outputIndex = 0; outputIndex < outputElements.length; outputIndex++) {
         let oe = outputElements[outputIndex];
-        if (!oe.disabled && !oe.classList.contains("outputvaluenoautolink")) {
-            let valueText = oe.innerText;
-            let linkValueText = valueText;
-            let link = document.createElement("A");
-
-            /* Store oe's existing child elements here - we'll put them inside
-             * a link and replace oe's contents with the link. */
-            let existingChildren = [];
-            while (oe.firstChild) {
-                existingChildren.push(oe.firstChild);
-                oe.removeChild(oe.firstChild);
-            }
-
-            if (oe.classList.contains("outputvaluehex")) {
-                /* Value is a series of hex numbers (at least two digits each),
-                 * possibly without the leading 0x, separated by spaces. We
-                 * must add the 0x before the first one so that if the user
-                 * clicks, the numbers don't get interpreted as base-10. */
-                linkValueText = valueText.replace(/\b([0-9a-fA-F][0-9a-fA-F])/, "0x$1");
-            }
-
-            /* Create the link, and add the element's old children */
-            link.href = "?i=" + encodeURIComponent(linkValueText);
-            link.classList.add("outputvaluelink");
-            for (let i = 0; i < existingChildren.length; i++) {
-                link.appendChild(existingChildren[i]);
-            }
-
-            /* Make the link the only child of the output element */
-            oe.appendChild(link);
+        if (!oe.disabled && !oe.classList.contains("outputvaluenoautocopy") &&
+                !oe.classList.contains("clicktocopy")) {
+            oe.addEventListener("click", outputValueClickHandler);
+            oe.classList.add("clicktocopy");
+            console.log("Added click handler");
         }
     }
 
