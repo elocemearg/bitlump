@@ -106,23 +106,23 @@ function initialiseConversionControls() {
     }
 }
 
-function buildQueryString(namesValues) {
-    let q = "";
-    for (let name in namesValues) {
-        if (q.length > 0)
-            q += "&";
-        q += encodeURIComponent(name) + "=" + encodeURIComponent(namesValues[name].toString());
-    }
-    return q;
-}
-
-function inputChanged(text) {
-    /* Change the URL query string to reflect the new input */
+function updateURL(text) {
     let newUrl;
     if (text.trim().length > 0) {
-        newUrl = "?" + buildQueryString({
-            "i" : text
-        });
+        let keyValues = {};
+        if (!getCheckBoxValue("unixtsscale-auto")) {
+            /* Default timestamp unit is auto-guess. If that is not checked,
+             * also encode the selected unit in the URL. */
+            keyValues["t"] = getRadioButtonValue("unixtsscale");
+        }
+        let bytesTextDecoding = getSelectOptionValue("textdecoding");
+        if (bytesTextDecoding != "utf8") {
+            /* Default decoding of bytes to text is UTF-8, put it in the URL
+             * if it's something else. */
+            keyValues["u"] = bytesTextDecoding;
+        }
+        keyValues["i"] = text;
+        newUrl = "?" + buildQueryString(keyValues);
     }
     else {
         newUrl = "?";
@@ -130,7 +130,9 @@ function inputChanged(text) {
     if (window.history.replaceState) {
         window.history.replaceState(null, null, newUrl);
     }
+}
 
+function inputChanged(text) {
     /* Create an InputValue from our text set currentInputValue to it */
     currentInputValue = new InputValue(text);
 
@@ -360,6 +362,9 @@ function refresh() {
     }
 
     setButtonsEnabledState();
+
+    /* Change the URL query string to reflect the new input */
+    updateURL(inputBox.value);
 }
 
 function getSelectedIntType() {
@@ -432,51 +437,12 @@ function clearInput() {
     inputChanged(inputBox.value);
 }
 
-function queryStringToDict(queryString) {
-    let dict = {};
-    if (queryString == null || queryString.length == 0) {
-        return dict;
-    }
-
-    if (queryString[0] == '?') {
-        queryString = queryString.substring(1);
-    }
-
-    let components = queryString.split("&");
-    for (let i = 0; i < components.length; ++i) {
-        let nameEqualsValue = components[i];
-        let equalsPos = nameEqualsValue.search("=");
-
-        if (equalsPos >= 0) {
-            name = nameEqualsValue.substring(0, equalsPos);
-            value = nameEqualsValue.substring(equalsPos + 1);
-        }
-        else {
-            name = nameEqualsValue;
-            value = "";
-        }
-
-        name = decodeURIComponent(name.replace(/\+/g, " "));
-        value = decodeURIComponent(value.replace(/\+/g, " "));
-        dict[name] = value;
-    }
-
-    return dict;
-}
-
-function parseQueryString() {
-    let url = window.location.href;
-    let qPos = url.indexOf('?');
-    if (qPos >= 0) {
-        return queryStringToDict(url.substr(qPos + 1));
-    }
-    else {
-        return {};
-    }
-}
-
 function intTypeRadioButtonClicked(e) {
     setButtonsEnabledState();
+}
+
+function changeBytesTextDecodingMode() {
+    refresh();
 }
 
 function initPage() {
@@ -490,6 +456,13 @@ function initPage() {
     let queryString = parseQueryString();
     if ("i" in queryString) {
         inputBox.value = queryString["i"];
+    }
+    if ("u" in queryString) {
+        setSelectOptionValue("textdecoding", queryString["u"]);
+    }
+    if ("t" in queryString) {
+        setCheckboxValue("unixtsscale-auto", false);
+        setRadioButtonValue("unixtsscale", queryString["t"]);
     }
 
     inputBox.focus();

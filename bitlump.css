@@ -289,7 +289,7 @@ span.invalidbyte {
     border-bottom: 1pt dotted red;
 }
 
-span.invalidutf8 {
+span.invalidbyteseq {
     color: red;
     border-bottom: 1pt dotted red;
 }

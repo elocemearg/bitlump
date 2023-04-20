@@ -439,6 +439,10 @@ function isHighSurrogate(cp) {
     return cp >= 0xd800 && cp < 0xdc00;
 }
 
+function isLowSurrogate(cp) {
+    return cp >= 0xdc00 && cp < 0xe000;
+}
+
 function makeCodepointLinkElement(cp) {
     let a = document.createElement("A");
     let cpText = "U+" + intToHex(cp, 4);
@@ -542,15 +546,13 @@ class Text2UnicodeDynamicTableFiller extends DynamicTableFiller {
     }
 }
 
-class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
+class Bytes2TextDynamicTableFiller extends DynamicTableFiller {
     constructor(inputValue, outputElement) {
         super(inputValue, outputElement);
-        this.pos = 0;
-        this.utf8Chars = [];
-        this.bytes = inputValue.getBytes();
+        this.decodedChars = [];
     }
 
-    makeHexBytesNode(bytes, errorByteIndex, furtherBytesExpected, isOverlongEncoding, isInvalidCodepoint) {
+    makeHexBytesNode(bytes, errorByteIndex, furtherBytesExpected, isOverlongEncoding, isInvalidCodepoint, encodingName) {
         let beforeErrValue = null;
         let errValue = null;
         let afterErrValue = null;
@@ -578,12 +580,12 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
 
         let node = document.createElement("SPAN");
         if (isInvalidCodepoint) {
-            node.classList.add("invalidutf8");
-            node.title = "This UTF-8 sequence is not valid because it decodes to an invalid codepoint.";
+            node.classList.add("invalidbyteseq");
+            node.title = "This " + encodingName + " sequence is not valid because it decodes to an invalid codepoint.";
         }
         else if (isOverlongEncoding) {
-            node.classList.add("invalidutf8");
-            node.title = "This UTF-8 sequence is not valid because the codepoint is not encoded in its shortest possible form.";
+            node.classList.add("invalidbyteseq");
+            node.title = "This " + encodingName + " sequence is not valid because the codepoint is not encoded in its shortest possible form.";
         }
 
         node.appendChild(document.createTextNode(beforeErrValue));
@@ -592,15 +594,127 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
             errSpan.classList.add("invalidbyte");
             errSpan.innerText = errValue;
             if (furtherBytesExpected)
-                errSpan.title = "This UTF-8 sequence is not valid because it is incomplete.";
+                errSpan.title = "This " + encodingName + " sequence is not valid because it is incomplete.";
             else
-                errSpan.title = "This UTF-8 sequence is not valid because this byte isn't allowed to appear here.";
+                errSpan.title = "This " + encodingName + " sequence is not valid because this byte isn't allowed to appear here.";
             node.appendChild(errSpan);
         }
         if (afterErrValue != null) {
             node.appendChild(document.createTextNode(afterErrValue));
         }
         return node;
+    }
+
+    finished(maxRows) {
+        super.finished(maxRows, this.bytes != null && this.pos < this.bytes.length);
+        let stringOutputElement = this.outputElement.getElementsByClassName("bytes2textstring");
+        if (stringOutputElement.length > 0) {
+            stringOutputElement = stringOutputElement[0];
+            stringOutputElement.innerText = this.decodedChars.join("");
+        }
+    }
+
+    getOverflowText(maxRows) {
+        return "Only the first " + maxRows.toString() + " characters are shown.";
+    }
+}
+
+class Bytes2UTF16DynamicTableFiller extends Bytes2TextDynamicTableFiller {
+    constructor(inputValue, outputElement) {
+        super(inputValue, outputElement);
+        this.pos = 0;
+        this.bytes = inputValue.getBytes();
+    }
+
+    nextRow() {
+        let bytes = this.bytes;
+        let startByteIndex = this.pos;
+        let errorByteIndex = -1;
+        let missingBytes = 0;
+        let charBytes = [];
+        let codepoint = 0;
+        let charDisplayCodepoint = 0;
+
+        if (bytes == null || this.pos >= bytes.length) {
+            return null;
+        }
+
+        charBytes.push(bytes[this.pos++]);
+        if (this.pos >= bytes.length) {
+            /* Incomplete UTF-16 character */
+            errorByteIndex = 0;
+            missingBytes = 1;
+        }
+
+        if (errorByteIndex < 0) {
+            let c1 = 0;
+            let c2 = 0;
+            charBytes.push(bytes[this.pos++]);
+            c1 = charBytes[0] * 256 + charBytes[1];
+            if (isHighSurrogate(c1)) {
+                /* Expect two more bytes */
+                for (let i = 0; i < 2; i++) {
+                    if (this.pos >= bytes.length) {
+                        errorByteIndex = charBytes.length - 1;
+                        missingBytes = 2 - i;
+                        if (i == 1 && !(charBytes[errorByteIndex] >= 0xdc && charBytes[errorByteIndex] <= 0xdf)) {
+                            /* The main problem isn't a missing byte, it's that
+                             * the third byte of the sequence can't be the
+                             * start of a low-order surrogate. */
+                            missingBytes = 0;
+                        }
+                        break;
+                    }
+                    else {
+                        charBytes.push(bytes[this.pos++]);
+                    }
+                }
+                if (errorByteIndex < 0) {
+                    c2 = charBytes[2] * 256 + charBytes[3];
+                    if (!isLowSurrogate(c2)) {
+                        errorByteIndex = 2;
+                    }
+                }
+                if (errorByteIndex < 0) {
+                    codepoint = 0x10000 + ((c1 & 0x3ff) << 10) + (c2 & 0x3ff);
+                }
+            }
+            else {
+                codepoint = c1;
+            }
+        }
+
+        if (errorByteIndex >= 0) {
+            /* Unicode replacement character */
+            charDisplayCodepoint = 0xfffd;
+        }
+        else {
+            charDisplayCodepoint = codepoint;
+        }
+
+        /* Not a codepoint */
+        if (!isUnicodeCodepoint(codepoint)) {
+            charDisplayCodepoint = 0xfffd;
+        }
+
+        this.decodedChars.push(String.fromCodePoint(charDisplayCodepoint));
+
+        return [
+            document.createTextNode(startByteIndex.toString()),
+            document.createTextNode(String.fromCodePoint(charDisplayCodepoint)),
+            errorByteIndex >= 0 ? document.createTextNode("(invalid)") : makeCodepointLinkElement(codepoint),
+            document.createTextNode(errorByteIndex >= 0 ? "" : codepoint.toString()),
+            this.makeHexBytesNode(charBytes, errorByteIndex, missingBytes,
+                false, errorByteIndex < 0 && !isUnicodeCodepoint(codepoint), "UTF-16")
+        ];
+    }
+}
+
+class Bytes2UTF8DynamicTableFiller extends Bytes2TextDynamicTableFiller {
+    constructor(inputValue, outputElement) {
+        super(inputValue, outputElement);
+        this.pos = 0;
+        this.bytes = inputValue.getBytes();
     }
 
     nextRow() {
@@ -700,7 +814,7 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
             charDisplayCodepoint = 0xfffd;
         }
 
-        this.utf8Chars.push(String.fromCodePoint(charDisplayCodepoint));
+        this.decodedChars.push(String.fromCodePoint(charDisplayCodepoint));
 
         return [
             document.createTextNode(startByteIndex.toString()),
@@ -708,21 +822,9 @@ class Bytes2UTF8DynamicTableFiller extends DynamicTableFiller {
             errorByteIndex >= 0 ? document.createTextNode("(invalid)") : makeCodepointLinkElement(cp),
             document.createTextNode(errorByteIndex >= 0 ? "" : cp.toString()),
             this.makeHexBytesNode(charBytes, errorByteIndex, missingBytes,
-                isOverlongEncoding, errorByteIndex < 0 && !isUnicodeCodepoint(cp))
+                isOverlongEncoding,
+                errorByteIndex < 0 && !isUnicodeCodepoint(cp), "UTF-8")
         ];
-    }
-
-    finished(maxRows) {
-        super.finished(maxRows, this.bytes != null && this.pos < this.bytes.length);
-        let stringOutputElement = this.outputElement.getElementsByClassName("bytes2utf8string");
-        if (stringOutputElement.length > 0) {
-            stringOutputElement = stringOutputElement[0];
-            stringOutputElement.innerText = this.utf8Chars.join("");
-        }
-    }
-
-    getOverflowText(maxRows) {
-        return "Only the first " + maxRows.toString() + " characters are shown.";
     }
 }
 
@@ -814,10 +916,15 @@ function text2UnicodeFunc(inputValue, params, outputFlags, outputElement) {
     );
 }
 
-function bytes2UTF8Func(inputValue, params, outputFlags, outputElement) {
-    return fillTable(outputElement,
-            new Bytes2UTF8DynamicTableFiller(inputValue, outputElement)
-    );
+function bytes2TextFunc(inputValue, params, outputFlags, outputElement) {
+    let filler;
+    if (params["textdecoding"] == "utf8") {
+        filler = new Bytes2UTF8DynamicTableFiller(inputValue, outputElement);
+    }
+    else {
+        filler = new Bytes2UTF16DynamicTableFiller(inputValue, outputElement);
+    }
+    return fillTable(outputElement, filler);
 }
 
 function formatInt(n, fieldWidth) {
@@ -1109,5 +1216,5 @@ function initConversions() {
     conversions["text2unicode"] = new Conversion("text", "text2unicode", text2UnicodeFunc);
 
     /* Byte string to UTF-8 decoding */
-    conversions["bytes2utf8"] = new Conversion("bytes", "bytes2utf8", bytes2UTF8Func);
+    conversions["bytes2text"] = new Conversion("bytes", "bytes2text", bytes2TextFunc);
 }

@@ -11,6 +11,7 @@
     <body onload="initPage();">
         <script src="unicodedata.js?bump=0"></script>
         <script src="binaryint.js?bump=0"></script>
+        <script src="webutils.js?bump=0"></script>
         <script src="conversions.js?bump=0"></script>
         <script src="bitlump.js?bump=0"></script>
         <noscript>
@@ -39,7 +40,7 @@
             <div class="mainoutput">
                 <div class="outputgroupcolumn">
                     <div class="outputgroup" data-category="binaryint">
-                        <div class="outputgrouptitle">Interpreting input as a <span class="inputtype">binary integer</span></div>
+                        <div class="outputgrouptitle">Interpreting input as an <span class="inputtype">integer</span></div>
                         <div>
                             <div style="width: 100%;">
                                 <table style="width: 100%; text-align: right;">
@@ -270,7 +271,7 @@
 
                 <div class="outputgroupcolumn">
                     <div class="outputgroup" data-category="float">
-                        <div class="outputgrouptitle">Interpreting input as a <span class="inputtype">floating-point value</span></div>
+                        <div class="outputgrouptitle">Interpreting input as a <span class="inputtype">floating-point number</span></div>
                         <div class="outputgrouprow">
                             <div class="outputgrouprowtitle">
                                 <a href="https://en.wikipedia.org/wiki/Single-precision_floating-point_format" target="_blank">IEEE 754 32-bit encoding</a>
@@ -337,10 +338,16 @@
 
                     <div class="outputgroup" data-category="bytes">
                         <div class="outputgrouptitle">Interpreting input as <span class="inputtype">bytes</span></div>
+                        <div class="outputgrouprow" style="text-align: left;">
+                            <select name="textdecoding" converter-param="textdecoding" oninput="changeBytesTextDecodingMode();">
+                                <option value="utf8" selected>Decode as UTF-8</option>
+                                <option value="utf16">Decode as UTF-16</option>
+                            </select>
+                        </div>
                         <div class="outputgrouprow">
-                            <div class="outputgrouprowtitle">UTF-8 decoding</div>
-                            <div class="outputcontainer outputvaluetable" data-converter="bytes2utf8">
-                                <div class="outputvalue bigoutputvalue bytes2utf8string" style="font-family: sans-serif;"></div>
+                            <div class="outputgrouprowtitle">Decoded text</div>
+                            <div class="outputcontainer outputvaluetable" data-converter="bytes2text" data-param-element-names="textdecoding">
+                                <div class="outputvalue bigoutputvalue bytes2textstring" style="font-family: sans-serif;"></div>
                                 <table class="dyntable" style="width: 100%;">
                                     <colgroup>
                                         <col style="width: 3em; text-align: right;" />
@@ -354,7 +361,7 @@
                                         <th></th>
                                         <th>Codepoint</th>
                                         <th>Decimal</th>
-                                        <th>UTF-8 encoding</th>
+                                        <th>Bytes</th>
                                     </tr>
                                     <!-- tr-td rows added at runtime -->
                                 </table>
