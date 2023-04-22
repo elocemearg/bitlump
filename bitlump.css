@@ -25,28 +25,74 @@ input[type=text] {
 }
 
 div.maininput {
-    margin-bottom: 10px;
+    width: 100%;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 #input {
+    width: 600px;
 }
 
-div.maininputcolumn {
-    display: inline-block;
-    vertical-align: middle;
+div.maininputrow {
+    display: block;
+    margin-bottom: 10px;
 }
 
-div.maininputcolumn button {
+div.maininputrow button {
     font-size: 12pt;
+}
+
+div.help {
+    font-size: 10pt;
+    display: inline-block;
+    width: 600px;
+    text-align: left;
+    background-color: hsl(240deg, 100%, 85%);
+    vertical-align: top;
+}
+
+div.expandbutton {
+    display: inline-block;
+    text-align: center;
+    cursor: pointer;
+    width: 14pt;
+    height: 14pt;
+    line-height: 14pt;
+    font-size: 12pt;
+    background-color: hsl(240deg, 100%, 85%);
+}
+
+div.helpbar {
+    background-color: hsl(240deg, 100%, 90%);
+    color: gray;
+    cursor: pointer;
+}
+
+div.helptext {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+a.inputexample {
+    font-family: monospace;
+    background-color: hsl(240deg, 100%, 90%);
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
 }
 
 div.mainoutput {
+    width: 100%;
     font-size: 12pt;
+    text-align: center;
 }
 
 div.outputgroupcolumn {
     display: inline-block;
     vertical-align: top;
+    margin-left: 5px;
+    margin-right: 5px;
 }
 
 div.outputgroup {
@@ -54,10 +100,10 @@ div.outputgroup {
     display: block;
     vertical-align: top;
     width: 600px;
-    border: 2px inset silver;
     background-color: hsl(120deg, 100%, 95%);
     padding: 5px;
     margin-bottom: 10px;
+    box-shadow: 3px 3px 10px black;
 }
 
 div.outputgroupvoid {

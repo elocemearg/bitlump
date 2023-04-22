@@ -22,19 +22,30 @@
         </noscript>
 
         <div class="main" id="main">
-            <h1>Bitlump</h1>
-            <p>
-            Enter a decimal number such as <span class="mono">960</span>,
-            a hex number preceded with <span class="mono">0x</span> such as
-            <span class="mono">0x1f346</span>, or a floating point number such
-            as <span class="mono">6.0221408e23</span>.
-            </p>
             <div class="maininput">
-                <div class="maininputcolumn">
+                <div class="maininputrow">
                     <input id="input" type="text"></input>
                 </div>
-                <div class="maininputcolumn">
+                <div class="maininputrow">
                     <button onclick="clearInput();">Clear</button>
+                </div>
+                <div class="help">
+                    <div class="helpbar" onclick="toggleHelp();"><div class="expandbutton" id="helpexpandbutton">▼</div> Help</div>
+                    <div class="helptext" id="helptext" style="display: none;">
+                        <p>
+                        Enter or paste any of the following into the input box. All applicable conversions happen automatically.
+                        </p>
+                        <ul>
+                            <li>A decimal number, such as <a href="?i=960" class="inputexample">960</a></li>
+                            <li>A hexadecimal number preceded with <span class="mono">0x</span>, such as <a href="?i=0x1f346" class="inputexample">0x1f346</a></li>
+                            <li>A floating-point number such as <a href="?i=6.0221408e23" class="inputexample">6.0221408e23</a></li>
+                            <li>A text string, such as <a href="?i=Joyeux%20Noël%20🎁" class="inputexample">Joyeux Noël 🎁</a></li>
+                            <li>A byte string in hex, such as <a href="?i=48656c6c+6f20776f+726c6421" class="inputexample">48656c6c 6f20776f 726c6421</a></li>
+                        </ul>
+                        <p>
+                        Click any converted value below to copy it to the clipboard.
+                        </p>
+                    </div>
                 </div>
             </div>
             <div class="mainoutput">

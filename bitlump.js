@@ -504,6 +504,22 @@ function changeBytesTextDecodingMode() {
     refresh();
 }
 
+function toggleHelp() {
+    let showHelpButton = document.getElementById("helpexpandbutton");
+    let helpText = document.getElementById("helptext");
+    if (helpText) {
+        if (helpText.style.display == "none") {
+            helpText.style.display = "block";
+            showHelpButton.innerText = "▲";
+        }
+        else {
+            helpText.style.display = "none";
+            showHelpButton.innerText = "▼";
+        }
+    }
+    return false;
+}
+
 function initPage() {
     initConversions();
     mainDiv = document.getElementById("main");
