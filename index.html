@@ -339,10 +339,18 @@
                     <div class="outputgroup" data-category="bytes">
                         <div class="outputgrouptitle">Interpreting input as <span class="inputtype">bytes</span></div>
                         <div class="outputgrouprow" style="text-align: left;">
-                            <select name="textdecoding" converter-param="textdecoding" oninput="changeBytesTextDecodingMode();">
+                            <select id="textdecoding" name="textdecoding" converter-param="textdecoding" oninput="changeBytesTextDecodingMode();">
                                 <option value="utf8" selected>Decode as UTF-8</option>
                                 <option value="utf16">Decode as UTF-16</option>
                             </select>
+                            <div class="buttongroup" style="float: right;">
+                                <div>
+                                    <div style="display: inline-block; font-size: 10pt; color: gray;">Byte order swap</div>
+                                    <button class="bytesendianswap" onclick="endianSwapInputBytes(2);">16</button>
+                                    <button class="bytesendianswap" onclick="endianSwapInputBytes(4);">32</button>
+                                    <button class="bytesendianswap" onclick="endianSwapInputBytes(8);">64</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="outputgrouprow">
                             <div class="outputgrouprowtitle">Decoded text</div>

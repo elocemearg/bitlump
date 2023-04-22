@@ -234,6 +234,17 @@ function setButtonsEnabledState() {
         endianSwap32Button.disabled = bits < 32;
         endianSwap64Button.disabled = bits < 64;
     }
+
+    /* Disable bytes panel's endian-swap buttons and character encoding
+     * selector if the input value isn't a byte array. */
+    let bytesEndianSwapButtons = document.getElementsByClassName("bytesendianswap");
+    for (let i = 0; i < bytesEndianSwapButtons.length; i++) {
+        bytesEndianSwapButtons[i].disabled = !currentInputValue.isBytes();
+    }
+    let textDecoding = document.getElementById("textdecoding");
+    if (textDecoding) {
+        textDecoding.disabled = !currentInputValue.isBytes();
+    }
 }
 
 function killCopyIndicator() {
@@ -454,6 +465,20 @@ function shiftRightInputValue() {
 
 function endianSwapInputValue(numBytes) {
     modifyBinaryInt(function(x) { return x.endianSwap(numBytes); });
+}
+
+function endianSwapInputBytes(numBytes) {
+    if (currentInputValue.isBytes()) {
+        let bytes = currentInputValue.getBytes();
+        let swappedBytes = swapByteOrder(bytes, numBytes, true);
+        if (swappedBytes) {
+            let newText = formatByteArray(swappedBytes, numBytes);
+            if (newText) {
+                inputBox.value = newText;
+                inputChanged(newText);
+            }
+        }
+    }
 }
 
 function unixTimestampUnitChanged() {

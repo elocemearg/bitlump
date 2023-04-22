@@ -342,6 +342,43 @@ function convertInt(inputValue, signed, bits, hex) {
     }
 }
 
+/* Return a copy of bytesOriginal where every chunk of bytesPerWord bytes
+ * has its order reversed. bytesOriginal.length must be a multiple of
+ * bytesPerWord. If it isn't, then if extend is true the copy is extended
+ * accordingly with 0-bytes, and if extend is false null is returned. */
+function swapByteOrder(bytesOriginal, bytesPerWord, extend) {
+    let bytes = [];
+    for (let i = 0; i < bytesOriginal.length; i++) {
+        bytes.push(bytesOriginal[i]);
+    }
+    /* If extend = true, pad the byte array to be a multiple of bytesPerWord
+     * bytes. If extend = false, do nothing and return if the byte array isn't
+     * already a multiple of bytesPerWord bytes. */
+    if (bytes.length % bytesPerWord != 0) {
+        if (extend) {
+            while (bytes.length % bytesPerWord != 0) {
+                bytes.push(0);
+            }
+        }
+        else {
+            return null;
+        }
+    }
+
+    for (let start = 0; start < bytes.length; start += bytesPerWord) {
+        let l = start;
+        let r = start + bytesPerWord - 1;
+        while (l < r) {
+            let tmp = bytes[l];
+            bytes[l] = bytes[r];
+            bytes[r] = tmp;
+            l++;
+            r--;
+        }
+    }
+    return bytes;
+}
+
 function hexByteString(bytes) {
     let resultString = "";
     for (let i = 0; i < bytes.length; i++) {
@@ -352,6 +389,25 @@ function hexByteString(bytes) {
         resultString += HEX_DIGITS[b & 15];
     }
     return resultString;
+}
+
+function formatByteArray(bytes, bytesPerGroup) {
+    let groups = [];
+    let currentGroup = [];
+    if (bytes.length == 0) {
+        return "";
+    }
+    for (let i = 0; i < bytes.length; i++) {
+        let b = bytes[i];
+        if (currentGroup.length > 0 && currentGroup.length % bytesPerGroup == 0) {
+            groups.push(currentGroup.join(""));
+            currentGroup = [];
+        }
+        currentGroup.push(HEX_DIGITS[b >> 4] + HEX_DIGITS[b & 15]);
+    }
+    if (currentGroup.length > 0)
+        groups.push(currentGroup.join(""));
+    return (groups.length == 1 ? "0x" : "") + groups.join(" ");
 }
 
 function floatOrNull(inputValue, func) {
