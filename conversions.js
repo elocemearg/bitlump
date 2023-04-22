@@ -489,6 +489,7 @@ class Text2UnicodeDynamicTableFiller extends DynamicTableFiller {
         this.pos = 0;
         this.text = inputValue.getText();
         this.utf8Sequences = [];
+        this.utf16Sequences = [];
     }
 
     nextRow() {
@@ -505,6 +506,7 @@ class Text2UnicodeDynamicTableFiller extends DynamicTableFiller {
             }
 
             this.utf8Sequences.push(codepointToUTF8Hex(cp));
+            this.utf16Sequences.push(codepointToUTF16Hex(cp));
 
             rowContents = [
                 /* Character */
@@ -534,14 +536,17 @@ class Text2UnicodeDynamicTableFiller extends DynamicTableFiller {
     finished(maxRows) {
         super.finished(maxRows, this.pos < this.text.length);
 
-        /* Set the href value of the "UTF-8 encoding" table heading link
-         * so that it points to the hex encoding of the whole thing (up to
-         * maxRows) in UTF-8. Then it's easy to switch between the text
-         * and binary representation of a UTF-8 string. */
-        let utf8Link = this.outputElement.getElementsByClassName("text2unicodeutf8encodingheader");
-        if (utf8Link.length > 0) {
-            utf8Link = utf8Link[0];
-            utf8Link.href = "?i=" + encodeURIComponent("0x" + this.utf8Sequences.join(" "));
+        /* Set the text2unicodeutf8encodingheader and
+         * text2unicodeutf16encodingheader elements so that clicking them
+         * copies the UTF-8 or UTF-16 encoding to the clipboard. */
+        for (let encoding = 8; encoding <= 16; encoding += 8) {
+            let th = this.outputElement.getElementsByClassName("text2unicodeutf" + encoding.toString() + "encodingheader");
+            if (th.length > 0) {
+                let sequences = (encoding == 8 ? this.utf8Sequences : this.utf16Sequences);
+                if (sequences.length > 0) {
+                    th[0].setAttribute("data-text-to-copy", (sequences.length == 1 ? "0x" : "") + sequences.join(" "));
+                }
+            }
         }
     }
 }

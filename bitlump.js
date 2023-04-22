@@ -104,6 +104,15 @@ function initialiseConversionControls() {
             }
         }
     }
+
+    /* Any tag with autocopytagdata class behaves like an output value for
+     * the purpose of what happens when you click on it, except that what
+     * gets copied to the clipboard is the contents of the tag's
+     * data-text-to-copy attribute rather than its innerText. */
+    let autoCopyTags = document.getElementsByClassName("autocopytagdata");
+    for (let i = 0; i < autoCopyTags.length; i++) {
+        autoCopyTags[i].addEventListener("click", outputValueClickHandler);
+    }
 }
 
 function updateURL(text) {
@@ -259,12 +268,12 @@ function outputValueClickHandler(event) {
      * outputvalue, or it might even be the copy indicator itself if it's
      * still there, but we want the innerText property of the nearest
      * containing outputvalue. */
-    while (outputValue != null && !outputValue.classList.contains("outputvalue")) {
+    while (outputValue != null && !(outputValue.classList.contains("outputvalue") || outputValue.classList.contains("autocopytagdata"))) {
         outputValue = outputValue.parentElement;
     }
 
     /* Don't allow click-to-copy on a void output element */
-    if (outputValue.classList.contains("outputcontainervoid")) {
+    if (outputValue == null || outputValue.classList.contains("outputcontainervoid")) {
         return;
     }
 
@@ -278,7 +287,22 @@ function outputValueClickHandler(event) {
     if (outputValue) {
         /* When the Promise resolves, make the indicator start at the position
          * of the mouse click. */
-        let p = navigator.clipboard.writeText(outputValue.innerText);
+
+        /* If there is a data-text-to-copy attribute, take that as the text
+         * to copy to the clipboard. */
+        let clipboardText = outputValue.getAttribute("data-text-to-copy");
+        if (clipboardText == null) {
+            if (outputValue.classList.contains("autocopytagdata")) {
+                /* autocopytagdata must have a data-text-to-copy attribute
+                 * or it's not valid */
+                return null;
+            }
+            else {
+                /* Otherwise, take the inner text of the tag. */
+                clipboardText = outputValue.innerText;
+            }
+        }
+        let p = navigator.clipboard.writeText(clipboardText);
         let rect = outputValue.getBoundingClientRect();
         let indicatorY = event.clientY - rect.top;
         let indicatorX = event.clientX - rect.left;
@@ -329,6 +353,16 @@ function refresh() {
             groupParamControls[paramIndex].disabled = !groupEnable;
         }
 
+        /* Clear any data-text-to-copy attribute for any class=autocopytagdata
+         * elements in this group, so that these are not clickable unless a
+         * conversion function fills in the data-text-to-copy attribute with
+         * something new. */
+        let autoCopyTags = outputGroupElement.getElementsByClassName("autocopytagdata");
+        for (let i = 0; i < autoCopyTags.length; i++) {
+            autoCopyTags[i].removeAttribute("data-text-to-copy");
+        }
+
+        /* Set the value of any outputvalue elements in this group */
         for (let outputIndex = 0; outputIndex < conversionOutputs.length; outputIndex++) {
             let co = conversionOutputs[outputIndex];
             let oe = co.outputElement;

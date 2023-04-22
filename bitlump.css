@@ -126,11 +126,17 @@ div.outputcell {
     border: 1px solid silver;
 }
 
-.outputvalue.clicktocopy:not(.outputcontainervoid) {
+.autocopytagdata {
+    /* Must be positioned so that the copy indicator positions itself
+     * correctly within it */
+    position: relative;
+}
+
+.outputvalue.clicktocopy:not(.outputcontainervoid), .autocopytagdata[data-text-to-copy] {
     cursor: pointer;
 }
 
-.outputvalue.clicktocopy:not(.outputcontainervoid):hover {
+.outputvalue.clicktocopy:not(.outputcontainervoid):hover, .autocopytagdata[data-text-to-copy]:hover {
     background-color: hsl(60deg, 100%, 80%);
 }
 
