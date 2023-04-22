@@ -38,6 +38,7 @@
                         <ul>
                             <li>A decimal number, such as <a href="?i=960" class="inputexample">960</a></li>
                             <li>A hexadecimal number preceded with <span class="mono">0x</span>, such as <a href="?i=0x1f346" class="inputexample">0x1f346</a></li>
+                            <li>An octal number preceded with <span class="mono">0o</span>, such as <a href="?i=0o755" class="inputexample">0o755</a></li>
                             <li>A floating-point number such as <a href="?i=6.0221408e23" class="inputexample">6.0221408e23</a></li>
                             <li>A text string, such as <a href="?i=Joyeux%20Noël%20🎁" class="inputexample">Joyeux Noël 🎁</a></li>
                             <li>A byte string in hex, such as <a href="?i=48656c6c+6f20776f+726c6421" class="inputexample">48656c6c 6f20776f 726c6421</a></li>
@@ -60,12 +61,16 @@
                                         <col style="width: 5em;" />
                                     </colgroup>
                                     <tr>
+                                        <td class="outputcontainer outputvalue" data-converter="hex"></td>
+                                        <td>Hex</td>
+                                    </tr>
+                                    <tr>
                                         <td class="outputcontainer outputvalue" data-converter="decimal"></td>
                                         <td>Decimal</td>
                                     </tr>
                                     <tr>
-                                        <td class="outputcontainer outputvalue" data-converter="hex"></td>
-                                        <td>Hex</td>
+                                        <td class="outputcontainer outputvalue" data-converter="octal"></td>
+                                        <td>Octal</td>
                                     </tr>
                                 </table>
                             </div>

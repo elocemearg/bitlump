@@ -191,15 +191,46 @@ function hexToByteArray(text, numBytes=-1) {
     return bytes;
 }
 
-/* Interpret text as a decimal number, or a hexadecimal number or byte array,
- * and return a two-element array:
- *  [ the resulting byte array, true if it was hex and false if not ]
+function octalToByteArray(text, numBytes=-1) {
+    let bytes = [];
+    let pos = 0;
+    let extend = (numBytes < 0);
+    if (text.startsWith("0o") || text.startsWith("0O")) {
+        pos += 2;
+    }
+
+    if (!extend) {
+        for (let i = 0; i < numBytes; i++) {
+            bytes.push(0);
+        }
+    }
+    else {
+        bytes.push(0);
+    }
+
+    while (pos < text.length) {
+        let c = text.charCodeAt(pos);
+        if (c < 0x30 || c > 0x37) {
+            return null;
+        }
+        let overflow = shiftLeft(bytes, 3, extend);
+        overflow = addUnsignedBytes(bytes, [ c - 0x30 ], extend) || overflow;
+        if (overflow && !extend)
+            return null;
+        pos++;
+    }
+    return bytes;
+}
+
+/* Interpret text as a decimal number, hexadecimal number (0x...), octal number
+ * (0o...), binary number (0b...) or byte array, and return a two-element array:
+ *  [ the resulting byte array, the number base used to convert the string ]
  */
 function textToByteArray(text, numBytes, signed) {
     let pos = 0;
     let minus = false;
     let bytes = [];
-    let isHex = false;
+    let base = 10;
     let extend = (numBytes < 0);
 
     /* If numBytes > 0, create that many bytes */
@@ -220,12 +251,19 @@ function textToByteArray(text, numBytes, signed) {
 
     if (text.substr(pos, 2) == "0X") {
         /* We're using base 16 */
-        isHex = true;
+        base = 16;
         bytes = hexToByteArray(text.substr(pos), numBytes);
         if (bytes == null)
             return null;
     }
+    else if (text.substr(pos, 2) == "0O") {
+        base = 8;
+        bytes = octalToByteArray(text.substr(pos), numBytes);
+        if (bytes == null)
+            return null;
+    }
     else {
+        base = 10;
         /* We're using base 10 */
         if (pos >= text.length) {
             /* No digits? */
@@ -267,7 +305,7 @@ function textToByteArray(text, numBytes, signed) {
         }
     }
 
-    return [ bytes, isHex ];
+    return [ bytes, base ];
 }
 
 function buildFloat(sign, exponent, rawMantissa, mantissa, maxExp) {
@@ -292,10 +330,10 @@ function buildFloat(sign, exponent, rawMantissa, mantissa, maxExp) {
 
 /* Binary integer of arbitrary fixed size. */
 class BinaryInt {
-    constructor(bytes, signed, wasHex=false) {
+    constructor(bytes, signed, originalBase=10) {
         this.bytes = bytes;
         this.signed = signed;
-        this.wasHex = wasHex;
+        this.originalBase = originalBase;
     }
 
     isNegative() {
@@ -308,10 +346,6 @@ class BinaryInt {
                 return false;
         }
         return true;
-    }
-
-    isConvertedFromHex() {
-        return this.wasHex;
     }
 
     negate() {
@@ -328,6 +362,10 @@ class BinaryInt {
             l++;
             r--;
         }
+    }
+
+    isConvertedFromHex() {
+        return this.originalBase == 16;
     }
 
     isMostNegativeInteger() {
@@ -353,6 +391,65 @@ class BinaryInt {
             }
         }
         return nibbles.join("");
+    }
+
+    formatOctal() {
+        let tribbles = [];
+        let bitCount = 0;
+        let bytePos = this.bytes.length - 1;
+        let tribble = 0;
+        while (bytePos >= 0) {
+            let mask = 1;
+            let b = this.bytes[bytePos];
+            while (mask < 256) {
+                if (b & mask) {
+                    tribble |= (1 << bitCount);
+                }
+                mask <<= 1;
+                if (++bitCount >= 3) {
+                    tribbles.unshift(tribble.toString());
+                    tribble = 0;
+                    bitCount = 0;
+                }
+            }
+            bytePos--;
+        }
+        if (tribble) {
+            tribbles.unshift(tribble.toString());
+        }
+        /* Remove leading zeroes */
+        while (tribbles.length > 1 && tribbles[0] == '0') {
+            tribbles.shift();
+        }
+        return tribbles.join("");
+    }
+
+    formatBinary() {
+        let bits = [];
+        for (let bytePos = 0; bytePos < this.bytes.length; bytePos++) {
+            let b = this.bytes[bytePos];
+            for (let mask = 128; mask > 0; mask >>= 1) {
+                bits.push((b & mask) ? '1' : '0');
+            }
+        }
+        /* Remove leading zeroes */
+        while (bits.length > 1 && bits[0] == '0') {
+            bits.shift();
+        }
+        return bits.join("");
+    }
+
+    formatAsOriginalBase(hexLeadingZeroes=false) {
+        switch (this.originalBase) {
+            case 2:
+                return this.formatBinary();
+            case 8:
+                return this.formatOctal();
+            case 16:
+                return this.formatHex(hexLeadingZeroes);
+            default:
+                return this.formatDecimal();
+        }
     }
 
     getJSInt() {
@@ -709,7 +806,7 @@ class BinaryInt {
     }
 
     copy() {
-        return new BinaryInt([...this.bytes], this.signed, this.wasHex);
+        return new BinaryInt([...this.bytes], this.signed, this.originalBase);
     }
 }
 
@@ -718,7 +815,7 @@ function createBinaryIntFromString(text, numBytes, signed) {
     if (result == null)
         return null;
     let bytes = result[0];
-    let wasHex = result[1];
+    let base = result[1];
 
     /* If we made a flexibly-sized integer, extend to at least 8 bytes. */
     if (numBytes < 0) {
@@ -726,7 +823,7 @@ function createBinaryIntFromString(text, numBytes, signed) {
         while (bytes.length < 8)
             bytes.unshift(padByte);
     }
-    return new BinaryInt(bytes, signed, wasHex);
+    return new BinaryInt(bytes, signed, base);
 }
 
 function createBinaryIntFromFloat64Bin(f) {
@@ -744,7 +841,7 @@ function createBinaryIntFromFloat64Bin(f) {
             bytesSwapped.push(bytes[i]);
         }
     }
-    return new BinaryInt(bytesSwapped, false);
+    return new BinaryInt(bytesSwapped, false, 16);
 }
 
 function createBinaryIntFromFloat32Bin(f) {
@@ -762,7 +859,7 @@ function createBinaryIntFromFloat32Bin(f) {
             bytesSwapped.push(bytes[i]);
         }
     }
-    return new BinaryInt(bytesSwapped, false);
+    return new BinaryInt(bytesSwapped, false, 16);
 }
 
 function createBinaryIntFromFloatBin(f, fBits) {

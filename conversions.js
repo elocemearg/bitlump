@@ -214,12 +214,7 @@ class InputValue {
 
     /* Format a supplied BinaryInt the same way this one is formatted. */
     formatBinaryInt(binaryInt) {
-        if (binaryInt.isConvertedFromHex()) {
-            return "0x" + binaryInt.formatHex(false);
-        }
-        else {
-            return binaryInt.formatDecimal();
-        }
+        return binaryInt.formatAsOriginalBase();
     }
 
     isInteger() {
@@ -1087,7 +1082,8 @@ function dateValueToLocalString(binaryInt, inputValue, params) {
 
 function initConversions() {
     createConversionFromBinaryInt("hex", binaryInt => "0x" + binaryInt.formatHex(false));
-
+    createConversionFromBinaryInt("octal", binaryInt => "0o" + binaryInt.formatOctal());
+    createConversionFromBinaryInt("binary", binaryInt => "0b" + binaryInt.formatBinary());
     createConversionFromBinaryInt("decimal", binaryInt => binaryInt.formatDecimal());
 
     let signedness = [ "signed", "unsigned" ];
