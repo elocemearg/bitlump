@@ -439,14 +439,14 @@ class BinaryInt {
         return bits.join("");
     }
 
-    formatAsOriginalBase(hexLeadingZeroes=false) {
+    formatAsOriginalBase(addBaseIndicator=true, hexLeadingZeroes=false) {
         switch (this.originalBase) {
             case 2:
-                return this.formatBinary();
+                return "0b" + this.formatBinary();
             case 8:
-                return this.formatOctal();
+                return "0o" + this.formatOctal();
             case 16:
-                return this.formatHex(hexLeadingZeroes);
+                return "0x" + this.formatHex(hexLeadingZeroes);
             default:
                 return this.formatDecimal();
         }

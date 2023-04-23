@@ -213,8 +213,8 @@ class InputValue {
     }
 
     /* Format a supplied BinaryInt the same way this one is formatted. */
-    formatBinaryInt(binaryInt) {
-        return binaryInt.formatAsOriginalBase();
+    formatBinaryInt(binaryInt, addBaseIndicator=true) {
+        return binaryInt.formatAsOriginalBase(addBaseIndicator);
     }
 
     isInteger() {
