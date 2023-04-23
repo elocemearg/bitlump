@@ -189,6 +189,50 @@ class InputValue {
         else {
             this.bytes = null;
         }
+
+        /* Try to parse the text as a date/time string. */
+        this.timestamp = parseTimestamp(text);
+
+        /* The same timestamp with any missing values filled in with defaults. */
+        this.filledTimestamp = fillTimestamp(this.timestamp);
+
+        /* Convert to a date */
+        if (this.filledTimestamp) {
+            let d = new Date();
+            let ts = this.filledTimestamp;
+            if (ts.tzMinutes == null) {
+                /* No timezone given, so assume local time. Use the Date's
+                 * non-UTC set methods and it will take it as the user's local
+                 * time zone. */
+                d.setFullYear(ts.year);
+                d.setMonth(ts.month - 1);
+                d.setDate(ts.day);
+                d.setHours(ts.hour);
+                d.setMinutes(ts.minute);
+                d.setSeconds(ts.second);
+                d.setMilliseconds(ts.millisecond);
+            }
+            else {
+                /* Timezone given, so tell the Date object the UTC time. */
+                d.setUTCFullYear(ts.year);
+                d.setUTCMonth(ts.month - 1);
+                d.setUTCDate(ts.day);
+                d.setUTCHours(ts.hour);
+                d.setUTCMinutes(ts.minute - ts.tzMinutes); /* Correct for any time zone field */
+                d.setUTCSeconds(ts.second);
+                d.setUTCMilliseconds(ts.millisecond);
+            }
+            this.date = d;
+            if (isNaN(this.date.getUTCFullYear())) {
+                /* Out of range */
+                this.date = null;
+                this.timestamp = null;
+                this.filledTimestamp = null;
+            }
+        }
+        else {
+            this.date = null;
+        }
     }
 
     getBinaryInt() {
@@ -239,6 +283,25 @@ class InputValue {
 
     getText() {
         return this.text;
+    }
+
+    isTimestamp() {
+        return this.timestamp != null;
+    }
+
+    /* Returns an object with "year", "month" etc fields filled in. */
+    getTimestamp() {
+        return this.timestamp;
+    }
+
+    /* Returns an object with "year", "month" etc fields filled in, and any
+     * field not given in the timestamp text is filled in with a default. */
+    getFilledTimestamp() {
+        return this.filledTimestamp;
+    }
+
+    getDate() {
+        return this.date;
     }
 }
 
@@ -439,11 +502,6 @@ function getFloatMantissa(f, fBits, raw=false) {
         return createBinaryIntFromFloat64Bin(f).getCastFloat64Mantissa(raw);
     else
         throw new Error("getFloatMantissa() called with fBits=" + fBits);
-}
-
-const weekDayNames = [ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" ];
-function weekDayName(n) {
-    return weekDayNames[n];
 }
 
 function codepointToUTF8Hex(cp) {
@@ -1021,6 +1079,116 @@ function dateToString(d, utc) {
         timeZone;
 }
 
+function timestamp2TextFunc(inputValue, params, outputFlags, outputElement, showAsUTC) {
+    let d = inputValue.getDate();
+    let text = null;
+    if (d != null) {
+        text = dateToString(d, showAsUTC);
+    }
+    if (text == null) {
+        outputElement.innerHTML = "&nbsp;";
+        return false;
+    }
+    outputElement.innerText = text;
+    return true;
+}
+
+function timestamp2UTCTextFunc(inputValue, params, outputFlags, outputElement) {
+    return timestamp2TextFunc(inputValue, params, outputFlags, outputElement, true);
+}
+
+function timestamp2LocalTextFunc(inputValue, params, outputFlags, outputElement) {
+    return timestamp2TextFunc(inputValue, params, outputFlags, outputElement, false);
+}
+
+function timestamp2UnixTime(inputValue, params, outputFlags, outputElement) {
+    let d = inputValue.getDate();
+    if (d == null || isNaN(d.getUTCFullYear())) {
+        outputElement.innerHTML = "&nbsp;";
+        return false;
+    }
+    let unixTimeMs = d.getTime();
+    let text;
+    if (unixTimeMs % 1000 == 0) {
+        text = Math.floor(unixTimeMs / 1000).toString();
+    }
+    else {
+        text = (unixTimeMs / 1000).toFixed(3);
+    }
+    outputElement.innerText = text;
+    return true;
+}
+
+function timestamp2JulianDate(inputValue, params, outputFlags, outputElement) {
+    let d = inputValue.getDate();
+    if (d == null || isNaN(d.getUTCFullYear())) {
+        outputElement.innerHTML = "&nbsp;";
+        return false;
+    }
+    let unixTimeMs = d.getTime();
+    let julianDate = JULIAN_DATE_OF_UNIX_EPOCH + unixTimeMs / 86400000;
+    outputElement.innerText = julianDate.toString();
+    return true;
+}
+
+function clearCalendar(outputElement) {
+    let rows = outputElement.getElementsByTagName("TR");
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        if (!rows[rowIndex].classList.contains("weekdayrow")) {
+            let cells = rows[rowIndex].getElementsByTagName("TD");
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].innerHTML = "&nbsp;";
+                cells[i].classList.remove("highlightday");
+            }
+        }
+    }
+}
+
+function fillCalendar(outputElement, year, month, highlightDay) {
+    let rowTitle = outputElement.getElementsByClassName("titlecell");
+    if (rowTitle.length > 0) {
+        rowTitle[0].innerText = fullMonthNames[month - 1] + " " + formatInt(year, 4);
+    }
+    let rows = outputElement.getElementsByClassName("daterow");
+    let dayNumber = 1 - getMonthStartWeekday(year, month);
+    let monthLength = getDaysInMonth(year, month);
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        let cells = rows[rowIndex].getElementsByTagName("TD");
+        for (let weekday = 0; weekday < cells.length; weekday++) {
+            let cell = cells[weekday];
+            if (dayNumber < 1 || dayNumber > monthLength) {
+                cell.innerHTML = "&nbsp;";
+            }
+            else {
+                cell.innerText = dayNumber.toString();
+            }
+            if (dayNumber >= 1 && dayNumber <= monthLength && dayNumber == highlightDay)
+                cell.classList.add("highlightday");
+            else
+                cell.classList.remove("highlightday");
+            dayNumber++;
+        }
+    }
+}
+
+function timestamp2Calendar(inputValue, params, outputFlags, outputElement) {
+    clearCalendar(outputElement);
+    let timestamp = inputValue.getTimestamp();
+    let date = inputValue.getDate();
+    if (timestamp == null || date == null)
+        return false;
+    let year = date.getFullYear();
+    let month = date.getMonth() + 1;
+
+    /* Only highlight the current day if a day was specified in the input */
+    let day = (timestamp.day == null ? null : date.getDate());
+    if (year == null || month == null || month < 1 || month > 12) {
+        return false;
+    }
+    fillCalendar(outputElement, year, month, day);
+    return true;
+}
+
 function dateValueToString(binaryInt, inputValue, params, utc) {
     if (!inputValue.isInteger()) {
         return null;
@@ -1274,4 +1442,11 @@ function initConversions() {
 
     /* Byte string to UTF-8 decoding */
     conversions["bytes2text"] = new Conversion("bytes", "bytes2text", bytes2TextFunc);
+
+    conversions["timestamp2utcstring"] = new Conversion("datetime", "timestamp2utcstring", timestamp2UTCTextFunc);
+    conversions["timestamp2localstring"] = new Conversion("datetime", "timestamp2localstring", timestamp2LocalTextFunc);
+    conversions["timestamp2unixtime"] = new Conversion("datetime", "timestamp2unixtime", timestamp2UnixTime);
+    conversions["timestamp2juliandate"] = new Conversion("datetime", "timestamp2juliandate", timestamp2JulianDate);
+
+    conversions["timestamp2calendar"] = new Conversion("datetime", "timestamp2clanedar", timestamp2Calendar);
 }

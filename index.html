@@ -12,6 +12,7 @@
         <script src="unicodedata.js?bump=0"></script>
         <script src="binaryint.js?bump=0"></script>
         <script src="webutils.js?bump=0"></script>
+        <script src="calendar.js?bump=0"></script>
         <script src="conversions.js?bump=0"></script>
         <script src="bitlump.js?bump=0"></script>
         <noscript>
@@ -22,11 +23,12 @@
         </noscript>
 
         <div class="main" id="main">
-            <div class="maininput">
+            <div class="maininput" id="maininput">
                 <div class="maininputrow">
                     <input id="input" type="text"></input>
                 </div>
                 <div class="maininputrow">
+                    <button onclick="inputCurrentTime();">Current time</button>
                     <button onclick="clearInput();">Clear</button>
                 </div>
                 <div class="help">
@@ -40,6 +42,11 @@
                             <li>A hexadecimal number preceded with <span class="mono">0x</span>, such as <a href="?i=0x1f346" class="inputexample">0x1f346</a></li>
                             <li>An octal number preceded with <span class="mono">0o</span>, such as <a href="?i=0o755" class="inputexample">0o755</a></li>
                             <li>A floating-point number such as <a href="?i=6.0221408e23" class="inputexample">6.0221408e23</a></li>
+                            <li>A date and time, such as <a href="?i=2023-04-23+16:24:48+%2B0100" class="inputexample">2023-04-23 16:24:48 +0100</a></li>
+                            <ul>
+                                <li>If fields after the year are omitted, they are filled in with defaults.</li>
+                                <li>If no time zone is given, local time is assumed.</li>
+                            </ul>
                             <li>A text string, such as <a href="?i=Joyeux%20Noël%20🎁" class="inputexample">Joyeux Noël 🎁</a></li>
                             <li>A byte string in hex, such as <a href="?i=48656c6c+6f20776f+726c6421" class="inputexample">48656c6c 6f20776f 726c6421</a></li>
                         </ul>
@@ -49,7 +56,7 @@
                     </div>
                 </div>
             </div>
-            <div class="mainoutput">
+            <div class="mainoutput" id="mainoutput">
                 <div class="outputgroupcolumn">
                     <div class="outputgroup" data-category="binaryint">
                         <div class="outputgrouptitle">Interpreting input as an <span class="inputtype">integer</span></div>
@@ -352,6 +359,70 @@
                         </div> <!-- outputgrouprow -->
                     </div> <!-- outputgroup float -->
 
+                    <div class="outputgroup" data-category="datetime">
+                        <div class="outputgrouptitle">Interpreting input as a <span class="inputtype">date/time</span></div>
+                        <div class="outputgrouprow">
+                            <div class="outputgrouprowtitle">Timestamp</div>
+                            <table style="width: 100%;">
+                                <colgroup>
+                                    <col style="width: 10%;" />
+                                    <col />
+                                </colgroup>
+                                <tr>
+                                    <td class="rowtitle">UTC</td>
+                                    <td class="outputcontainer outputvalue"
+                                        style="text-align: left;"
+                                        data-converter="timestamp2utcstring"></td>
+                                </tr>
+                                <tr>
+                                    <td class="rowtitle">Local</td>
+                                    <td class="outputcontainer outputvalue"
+                                        style="text-align: left;"
+                                        data-converter="timestamp2localstring"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="outputgrouprow">
+                            <div class="outputgrouprowtitle">Conversions and calendar</div>
+                            <div style="text-align: left;">
+                                <div style="display: inline-block; position: relative; width: 330px;">
+                                    <table style="width: 100%">
+                                        <colgroup>
+                                            <col style="width: 8em;"/>
+                                            <col />
+                                        </colgroup>
+                                        <tr>
+                                            <td class="rowtitle">Unix timestamp</td>
+                                            <td class="outputcontainer outputvalue" style="text-align: right;" data-converter="timestamp2unixtime"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="rowtitle">Julian date</td>
+                                            <td class="outputcontainer outputvalue" style="text-align: right;" data-converter="timestamp2juliandate"></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div style="display: inline-block; vertical-align: top; width: 240px; text-align: right;">
+                                    <div style="display: inline-block;">
+                                        <table class="calendar outputcontainer" data-converter="timestamp2calendar">
+                                            <tr class="titlerow"><td class="titlecell" colspan="7"></td></tr>
+                                            <tr class="weekdayrow">
+                                                <td>Mo</td><td>Tu</td><td>We</td><td>Th</td><td>Fr</td><td>Sa</td><td>Su</td>
+                                            </tr>
+                                            <tr class="daterow"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                                            <tr class="daterow"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                                            <tr class="daterow"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                                            <tr class="daterow"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                                            <tr class="daterow"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                                            <tr class="daterow"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- outputgroup datetime -->
+                </div> <!-- outputgroupcolumn -->
+
+                <div class="outputgroupcolumn">
                     <div class="outputgroup" data-category="bytes">
                         <div class="outputgrouptitle">Interpreting input as <span class="inputtype">bytes</span></div>
                         <div class="outputgrouprow" style="text-align: left;">

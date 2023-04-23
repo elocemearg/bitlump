@@ -350,6 +350,9 @@ function refresh() {
         else if (inputTypeName == "bytes") {
             groupEnable = currentInputValue.isBytes();
         }
+        else if (inputTypeName == "datetime") {
+            groupEnable = currentInputValue.isTimestamp();
+        }
 
         /* Put this output group in its enabled/disabled colours */
         if (groupEnable) {
@@ -493,6 +496,12 @@ function unixTimestampUnitAutoDetectChanged() {
 function clearInput() {
     inputBox.value = "";
     inputBox.focus();
+    inputChanged(inputBox.value);
+}
+
+function inputCurrentTime() {
+    let timestampString = dateToString(new Date(), false);
+    inputBox.value = timestampString;
     inputChanged(inputBox.value);
 }
 

@@ -30,6 +30,16 @@ div.maininput {
     text-align: center;
 }
 
+#maininput {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    background: hsla(240deg, 100%, 85%, 80%);
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
 #input {
     width: 600px;
 }
@@ -41,9 +51,12 @@ div.maininputrow {
 
 div.maininputrow button {
     font-size: 12pt;
+    margin-left: 20px;
+    margin-right: 20px;
 }
 
 div.help {
+    position: relative;
     font-size: 10pt;
     display: inline-block;
     width: 600px;
@@ -70,8 +83,12 @@ div.helpbar {
 }
 
 div.helptext {
+    position: absolute;
+    top: 16pt;
+    left: 0;
     padding-left: 10px;
     padding-right: 10px;
+    background-color: hsl(240deg, 100%, 85%);
 }
 
 a.inputexample {
@@ -86,6 +103,12 @@ div.mainoutput {
     width: 100%;
     font-size: 12pt;
     text-align: center;
+}
+
+#mainoutput {
+    position: absolute;
+    top: 160px;
+    left: 0;
 }
 
 div.outputgroupcolumn {
@@ -375,4 +398,43 @@ div.copyindicator {
     font-weight: bold;
     color: white;
     background: black;
+}
+
+table.calendar {
+    background-color: white;
+    border-collapse: collapse;
+    border: 1px solid silver;
+}
+
+table.calendar.outputcontainervoid {
+    background-color: silver;
+}
+
+table.calendar tr.titlerow {
+    font-weight: bold;
+}
+
+table.calendar tr.titlerow td {
+    text-align: center;
+    padding: 5px;
+}
+
+table.calendar tr.weekdayrow {
+    font-size: 10pt;
+    text-align: center;
+}
+
+table.calendar tr.daterow {
+    text-align: right;
+}
+
+table.calendar tr.daterow td {
+    border: 1px solid silver;
+    padding: 2px;
+    width: 1.5em;
+    font-variant-numeric: tabular-nums;
+}
+
+table.calendar tr.daterow td.highlightday {
+    background-color: yellow;
 }
