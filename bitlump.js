@@ -500,7 +500,9 @@ function clearInput() {
 }
 
 function inputCurrentTime() {
-    let timestampString = dateToString(new Date(), false);
+    let d = new Date();
+    d.setMilliseconds(0);
+    let timestampString = dateToString(d, false, false);
     inputBox.value = timestampString;
     inputChanged(inputBox.value);
 }

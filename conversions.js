@@ -1046,7 +1046,7 @@ function formatInt(n, fieldWidth) {
     return (minus ? "-" : "") + leftPad(Math.abs(n).toString(), '0', fieldWidth - (minus ? 1 : 0));
 }
 
-function dateToString(d, utc) {
+function dateToString(d, utc, showMilliseconds=true) {
     let year = utc ? d.getUTCFullYear() : d.getFullYear();
     let month = utc ? d.getUTCMonth() : d.getMonth();
     let date = utc ? d.getUTCDate() : d.getDate();
@@ -1074,8 +1074,8 @@ function dateToString(d, utc) {
         formatInt(date, 2) + " " +
         formatInt(hour, 2) + ":" +
         formatInt(minute, 2) + ":" +
-        formatInt(second, 2) + "." +
-        formatInt(millisecond, 3) + " " +
+        formatInt(second, 2) +
+        (showMilliseconds ? ("." + formatInt(millisecond, 3)) : "") + " " +
         timeZone;
 }
 
