@@ -1448,5 +1448,5 @@ function initConversions() {
     conversions["timestamp2unixtime"] = new Conversion("datetime", "timestamp2unixtime", timestamp2UnixTime);
     conversions["timestamp2juliandate"] = new Conversion("datetime", "timestamp2juliandate", timestamp2JulianDate);
 
-    conversions["timestamp2calendar"] = new Conversion("datetime", "timestamp2clanedar", timestamp2Calendar);
+    conversions["timestamp2calendar"] = new Conversion("datetime", "timestamp2calendar", timestamp2Calendar);
 }
