@@ -56,6 +56,11 @@ const oneOverDenomRegex = /^([0-9]*)\s*\u215f([0-9]+)$/; // U+215F: one-over...
 const intNumDenomRegex = /^([0-9]+)\s+([0-9]+)[\u2044\/]([0-9]+)$/; // U+2044: fraction slash
 const numDenomRegex = /^([0-9]+)[\u2044\/]([0-9]+)$/;
 
+/* Number of decimal digits required in a string representation of a 32-bit or
+ * 64-bit float such that we can convert it back and get the original value. */
+const FLOAT32_DECIMAL_DIGITS = 9;
+const FLOAT64_DECIMAL_DIGITS = 17;
+
 /* Try to parse text as a fractional number matching any of the four regexes
  * above. Return a floating-point number or null. */
 function parseFraction(text) {
@@ -1337,7 +1342,7 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float32bin2mantissa",
-        binaryInt => binaryInt.getCastFloat32Mantissa().toFixed(9)
+        binaryInt => binaryInt.getCastFloat32Mantissa().toFixed(FLOAT32_DECIMAL_DIGITS - 1)
     );
 
     createConversionFromBinaryInt("float32bin2mantissaraw",
@@ -1347,7 +1352,7 @@ function initConversions() {
     createConversionFromBinaryInt("float32bin2value",
         function(binaryInt, inputValue, params, flags) {
             setFlagActive(flags, "float32binsubnormal", binaryInt.isFloat32Subnormal());
-            return binaryInt.getCastFloat32().toPrecision(7);
+            return binaryInt.getCastFloat32().toPrecision(FLOAT32_DECIMAL_DIGITS);
         }
     );
 
@@ -1368,7 +1373,7 @@ function initConversions() {
     );
 
     createConversionFromBinaryInt("float64bin2mantissa",
-        binaryInt => binaryInt.getCastFloat64Mantissa().toFixed(17)
+        binaryInt => binaryInt.getCastFloat64Mantissa().toFixed(FLOAT64_DECIMAL_DIGITS - 1)
     );
 
     createConversionFromBinaryInt("float64bin2mantissaraw",
@@ -1378,7 +1383,7 @@ function initConversions() {
     createConversionFromBinaryInt("float64bin2value",
         function(binaryInt, inputValue, params, flags) {
             setFlagActive(flags, "float64binsubnormal", binaryInt.isFloat64Subnormal());
-            return binaryInt.getCastFloat64().toPrecision(15);
+            return binaryInt.getCastFloat64().toPrecision(FLOAT64_DECIMAL_DIGITS);
         }
     );
 
@@ -1406,7 +1411,7 @@ function initConversions() {
         );
 
         createConversionFromFloat(namePreamble + "mantissa",
-            f => getFloatMantissa(f, fBits, false).toFixed(fBits == 32 ? 9 : 17)
+            f => getFloatMantissa(f, fBits, false).toFixed((fBits == 32 ? FLOAT32_DECIMAL_DIGITS : FLOAT64_DECIMAL_DIGITS) - 1)
         );
 
         createConversionFromFloat(namePreamble + "hexvalue",
@@ -1415,12 +1420,13 @@ function initConversions() {
 
     }
 
-    /* 64-bit float to value - just .toString() it */
+    /* 64-bit float to value - display with 17 digits of precision, which is
+     * enough to be round-trippable */
     createConversionFromFloat("float64tovalue",
         function(f, inputValue, params, flags) {
             setFlagActive(flags, "float64subnormal",
                 getFloatExponent(f, 64, true) == 0 && getFloatMantissa(f, 64, true) != 0);
-            return f.toString();
+            return f.toPrecision(FLOAT64_DECIMAL_DIGITS);
         }
     );
 
@@ -1432,7 +1438,7 @@ function initConversions() {
             f = fa[0];
             setFlagActive(flags, "float32subnormal",
                 getFloatExponent(f, 32, true) == 0 && getFloatMantissa(f, 32, true) != 0);
-            return f.toString();
+            return f.toPrecision(FLOAT32_DECIMAL_DIGITS);
         }
     );
 
