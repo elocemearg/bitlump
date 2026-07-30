@@ -560,10 +560,10 @@ function isLowSurrogate(cp) {
 function makeCodepointLinkElement(cp) {
     let a = document.createElement("A");
     let cpText = "U+" + intToHex(cp, 4);
-    a.href = "https://codepoints.net/" + cpText;
+    a.href = "https://greem.uk/unicodesearch/codepoint/" + cpText;
     a.target = "_blank";
     a.innerText = cpText;
-    a.title = "See " + cpText + " on codepoints.net (new tab)";
+    a.title = "See " + cpText + " at greem.uk/unicodesearch (new tab)";
     return a;
 }
 
