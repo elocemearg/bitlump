@@ -213,15 +213,15 @@
                                     <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float32bin2signraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float32bin2expraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float32bin2mantissaraw"></td>
-                                    <td class="outputcontainer outputvalue" rowspan="2" data-converter="float32bin2value" data-flags="float32binsubnormal"></td>
+                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float32bin2signraw" title="The sign bit: 0 for positive, 1 for negative."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float32bin2expraw" title="The 8-bit exponent field, in hex."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float32bin2mantissaraw" title="The 23-bit mantissa field, in hex, without the implied leading 1 bit."></td>
+                                    <td class="outputcontainer outputvalue" rowspan="2" data-converter="float32bin2value" data-flags="float32binsubnormal" title="The decimal representation of this floating point value."></td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float32bin2sign"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float32bin2exp"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float32bin2mantissa"></td>
+                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float32bin2sign" title="The sign of this value."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float32bin2exp" title="The unbiased exponent value represented by the above 8-bit field. The mantissa is multiplied by two to the power of this number to reach the final value."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float32bin2mantissa" title="The decimal value of the mantissa."></td>
                                 </tr>
                             </table>
                         </div>
@@ -245,15 +245,15 @@
                                     <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float64bin2signraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float64bin2expraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float64bin2mantissaraw"></td>
-                                    <td class="outputcontainer outputvalue" rowspan="2" style="width: 40%;" data-converter="float64bin2value" data-flags="float64binsubnormal"></td>
+                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float64bin2signraw" title="The sign bit: 0 for positive, 1 for negative."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float64bin2expraw" title="The 11-bit exponent field, in hex."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float64bin2mantissaraw" title="The 52-bit mantissa field, in hex, without the implied leading 1 bit."></td>
+                                    <td class="outputcontainer outputvalue" rowspan="2" style="width: 40%;" data-converter="float64bin2value" data-flags="float64binsubnormal" title="The decimal representation of this floating point value."></td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="width: 5%; text-align: center;" data-converter="float64bin2sign"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 10%;" data-converter="float64bin2exp"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64bin2mantissa"></td>
+                                    <td class="outputcontainer outputvalue" style="width: 5%; text-align: center;" data-converter="float64bin2sign" title="The sign of this value."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 10%;" data-converter="float64bin2exp" title="The unbiased exponent value represented by the above 11-bit field. The mantissa is multiplied by two to the power of this number to reach the final value."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64bin2mantissa" title="The decimal value of the mantissa."></td>
                                 </tr>
                             </table>
                         </div>
@@ -311,16 +311,16 @@
                                     <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float32tosignraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float32toexpraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float32tomantissaraw"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float32tohexvalue"></td>
+                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float32tosignraw" title="The sign bit: 0 for positive, 1 for negative."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float32toexpraw" title="The 8-bit exponent field, in hex."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float32tomantissaraw" title="The 23-bit mantissa, field, in hex, without the implied leading 1 bit."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float32tohexvalue" title="The full IEEE 754 bit pattern for this floating point value, in hex."></td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="width: 5%; text-align: center;" data-converter="float32tosign"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 10%;" data-converter="float32toexp"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float32tomantissa"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float32tovalue" data-flags="float32subnormal"></td>
+                                    <td class="outputcontainer outputvalue" style="width: 5%; text-align: center;" data-converter="float32tosign" title="The sign of this value."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 10%;" data-converter="float32toexp" title="The unbiased exponent value represented by the above 8-bit field. The mantissa is multiplied by two to the power of this number to reach the final value."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float32tomantissa" title="The decimal value of the mantissa."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float32tovalue" data-flags="float32subnormal" title="The decimal representation of this floating point value."></td>
                                 </tr>
                             </table>
                         </div>
@@ -342,16 +342,16 @@
                                     <td>Sign</td><td>Exponent</td><td>Mantissa</td><td>Value</td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float64tosignraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float64toexpraw"></td>
-                                    <td class="outputcontainer outputvalue" data-converter="float64tomantissaraw"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64tohexvalue"></td>
+                                    <td class="outputcontainer outputvalue" style="text-align: center;" data-converter="float64tosignraw" title="The sign bit: 0 for positive, 1 for negative."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float64toexpraw" title="The 11-bit exponent field, in hex."></td>
+                                    <td class="outputcontainer outputvalue" data-converter="float64tomantissaraw" title="The 52-bit mantissa field, in hex, without the implied leading 1 bit."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64tohexvalue" title="The full IEEE 754 bit pattern for this floating point value, in hex."></td>
                                 </tr>
                                 <tr>
-                                    <td class="outputcontainer outputvalue" style="width: 5%; text-align: center;" data-converter="float64tosign"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 10%;" data-converter="float64toexp"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64tomantissa"></td>
-                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64tovalue" data-flags="float64subnormal"></td>
+                                    <td class="outputcontainer outputvalue" style="width: 5%; text-align: center;" data-converter="float64tosign" title="The sign of the value."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 10%;" data-converter="float64toexp" title="The unbiased exponent value represented by the above 11-bit field. The mantissa is multiplied by two to the power of this number to reach the final value."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64tomantissa" title="The decimal value of the mantissa."></td>
+                                    <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64tovalue" data-flags="float64subnormal" title="The decimal representation of this floating point value."></td>
                                 </tr>
                             </table>
                         </div> <!-- outputgrouprow -->
