@@ -188,7 +188,7 @@ div.outputcell {
 
 .outputvalue {
     position: relative;
-    font-family: monospace;
+    font-family: "Fira Code", monospace;
     min-height: 16pt;
     line-height: 16pt;
     background-color: white;

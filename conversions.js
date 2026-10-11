@@ -2,20 +2,6 @@
 /* conversion name -> Conversion */
 let conversions = {};
 
-function leftPad(s, padChar, desiredLength) {
-    let numPads = desiredLength - s.length;
-    if (numPads > 0) {
-        return Array(numPads).fill(padChar).join("") + s;
-    }
-    else {
-        return s;
-    }
-}
-
-function intToHex(i, fieldWidth=0) {
-    return leftPad(i.toString(16).toUpperCase(), '0', fieldWidth);
-}
-
 function setFlagActive(flags, name, active) {
     if (name in flags) {
         if (active)

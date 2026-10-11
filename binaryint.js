@@ -708,6 +708,16 @@ class BinaryInt {
         }
     }
 
+    toggleBit(bit) {
+        let byteOffset = this.bytes.length - 1 - Math.floor(bit / 8);
+        if (byteOffset < 0) {
+            return false;
+        }
+        let mask = 1 << (bit % 8);
+        this.bytes[byteOffset] ^= mask;
+        return true;
+    }
+
     extractBits(topBit, length) {
         let n = 0;
         for (let i = topBit; i > topBit - length; i--) {
@@ -824,6 +834,13 @@ function createBinaryIntFromString(text, numBytes, signed) {
             bytes.unshift(padByte);
     }
     return new BinaryInt(bytes, signed, base);
+}
+
+function createBinaryIntFromHex(text, numBytes) {
+    if (!text.toLowerCase().startsWith("0x")) {
+        text = "0x" + text;
+    }
+    return createBinaryIntFromString(text, numBytes, false);
 }
 
 function createBinaryIntFromFloat64Bin(f) {

@@ -1,0 +1,30 @@
+.floatoutput td {
+    font-family: "Fira Code";
+    font-size: 12pt;
+    text-align: right;
+    font-variant-ligatures: none;
+}
+
+button.bitbutton {
+    border: 1px gray outset;
+    margin-right: 1px;
+    margin-top: 4px;
+    font-family: "Fira Code";
+    cursor: pointer;
+}
+
+button.bitbutton:active {
+    border: 1px gray inset;
+}
+
+button.bitbutton[data-value="0"] {
+    background-color: white;
+}
+
+button.bitbutton[data-value="1"] {
+    background-color: hsl(120deg, 100%, 80%);
+}
+
+button.bitbutton.bitbuttonendofgroup {
+    margin-right: 4px !important;
+}
