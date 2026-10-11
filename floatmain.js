@@ -124,7 +124,7 @@ class FPPrecision {
         button.addEventListener("click", function() {
             if (inputFloatBinary != null) {
                 inputFloatBinary.toggleBit(b);
-                refreshFromInputFloatBinary(impl);
+                refreshFromInputFloatBinary(impl, true);
             }
         });
         return button;
@@ -228,10 +228,12 @@ function decimalInputHandler() {
     }
 }
 
-function refreshFromInputFloatBinary(impl) {
+function refreshFromInputFloatBinary(impl, refreshHexInput) {
     inputFloatValue = impl.getValue(inputFloatBinary);
     decimalInput.value = "";
-    hexInput.value = impl.getHex(inputFloatBinary);
+    if (refreshHexInput) {
+        hexInput.value = impl.getHex(inputFloatBinary);
+    }
     refreshDisplay();
 }
 
@@ -239,14 +241,22 @@ function hexInputHandler() {
     let bits = getFloatBits();
     let impl = floatTypes[bits];
     let numBytes = Math.ceil(bits / 8);
-    let bin = createBinaryIntFromHex(hexInput.value.trim(), numBytes);
+    let hexString = hexInput.value.trim();
+
+    if (hexString == "") {
+        /* If the user deletes the contents of the hex string input, take
+         * this as 0 rather than turning it red like it's an error. */
+        hexString = "0";
+    }
+
+    let bin = createBinaryIntFromHex(hexString, numBytes);
     if (bin == null) {
         hexInput.style.backgroundColor = "red";
     }
     else {
         hexInput.style.backgroundColor = null;
         inputFloatBinary = bin;
-        refreshFromInputFloatBinary(impl);
+        refreshFromInputFloatBinary(impl, false);
     }
 }
 
