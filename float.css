@@ -1,3 +1,17 @@
+div.maininputrow {
+    text-align: center;
+}
+
+div.mainoutputrow {
+    display: block;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+div.mainoutputrowitem {
+    display: inline-block;
+}
+
 .floatoutput td {
     font-family: "Fira Code";
     font-size: 12pt;

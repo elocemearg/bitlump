@@ -1,5 +1,4 @@
 
-let mainDiv = null;
 let inputBox = null;
 let currentInputValue = new InputValue("");
 
@@ -533,7 +532,6 @@ function toggleHelp() {
 
 function initPage() {
     initConversions();
-    mainDiv = document.getElementById("main");
     inputBox = document.getElementById("input");
     inputBox.addEventListener("input", function() {
         inputChanged(inputBox.value);

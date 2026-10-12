@@ -25,49 +25,60 @@
         </noscript>
 
         <main>
-            <div>
+            <div class="maininputrow">
+                <label><input type="radio" name="floatformat" id="floatformat32" checked> Single-precision (32 bit)</label>
+                <label><input type="radio" name="floatformat" id="floatformat64"> Double-precision (64 bit)</label>
+            </div>
+            <div class="maininputrow">
                 Number input
                 <input id="decimalinput" type="text">
             </div>
-            <div>
+            <div class="maininputrow">
                 Hex bit pattern input
                 <input id="hexinput" type="text">
             </div>
 
             <div>
-                <label><input type="radio" name="floatformat" id="floatformat32" checked> Single-precision (32 bit)</label>
-                <label><input type="radio" name="floatformat" id="floatformat64"> Double-precision (64 bit)</label>
+                <div class="mainoutputrow">
+                    <div class="mainoutputrowitem">
+                        <table class="floatoutput">
+                            <tr>
+                                <th></th>
+                                <th>Sign</th>
+                                <th>Exponent</th>
+                                <th>Mantissa</th>
+                            </tr>
+                            <tr>
+                                <th>Fields</th>
+                                <td class="outputcontainer outputvalue clicktocopy" id="signvalue"></td>
+                                <td class="outputcontainer outputvalue clicktocopy" id="exponentvalue"></td>
+                                <td class="outputcontainer outputvalue clicktocopy" id="mantissavalue"></td>
+                            </tr>
+                            <tr>
+                                <th>Raw</th>
+                                <td class="outputcontainer outputvalue clicktocopy" id="signraw"></td>
+                                <td class="outputcontainer outputvalue clicktocopy" id="exponentraw"></td>
+                                <td class="outputcontainer outputvalue clicktocopy" id="mantissaraw"></td>
+                            </tr>
+                            <tr>
+                                <th>Bits</th>
+                                <td id="signbitbuttons"></td>
+                                <td id="exponentbitbuttons"></td>
+                                <td id="mantissabitbuttons"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <th>Encoding</th>
+                                <td colspan="3" class="outputcontainer outputvalue clicktocopy" id="valuehex"></td>
+                            </tr>
+                            <tr>
+                                <th>Value</th>
+                                <td colspan="3" class="outputcontainer outputvalue clicktocopy" id="valuedecimal"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </div>
-
-            <div>
-                <table class="floatoutput">
-                    <tr>
-                        <th>Sign</th>
-                        <th>Exponent</th>
-                        <th>Mantissa</th>
-                        <th>Value</th>
-                    </tr>
-                    <tr>
-                        <td class="outputcontainer outputvalue clicktocopy" id="signraw"></td>
-                        <td class="outputcontainer outputvalue clicktocopy" id="exponentraw"></td>
-                        <td class="outputcontainer outputvalue clicktocopy" id="mantissaraw"></td>
-                        <td class="outputcontainer outputvalue clicktocopy" id="valuehex"></td>
-                    </tr>
-                    <tr>
-                        <td id="signbitbuttons"></td>
-                        <td id="exponentbitbuttons"></td>
-                        <td id="mantissabitbuttons"></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td class="outputcontainer outputvalue clicktocopy" id="signvalue"></td>
-                        <td class="outputcontainer outputvalue clicktocopy" id="exponentvalue"></td>
-                        <td class="outputcontainer outputvalue clicktocopy" id="mantissavalue"></td>
-                        <td class="outputcontainer outputvalue clicktocopy" id="valuedecimal"></td>
-                    </tr>
-                </table>
-            </div>
-
 
         </main>
 
