@@ -76,7 +76,7 @@ class FPPrecision {
     }
 
     isZero(bin) {
-        return bin.isZero();
+        return this.getExponentRaw(bin) == 0 && this.getMantissaRaw(bin) == 0;
     }
 
     isSubnormal(bin) {
