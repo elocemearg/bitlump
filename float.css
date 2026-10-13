@@ -12,6 +12,10 @@ div.mainoutputrowitem {
     display: inline-block;
 }
 
+.floatoutput th {
+    text-align: right;
+}
+
 .floatoutput td {
     font-family: "Fira Code";
     font-size: 12pt;
@@ -24,7 +28,18 @@ button.bitbutton {
     margin-right: 1px;
     margin-top: 4px;
     font-family: "Fira Code";
+    font-size: 10pt;
     cursor: pointer;
+}
+
+.leadingmantissadigit {
+    display: inline-block;
+    padding: 2px;
+    font-size: 10pt;
+    margin-right: 1px;
+    margin-top: 4px;
+    font-family: "Fira Code";
+    background-color: #dddddd;
 }
 
 button.bitbutton:active {
@@ -39,6 +54,6 @@ button.bitbutton[data-value="1"] {
     background-color: hsl(120deg, 100%, 80%);
 }
 
-button.bitbutton.bitbuttonendofgroup {
-    margin-right: 4px !important;
+button.bitbutton.bitbuttonstartofgroup {
+    margin-left: 4px !important;
 }

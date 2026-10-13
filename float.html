@@ -30,12 +30,12 @@
                 <label><input type="radio" name="floatformat" id="floatformat64"> Double-precision (64 bit)</label>
             </div>
             <div class="maininputrow">
-                Number input
-                <input id="decimalinput" type="text">
+                <label><input type="radio" name="floatinput" id="floatinputstring" checked> Input string</label>
+                <label><input type="radio" name="floatinput" id="floatinputhex"> Input IEEE 754 encoding in hex</label>
             </div>
             <div class="maininputrow">
-                Hex bit pattern input
-                <input id="hexinput" type="text">
+                <input id="decimalinput" type="text" placeholder="e.g. 1.23456789e-10">
+                <input id="hexinput" type="text" placeholder="e.g. 40490FDB">
             </div>
 
             <div>
@@ -68,11 +68,19 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <th>Encoding</th>
+                                <th></th>
+                                <th colspan="3" style="text-align: left;">IEEE 754 encoding</th>
+                            </tr>
+                            <tr>
+                                <th></th>
                                 <td colspan="3" class="outputcontainer outputvalue clicktocopy" id="valuehex"></td>
                             </tr>
                             <tr>
-                                <th>Value</th>
+                                <th></th>
+                                <th colspan="3" style="text-align: left;">Decimal representation</th>
+                            </tr>
+                            <tr>
+                                <th></th>
                                 <td colspan="3" class="outputcontainer outputvalue clicktocopy" id="valuedecimal"></td>
                             </tr>
                         </table>

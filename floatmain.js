@@ -13,13 +13,25 @@ let outputValueDecimal = document.getElementById("valuedecimal");
 let floatFormat32Input = document.getElementById("floatformat32");
 let floatFormat64Input = document.getElementById("floatformat64");
 
+let floatInputSelectorString = document.getElementById("floatinputstring");
+let floatInputSelectorHex = document.getElementById("floatinputhex");
+
 let signBitButtonsCell = document.getElementById("signbitbuttons");
 let exponentBitButtonsCell = document.getElementById("exponentbitbuttons");
 let mantissaBitButtonsCell = document.getElementById("mantissabitbuttons");
 
+/* Buttons, one per bit, with which the user can toggle the float's bits. */
 let signBitButton = null;
 let exponentBitButtons = [];
 let mantissaBitButtons = [];
+
+/* A bit-button-shaped thing which isn't a real button, it just shows the value
+ * of the implied leading mantissa bit, which is usually 1 (unless the number
+ * is subnormal) and does not actually appear in the encoding. */
+let impliedMantissaBit = document.createElement("DIV");
+impliedMantissaBit.classList.add("leadingmantissadigit");
+impliedMantissaBit.innerText = "1.";
+
 
 let inputFloatValue = 0;
 let inputFloatBinary = null;
@@ -61,6 +73,14 @@ class FPPrecision {
 
     isNegative(bin) {
         return bin.getBit(this.signBitIndex);
+    }
+
+    isZero(bin) {
+        return bin.isZero();
+    }
+
+    isSubnormal(bin) {
+        return this.getExponentRaw(bin) == 0 && this.getMantissaRaw(bin) != 0;
     }
 
     getSign(bin) {
@@ -164,6 +184,7 @@ class FPPrecision {
             }
             setBitButtonValue(mantissaBitButtons[i], bin.getBit(this.topMantissaBitIndex - i));
         }
+        impliedMantissaBit.innerText = (this.isSubnormal(bin) || this.isZero(bin)) ? "0." : "1.";
     }
 }
 
@@ -230,7 +251,7 @@ function decimalInputHandler() {
 
 function refreshFromInputFloatBinary(impl, refreshHexInput) {
     inputFloatValue = impl.getValue(inputFloatBinary);
-    decimalInput.value = "";
+    decimalInput.value = impl.getValueString(inputFloatBinary);
     if (refreshHexInput) {
         hexInput.value = impl.getHex(inputFloatBinary);
     }
@@ -278,6 +299,10 @@ function recreateBitButtons(impl) {
     for (let i = 0; i < buttonLists.length; i++) {
         let src = buttonLists[i][0];
         let dest = buttonLists[i][1];
+        if (i == 1) {
+            /* Display the implied leading "1." at the start of the mantissa */
+            dest.appendChild(impliedMantissaBit);
+        }
         for (let j = 0; j < src.length; j++) {
             let bitsFromEnd = src.length - 1 - j;
             dest.appendChild(src[j]);
@@ -285,8 +310,8 @@ function recreateBitButtons(impl) {
                 if (bitsFromEnd % 8 == 0) {
                     dest.appendChild(document.createElement("BR"));
                 }
-                else if (bitsFromEnd % 4 == 0) {
-                    src[j].classList.add("bitbuttonendofgroup");
+                else if (bitsFromEnd % 4 == 3) {
+                    src[j].classList.add("bitbuttonstartofgroup");
                 }
             }
         }
@@ -298,12 +323,27 @@ function changeFloatPrecision() {
     let impl = floatTypes[bits];
     if (bits == 32) {
         inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
+        decimalInput.setAttribute("placeholder", "e.g. 1.23456789e-10...");
+        hexInput.setAttribute("placeholder", "e.g. 40490FDB")
     }
     else {
         inputFloatBinary = createBinaryIntFromFloat64Bin(inputFloatValue);
+        decimalInput.setAttribute("placeholder", "e.g. 1.2345678901234567e-89...");
+        hexInput.setAttribute("placeholder", "e.g. 400921FB54442D18")
     }
     recreateBitButtons(impl);
     refreshDisplay();
+}
+
+function changeInputFormat() {
+    if (floatInputSelectorString.checked) {
+        decimalInput.style.display = null;
+        hexInput.style.display = "none";
+    }
+    else {
+        decimalInput.style.display = "none";
+        hexInput.style.display = null;
+    }
 }
 
 decimalInput.addEventListener("input", decimalInputHandler);
@@ -311,9 +351,13 @@ hexInput.addEventListener("input", hexInputHandler);
 floatFormat32Input.addEventListener("change", changeFloatPrecision);
 floatFormat64Input.addEventListener("change", changeFloatPrecision);
 
+floatInputSelectorString.addEventListener("change", changeInputFormat);
+floatInputSelectorHex.addEventListener("change", changeInputFormat);
+
 function initPage() {
     decimalInput.focus();
     inputFloatValue = 0;
     inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
     changeFloatPrecision();
+    changeInputFormat();
 }
