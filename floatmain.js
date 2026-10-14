@@ -25,6 +25,9 @@ let incrementExponentButton = document.getElementById("incrementexponent");
 let decrementMantissaButton = document.getElementById("decrementmantissa");
 let incrementMantissaButton = document.getElementById("incrementmantissa");
 
+/* key (e.g. "negative" or "zero") maps to list of HTML elements to be given
+ * the fpconditionlit class when that condition applies. */
+let fpConditionLights = {};
 
 /* Buttons, one per bit, with which the user can toggle the float's bits. */
 let signBitButton = null;
@@ -38,7 +41,7 @@ let impliedMantissaBit = document.createElement("DIV");
 impliedMantissaBit.classList.add("leadingmantissadigit");
 impliedMantissaBit.innerText = "1.";
 
-
+/* The current value we're working with, as both a float and a binary string. */
 let inputFloatValue = 0;
 let inputFloatBinary = null;
 
@@ -50,6 +53,25 @@ function setBitButtonValue(button, value) {
     else {
         button.innerText = "0";
         button.setAttribute("data-value", 0);
+    }
+}
+
+function setFPConditionLight(key, on) {
+    let list = fpConditionLights[key];
+    if (list) {
+        for (let i = 0; i < list.length; i++) {
+            let l = list[i];
+            if (on) {
+                if (!l.classList.contains("fpconditionlit")) {
+                    l.classList.add("fpconditionlit");
+                }
+            }
+            else {
+                if (l.classList.contains("fpconditionlit")) {
+                    l.classList.remove("fpconditionlit");
+                }
+            }
+        }
     }
 }
 
@@ -91,6 +113,14 @@ class FPScheme {
 
     isSubnormal(bin) {
         return this.getExponentRaw(bin) == 0 && this.getMantissaRaw(bin) != 0;
+    }
+
+    isInfinity(bin) {
+        return this.getExponentRaw(bin) == (1 << this.numExpBits) - 1 && this.getMantissaRaw(bin) == 0;
+    }
+
+    isNotANumber(bin) {
+        return this.getExponentRaw(bin) == (1 << this.numExpBits) - 1 && this.getMantissaRaw(bin) != 0;
     }
 
     getSign(bin) {
@@ -254,6 +284,12 @@ function refreshDisplay() {
     outputExponentValue.innerText = scheme.getExponent(bin);
     outputMantissaValue.innerText = scheme.getMantissaString(bin);
     outputValueDecimal.innerText = scheme.getValueString(bin);
+
+    setFPConditionLight("subnormal", scheme.isSubnormal(bin));
+    setFPConditionLight("zero", scheme.isZero(bin));
+    setFPConditionLight("negative", scheme.isNegative(bin));
+    setFPConditionLight("infinity", scheme.isInfinity(bin));
+    setFPConditionLight("nan", scheme.isNotANumber(bin));
 
     scheme.setButtonValues(bin);
 }
@@ -424,6 +460,24 @@ incrementMantissaButton.addEventListener("click", incrementMantissaHandler);
 
 
 function initPage() {
+    /* Put the element with id "fpconditionnegative" in the fpConditionLights
+     * map with the key "negative", and so on. The illumination status of
+     * these lights are changed with setFPConditionLight(key, on). */
+    let fpConditionElements = document.getElementsByClassName("fpcondition");
+    for (let i = 0; i < fpConditionElements.length; i++) {
+        let el = fpConditionElements[i];
+        for (let j = 0; j < el.classList.length; j++) {
+            let className = el.classList[j];
+            if (className.startsWith("fpcondition") && className != "fpcondition") {
+                let key = className.substring(11);
+                if (fpConditionLights[key] === undefined) {
+                    fpConditionLights[key] = [];
+                }
+                fpConditionLights[key].push(el);
+            }
+        }
+    }
+
     decimalInput.focus();
     inputFloatValue = 0;
     inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
