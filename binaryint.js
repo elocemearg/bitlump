@@ -547,9 +547,12 @@ class BinaryInt {
         return this.cmp(other) <= 0;
     }
 
-    addByte(n) {
+    addByte(n, fromByte=null) {
         let carry = n;
-        for (let i = this.bytes.length - 1; i >= 0; i--) {
+        if (fromByte == null) {
+            fromByte = this.bytes.length - 1;
+        }
+        for (let i = fromByte; i >= 0; i--) {
             if (carry == 0)
                 return true;
             this.bytes[i] += carry;
@@ -563,9 +566,16 @@ class BinaryInt {
         return this.addByte(1);
     }
 
-    subtractByte(n) {
+    incrementFromBit(bitIndex) {
+        return this.addByte((1 << (bitIndex % 8)), this.bytes.length - 1 - Math.floor(bitIndex / 8));
+    }
+
+    subtractByte(n, fromByte=null) {
         let borrow = n;
-        for (let i = this.bytes.length - 1; i >= 0; i--) {
+        if (fromByte == null) {
+            fromByte = this.bytes.length - 1;
+        }
+        for (let i = fromByte; i >= 0; i--) {
             if (borrow == 0)
                 return true;
             this.bytes[i] -= borrow;
@@ -582,6 +592,10 @@ class BinaryInt {
 
     decrement() {
         return this.subtractByte(1);
+    }
+
+    decrementFromBit(bitIndex) {
+        return this.subtractByte((1 << (bitIndex % 8)), this.bytes.length - 1 - Math.floor(bitIndex / 8));
     }
 
     shiftLeft(bits) {

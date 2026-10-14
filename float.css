@@ -23,6 +23,10 @@ div.mainoutputrowitem {
     font-variant-ligatures: none;
 }
 
+.floatoutput tr.nudgebuttons td {
+    text-align: center;
+}
+
 button.bitbutton {
     border: 1px gray outset;
     margin-right: 1px;

@@ -20,6 +20,12 @@ let signBitButtonsCell = document.getElementById("signbitbuttons");
 let exponentBitButtonsCell = document.getElementById("exponentbitbuttons");
 let mantissaBitButtonsCell = document.getElementById("mantissabitbuttons");
 
+let decrementExponentButton = document.getElementById("decrementexponent");
+let incrementExponentButton = document.getElementById("incrementexponent");
+let decrementMantissaButton = document.getElementById("decrementmantissa");
+let incrementMantissaButton = document.getElementById("incrementmantissa");
+
+
 /* Buttons, one per bit, with which the user can toggle the float's bits. */
 let signBitButton = null;
 let exponentBitButtons = [];
@@ -47,7 +53,7 @@ function setBitButtonValue(button, value) {
     }
 }
 
-class FPPrecision {
+class FPScheme {
     constructor(numBits, signBitIndex, topExpBitIndex, numExpBits,
             topMantissaBitIndex, numMantissaBits, expBias, roundTripDecimalDigits) {
         this.numBits = numBits;
@@ -69,6 +75,10 @@ class FPPrecision {
         this.roundTripDecimalDigits = roundTripDecimalDigits;
         this.exponentHexDigits = Math.ceil(numExpBits / 4);
         this.mantissaHexDigits = Math.ceil(numMantissaBits / 4);
+    }
+
+    howManyBits(bin) {
+        return this.numBits;
     }
 
     isNegative(bin) {
@@ -138,13 +148,13 @@ class FPPrecision {
     createBitToggleButton(bitIndex) {
         let button = document.createElement("BUTTON");
         let b = bitIndex;
-        let impl = this;
+        let scheme = this;
         button.innerText = "0";
         button.classList.add("bitbutton");
         button.addEventListener("click", function() {
             if (inputFloatBinary != null) {
                 inputFloatBinary.toggleBit(b);
-                refreshFromInputFloatBinary(impl, true);
+                refreshFromInputFloatBinary(scheme, true);
             }
         });
         return button;
@@ -186,12 +196,32 @@ class FPPrecision {
         }
         impliedMantissaBit.innerText = (this.isSubnormal(bin) || this.isZero(bin)) ? "0." : "1.";
     }
+
+    /* Delta must be -1 or 1 */
+    modifyExponent(bin, delta) {
+        if (delta > 0) {
+            bin.incrementFromBit(this.topExpBitIndex - this.numExpBits + 1);
+        }
+        else if (delta < 0) {
+            bin.decrementFromBit(this.topExpBitIndex - this.numExpBits + 1);
+        }
+    }
+
+    /* Delta must be -1 or 1 */
+    modifyMantissa(bin, delta) {
+        if (delta > 0) {
+            bin.increment();
+        }
+        else if (delta < 0) {
+            bin.decrement();
+        }
+    }
 }
 
 
-let floatTypes = {
-    32 : new FPPrecision(32, 31, 30, 8, 22, 23, 127, 9),
-    64 : new FPPrecision(64, 63, 62, 11, 51, 52, 1023, 17),
+let floatSchemes = {
+    32 : new FPScheme(32, 31, 30, 8, 22, 23, 127, 9),
+    64 : new FPScheme(64, 63, 62, 11, 51, 52, 1023, 17),
 };
 
 function getFloatBits() {
@@ -203,25 +233,29 @@ function getFloatBits() {
     }
 }
 
-function refreshDisplay() {
+function getFloatScheme() {
     let bits = getFloatBits();
-    let impl = floatTypes[bits];
+    return floatSchemes[bits];
+}
+
+function refreshDisplay() {
+    let scheme = getFloatScheme();
     let bin = inputFloatBinary;
-    if (impl == null || bin == null) {
+    if (scheme == null || bin == null) {
         return null;
     }
 
-    outputSignRaw.innerText = impl.isNegative(bin) ? "1" : "0";
-    outputExponentRaw.innerText = impl.getExponentRawHex(bin);
-    outputMantissaRaw.innerText = impl.getMantissaRawHex(bin);
-    outputValueRaw.innerText = "0x" + impl.getHex(bin);
+    outputSignRaw.innerText = scheme.isNegative(bin) ? "1" : "0";
+    outputExponentRaw.innerText = scheme.getExponentRawHex(bin);
+    outputMantissaRaw.innerText = scheme.getMantissaRawHex(bin);
+    outputValueRaw.innerText = "0x" + scheme.getHex(bin);
 
-    outputSignValue.innerText = impl.getSign(bin);
-    outputExponentValue.innerText = impl.getExponent(bin);
-    outputMantissaValue.innerText = impl.getMantissaString(bin);
-    outputValueDecimal.innerText = impl.getValueString(bin);
+    outputSignValue.innerText = scheme.getSign(bin);
+    outputExponentValue.innerText = scheme.getExponent(bin);
+    outputMantissaValue.innerText = scheme.getMantissaString(bin);
+    outputValueDecimal.innerText = scheme.getValueString(bin);
 
-    impl.setButtonValues(bin);
+    scheme.setButtonValues(bin);
 }
 
 function decimalInputHandler() {
@@ -231,36 +265,35 @@ function decimalInputHandler() {
         decimalInput.style.backgroundColor = "red";
     }
     else {
-        const bits = getFloatBits();
-        let impl = floatTypes[bits];
+        let scheme = getFloatScheme();
         decimalInput.style.backgroundColor = null;
         hexInput.value = "";
         inputFloatValue = value;
-        if (bits == 32) {
+        if (scheme.howManyBits() == 32) {
             inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
         }
         else {
             inputFloatBinary = createBinaryIntFromFloat64Bin(inputFloatValue);
         }
-        if (impl) {
-            hexInput.value = impl.getHex(inputFloatBinary);
+        if (scheme) {
+            hexInput.value = scheme.getHex(inputFloatBinary);
         }
         refreshDisplay();
     }
 }
 
-function refreshFromInputFloatBinary(impl, refreshHexInput) {
-    inputFloatValue = impl.getValue(inputFloatBinary);
-    decimalInput.value = impl.getValueString(inputFloatBinary);
+function refreshFromInputFloatBinary(scheme, refreshHexInput) {
+    inputFloatValue = scheme.getValue(inputFloatBinary);
+    decimalInput.value = scheme.getValueString(inputFloatBinary);
     if (refreshHexInput) {
-        hexInput.value = impl.getHex(inputFloatBinary);
+        hexInput.value = scheme.getHex(inputFloatBinary);
     }
     refreshDisplay();
 }
 
 function hexInputHandler() {
-    let bits = getFloatBits();
-    let impl = floatTypes[bits];
+    let scheme = getFloatScheme();
+    let bits = scheme.howManyBits();
     let numBytes = Math.ceil(bits / 8);
     let hexString = hexInput.value.trim();
 
@@ -277,14 +310,14 @@ function hexInputHandler() {
     else {
         hexInput.style.backgroundColor = null;
         inputFloatBinary = bin;
-        refreshFromInputFloatBinary(impl, false);
+        refreshFromInputFloatBinary(scheme, false);
     }
 }
 
-function recreateBitButtons(impl) {
-    signBitButton = impl.createSignBitButton();
-    exponentBitButtons = impl.createExponentBitButtons();
-    mantissaBitButtons = impl.createMantissaBitButtons();
+function recreateBitButtons(scheme) {
+    signBitButton = scheme.createSignBitButton();
+    exponentBitButtons = scheme.createExponentBitButtons();
+    mantissaBitButtons = scheme.createMantissaBitButtons();
     signBitButtonsCell.innerHTML = "";
     exponentBitButtonsCell.innerHTML = "";
     mantissaBitButtonsCell.innerHTML = "";
@@ -320,7 +353,7 @@ function recreateBitButtons(impl) {
 
 function changeFloatPrecision() {
     let bits = getFloatBits();
-    let impl = floatTypes[bits];
+    let scheme = getFloatScheme();
     if (bits == 32) {
         inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
         decimalInput.setAttribute("placeholder", "e.g. 1.23456789e-10...");
@@ -331,7 +364,7 @@ function changeFloatPrecision() {
         decimalInput.setAttribute("placeholder", "e.g. 1.2345678901234567e-89...");
         hexInput.setAttribute("placeholder", "e.g. 400921FB54442D18")
     }
-    recreateBitButtons(impl);
+    recreateBitButtons(scheme);
     refreshDisplay();
 }
 
@@ -346,6 +379,34 @@ function changeInputFormat() {
     }
 }
 
+function modifyExponent(delta) {
+    let scheme = getFloatScheme();
+    scheme.modifyExponent(inputFloatBinary, delta);
+    refreshFromInputFloatBinary(scheme, true);
+}
+
+function modifyMantissa(delta) {
+    let scheme = getFloatScheme();
+    scheme.modifyMantissa(inputFloatBinary, delta);
+    refreshFromInputFloatBinary(scheme, true);
+}
+
+function decrementExponentHandler() {
+    modifyExponent(-1);
+}
+
+function incrementExponentHandler() {
+    modifyExponent(1);
+}
+
+function decrementMantissaHandler() {
+    modifyMantissa(-1);
+}
+
+function incrementMantissaHandler() {
+    modifyMantissa(1);
+}
+
 decimalInput.addEventListener("input", decimalInputHandler);
 hexInput.addEventListener("input", hexInputHandler);
 floatFormat32Input.addEventListener("change", changeFloatPrecision);
@@ -353,6 +414,14 @@ floatFormat64Input.addEventListener("change", changeFloatPrecision);
 
 floatInputSelectorString.addEventListener("change", changeInputFormat);
 floatInputSelectorHex.addEventListener("change", changeInputFormat);
+
+decrementExponentButton.addEventListener("click", decrementExponentHandler);
+incrementExponentButton.addEventListener("click", incrementExponentHandler);
+decrementMantissaButton.addEventListener("click", decrementMantissaHandler);
+incrementMantissaButton.addEventListener("click", incrementMantissaHandler);
+
+
+
 
 function initPage() {
     decimalInput.focus();
