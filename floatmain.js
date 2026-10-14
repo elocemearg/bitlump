@@ -139,7 +139,7 @@ class FPScheme {
         let rawExp = this.getExponentRaw(bin);
         if (rawExp == 0) {
             /* Value is subnormal or zero */
-            return this.minExp;
+            return this.minNormalExp;
         }
         else {
             return rawExp - this.expBias;
