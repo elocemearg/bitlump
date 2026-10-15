@@ -25,6 +25,8 @@ let incrementExponentButton = document.getElementById("incrementexponent");
 let decrementMantissaButton = document.getElementById("decrementmantissa");
 let incrementMantissaButton = document.getElementById("incrementmantissa");
 
+let ieee754EncodingLink = document.getElementById("ieee754encodinglink");
+
 /* key (e.g. "negative" or "zero") maps to list of HTML elements to be given
  * the fpconditionlit class when that condition applies. */
 let fpConditionLights = {};
@@ -393,12 +395,14 @@ function changeFloatPrecision() {
     if (bits == 32) {
         inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
         decimalInput.setAttribute("placeholder", "e.g. 1.23456789e-10...");
-        hexInput.setAttribute("placeholder", "e.g. 40490FDB")
+        hexInput.setAttribute("placeholder", "e.g. 40490FDB");
+        ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Single-precision_floating-point_format";
     }
     else {
         inputFloatBinary = createBinaryIntFromFloat64Bin(inputFloatValue);
         decimalInput.setAttribute("placeholder", "e.g. 1.2345678901234567e-89...");
         hexInput.setAttribute("placeholder", "e.g. 400921FB54442D18")
+        ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Double-precision_floating-point_format";
     }
     recreateBitButtons(scheme);
     refreshDisplay();
@@ -455,8 +459,6 @@ decrementExponentButton.addEventListener("click", decrementExponentHandler);
 incrementExponentButton.addEventListener("click", incrementExponentHandler);
 decrementMantissaButton.addEventListener("click", decrementMantissaHandler);
 incrementMantissaButton.addEventListener("click", incrementMantissaHandler);
-
-
 
 
 function initPage() {

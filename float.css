@@ -102,3 +102,9 @@ div.fpconditioninfinity.fpconditionlit {
 div.fpconditionnan.fpconditionlit {
     background: radial-gradient(hsl(0deg, 100%, 85%), hsl(0deg, 100%, 40%));
 }
+
+.outputvalue.outputvaluelarge {
+    font-size: 16pt;
+    min-height: 20pt;
+    line-height: 20pt;
+}
