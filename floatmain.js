@@ -101,7 +101,7 @@ class FPScheme {
         this.mantissaHexDigits = Math.ceil(numMantissaBits / 4);
     }
 
-    howManyBits(bin) {
+    howManyBits() {
         return this.numBits;
     }
 
