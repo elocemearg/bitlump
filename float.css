@@ -1,5 +1,37 @@
+body {
+    font-family: "Fira Sans Condensed", sans-serif;
+}
+
 div.maininputrow {
     text-align: center;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+label.radiolabel {
+    background-color: white;
+    border-radius: 5px;
+    border: 2px silver outset;
+    padding: 5px 10px 5px 10px;
+    margin-left: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+label.radiolabelselected {
+    background-color: royalblue;
+    border: 2px silver inset !important;
+    color: white;
+}
+
+input.floatinput {
+    width: 15em;
+    font-family: "Fira Code", monospace;
+}
+
+select.bigselect {
+    font-size: 16pt;
+    font-family: "Fira Sans Condensed", sans-serif;
 }
 
 div.mainoutputrow {
@@ -14,6 +46,7 @@ div.mainoutputrowitem {
 
 .floatoutput th {
     text-align: right;
+    font-weight: normal;
 }
 
 .floatoutput td {

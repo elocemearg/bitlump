@@ -10,11 +10,13 @@ let outputExponentValue = document.getElementById("exponentvalue");
 let outputMantissaValue = document.getElementById("mantissavalue");
 let outputValueDecimal = document.getElementById("valuedecimal");
 
-let floatFormat32Input = document.getElementById("floatformat32");
-let floatFormat64Input = document.getElementById("floatformat64");
+let floatSchemeInputs = [
+    document.getElementById("floatscheme32"),
+    document.getElementById("floatscheme64")
+];
+let floatSchemeInputLabels = [];
 
-let floatInputSelectorString = document.getElementById("floatinputstring");
-let floatInputSelectorHex = document.getElementById("floatinputhex");
+let floatInputSelector = document.getElementById("floatinputformat");
 
 let signBitButtonsCell = document.getElementById("signbitbuttons");
 let exponentBitButtonsCell = document.getElementById("exponentbitbuttons");
@@ -25,7 +27,14 @@ let incrementExponentButton = document.getElementById("incrementexponent");
 let decrementMantissaButton = document.getElementById("decrementmantissa");
 let incrementMantissaButton = document.getElementById("incrementmantissa");
 
-let ieee754EncodingLink = document.getElementById("ieee754encodinglink");
+let ieee754EncodingLink = document.createElement("A");
+ieee754EncodingLink.setAttribute("target", "_blank");
+ieee754EncodingLink.innerText = "IEEE 754 hex encoding";
+
+/* <th> tags containing the headings for the main outputs - the contents
+ * vary depending on whether the user has entered a string or binary
+ * representation of a float. */
+let valueHexTitle = document.getElementById("valuehextitle");
 
 /* key (e.g. "negative" or "zero") maps to list of HTML elements to be given
  * the fpconditionlit class when that condition applies. */
@@ -46,6 +55,13 @@ impliedMantissaBit.innerText = "1.";
 /* The current value we're working with, as both a float and a binary string. */
 let inputFloatValue = 0;
 let inputFloatBinary = null;
+
+function getContainingLabel(element) {
+    while (element != null && element.tagName.toLowerCase() != "label") {
+        element = element.parentElement;
+    }
+    return element;
+}
 
 function setBitButtonValue(button, value) {
     if (value) {
@@ -103,6 +119,10 @@ class FPScheme {
 
     howManyBits() {
         return this.numBits;
+    }
+
+    getRoundTripDecimalDigits() {
+        return this.roundTripDecimalDigits;
     }
 
     isNegative(bin) {
@@ -257,12 +277,12 @@ let floatSchemes = {
 };
 
 function getFloatBits() {
-    if (floatFormat32Input.checked) {
-        return 32;
+    for (let i = 0; i < floatSchemeInputs.length; i++) {
+        if (floatSchemeInputs[i].checked) {
+            return parseInt(floatSchemeInputs[i].value);
+        }
     }
-    else {
-        return 64;
-    }
+    return null;
 }
 
 function getFloatScheme() {
@@ -404,18 +424,54 @@ function changeFloatPrecision() {
         hexInput.setAttribute("placeholder", "e.g. 400921FB54442D18")
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Double-precision_floating-point_format";
     }
+
+    /* Highlight the label containing the selected radio button */
+    for (let i = 0; i < floatSchemeInputLabels.length; i++) {
+        let label = floatSchemeInputLabels[i];
+        if (label && label.classList.contains("radiolabel")) {
+            if (floatSchemeInputs[i].checked) {
+                if (!label.classList.contains("radiolabelselected")) {
+                    label.classList.add("radiolabelselected");
+                }
+            }
+            else {
+                if (label.classList.contains("radiolabelselected")) {
+                    label.classList.remove("radiolabelselected");
+                }
+            }
+        }
+    }
+
+    /* Any element which needs to contain 9 or 17 depending on whether we're
+     * using 32-bit or 64-bit floats, set them now. */
+    let floatFormatDigits = document.getElementsByClassName("floatformatdigits");
+    for (let i = 0; i < floatFormatDigits.length; i++) {
+        floatFormatDigits[i].innerText = scheme.getRoundTripDecimalDigits().toString();
+    }
+
     recreateBitButtons(scheme);
     refreshDisplay();
 }
 
 function changeInputFormat() {
-    if (floatInputSelectorString.checked) {
-        decimalInput.style.display = null;
-        hexInput.style.display = "none";
-    }
-    else {
-        decimalInput.style.display = "none";
-        hexInput.style.display = null;
+    for (let i = 0; i < floatInputSelector.options.length; i++) {
+        let option = floatInputSelector.options[i];
+        if (option.selected) {
+            if (option.value == "string") {
+                decimalInput.style.display = null;
+                hexInput.style.display = "none";
+                valueHexTitle.innerHTML = "";
+                valueHexTitle.appendChild(document.createTextNode("Closest representable value, "));
+                valueHexTitle.appendChild(ieee754EncodingLink);
+            }
+            else {
+                decimalInput.style.display = "none";
+                hexInput.style.display = null;
+                valueHexTitle.innerHTML = "";
+                valueHexTitle.appendChild(ieee754EncodingLink);
+            }
+            break;
+        }
     }
 }
 
@@ -449,11 +505,13 @@ function incrementMantissaHandler() {
 
 decimalInput.addEventListener("input", decimalInputHandler);
 hexInput.addEventListener("input", hexInputHandler);
-floatFormat32Input.addEventListener("change", changeFloatPrecision);
-floatFormat64Input.addEventListener("change", changeFloatPrecision);
 
-floatInputSelectorString.addEventListener("change", changeInputFormat);
-floatInputSelectorHex.addEventListener("change", changeInputFormat);
+for (let i = 0; i < floatSchemeInputs.length; i++) {
+    floatSchemeInputs[i].addEventListener("change", changeFloatPrecision);
+    floatSchemeInputLabels.push(getContainingLabel(floatSchemeInputs[i]));
+}
+
+floatInputSelector.addEventListener("change", changeInputFormat);
 
 decrementExponentButton.addEventListener("click", decrementExponentHandler);
 incrementExponentButton.addEventListener("click", incrementExponentHandler);

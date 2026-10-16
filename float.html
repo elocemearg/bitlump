@@ -26,16 +26,16 @@
 
         <main>
             <div class="maininputrow">
-                <label><input type="radio" name="floatformat" id="floatformat32" checked> Single-precision (32 bit)</label>
-                <label><input type="radio" name="floatformat" id="floatformat64"> Double-precision (64 bit)</label>
+                <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme32" value="32" checked> Single-precision (32 bit)</label>
+                <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme64" value="64"> Double-precision (64 bit)</label>
             </div>
             <div class="maininputrow">
-                <label><input type="radio" name="floatinput" id="floatinputstring" checked> Input string</label>
-                <label><input type="radio" name="floatinput" id="floatinputhex"> Input IEEE 754 encoding in hex</label>
-            </div>
-            <div class="maininputrow">
-                <input id="decimalinput" type="text" placeholder="e.g. 1.23456789e-10">
-                <input id="hexinput" type="text" placeholder="e.g. 40490FDB">
+                <select id="floatinputformat" class="bigselect">
+                    <option value="string">Decimal string</option>
+                    <option value="hex">IEEE 754 hex encoding</option>
+                </select>
+                <input class="floatinput" id="decimalinput" type="text" placeholder="e.g. 1.23456789e-10">
+                <input class="floatinput" id="hexinput" type="text" placeholder="e.g. 40490FDB">
             </div>
 
             <div>
@@ -89,9 +89,7 @@
                             </tr>
                             <tr>
                                 <th></th>
-                                <th colspan="3" style="text-align: left;">
-                                    <a href="https://en.wikipedia.org/wiki/IEEE_754" id="ieee754encodinglink" target="_blank">IEEE 754 encoding</a>
-                                </th>
+                                <th colspan="3" style="text-align: left;" id="valuehextitle"></th>
                             </tr>
                             <tr>
                                 <th></th>
@@ -99,7 +97,7 @@
                             </tr>
                             <tr>
                                 <th></th>
-                                <th colspan="3" style="text-align: left;">Decimal representation</th>
+                                <th colspan="3" style="text-align: left;" id="valuedecimaltitle">Closest representable value, to <span class="floatformatdigits"></span> decimal digits</th>
                             </tr>
                             <tr>
                                 <th></th>
