@@ -320,11 +320,13 @@ function decimalInputHandler() {
     let valueString = decimalInput.value.trim();
     let value = valueString.length == 0 ? 0 : parseFloat(valueString);
     if (isNaN(value)) {
-        decimalInput.style.backgroundColor = "red";
+        decimalInput.classList.add("invalidinput");
     }
     else {
         let scheme = getFloatScheme();
-        decimalInput.style.backgroundColor = null;
+        if (decimalInput.classList.contains("invalidinput")) {
+            decimalInput.classList.remove("invalidinput");
+        }
         hexInput.value = "";
         inputFloatValue = value;
         if (scheme.howManyBits() == 32) {
@@ -363,10 +365,12 @@ function hexInputHandler() {
 
     let bin = createBinaryIntFromHex(hexString, numBytes);
     if (bin == null) {
-        hexInput.style.backgroundColor = "red";
+        hexInput.classList.add("invalidinput");
     }
     else {
-        hexInput.style.backgroundColor = null;
+        if (hexInput.classList.contains("invalidinput")) {
+            hexInput.classList.remove("invalidinput");
+        }
         inputFloatBinary = bin;
         refreshFromInputFloatBinary(scheme, false);
     }

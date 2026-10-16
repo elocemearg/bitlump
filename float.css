@@ -29,6 +29,10 @@ input.floatinput {
     font-family: "Fira Code", monospace;
 }
 
+input.invalidinput {
+    background-color: hsl(0deg, 100%, 80%);
+}
+
 select.bigselect {
     font-size: 16pt;
     font-family: "Fira Sans Condensed", sans-serif;
