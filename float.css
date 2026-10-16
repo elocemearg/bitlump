@@ -27,6 +27,7 @@ label.radiolabelselected {
 input.floatinput {
     width: 15em;
     font-family: "Fira Code", monospace;
+    font-variant-ligatures: none;
 }
 
 input.invalidinput {
