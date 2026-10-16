@@ -547,4 +547,6 @@ function initPage() {
     inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
     changeFloatPrecision();
     changeInputFormat();
+
+    attachCopyHandlerToElementsWithClass("outputvalue", null);
 }

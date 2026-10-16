@@ -9,9 +9,6 @@ let endianSwap64Button = null;
 
 let intManipulationButtons = [];
 
-let copyIndicator = null;
-let copyIndicatorTimeout = null;
-
 /* Data structure containing all the conversion output elements and their
  * conversion functions.
  *
@@ -108,10 +105,7 @@ function initialiseConversionControls() {
      * the purpose of what happens when you click on it, except that what
      * gets copied to the clipboard is the contents of the tag's
      * data-text-to-copy attribute rather than its innerText. */
-    let autoCopyTags = document.getElementsByClassName("autocopytagdata");
-    for (let i = 0; i < autoCopyTags.length; i++) {
-        autoCopyTags[i].addEventListener("click", outputValueClickHandler);
-    }
+    attachCopyHandlerToAutoCopyTagData();
 }
 
 function updateURL(text) {
@@ -246,87 +240,6 @@ function setButtonsEnabledState() {
     }
 }
 
-function killCopyIndicator() {
-    if (copyIndicator) {
-        if (copyIndicator.parentElement) {
-            copyIndicator.parentElement.removeChild(copyIndicator);
-        }
-        copyIndicator.style.display = "none";
-        copyIndicator = null;
-    }
-}
-
-function startCopyIndicator(indicatorText, posX, posY, parentElement) {
-    if (copyIndicator == null) {
-        copyIndicator = document.createElement("DIV");
-        copyIndicator.classList.add("copyindicator");
-        copyIndicator.innerText = indicatorText;
-        copyIndicator.style.left = posX.toString() + "px";
-        copyIndicator.style.top = posY.toString() + "px";
-
-        /* Add the copy indicator to the outputvalue element and kill it in
-         * 1000ms from now. In that time it will animate. */
-        parentElement.appendChild(copyIndicator);
-        copyIndicatorTimeout = setTimeout(killCopyIndicator, 1000);
-    }
-}
-
-function outputValueClickHandler(event) {
-    let outputValue = event.target;
-
-    /* The event might have been delivered to a tag contained within the
-     * outputvalue, or it might even be the copy indicator itself if it's
-     * still there, but we want the innerText property of the nearest
-     * containing outputvalue. */
-    while (outputValue != null && !(outputValue.classList.contains("outputvalue") || outputValue.classList.contains("autocopytagdata"))) {
-        outputValue = outputValue.parentElement;
-    }
-
-    /* Don't allow click-to-copy on a void output element */
-    if (outputValue == null || outputValue.classList.contains("outputcontainervoid")) {
-        return;
-    }
-
-    /* Wherever the floating copy indicator is, remove it. */
-    killCopyIndicator();
-    if (copyIndicatorTimeout) {
-        clearTimeout(copyIndicatorTimeout);
-    }
-
-    /* Now copy the text from the outputvalue. */
-    if (outputValue) {
-        /* When the Promise resolves, make the indicator start at the position
-         * of the mouse click. */
-
-        /* If there is a data-text-to-copy attribute, take that as the text
-         * to copy to the clipboard. */
-        let clipboardText = outputValue.getAttribute("data-text-to-copy");
-        if (clipboardText == null) {
-            if (outputValue.classList.contains("autocopytagdata")) {
-                /* autocopytagdata must have a data-text-to-copy attribute
-                 * or it's not valid */
-                return null;
-            }
-            else {
-                /* Otherwise, take the inner text of the tag. */
-                clipboardText = outputValue.innerText;
-            }
-        }
-        let p = navigator.clipboard.writeText(clipboardText);
-        let rect = outputValue.getBoundingClientRect();
-        let indicatorY = event.clientY - rect.top;
-        let indicatorX = event.clientX - rect.left;
-        p.then(
-            function() {
-                /* Create a new floating copy indicator, to tell the user they
-                 * copied * something to the clipboard. */
-                startCopyIndicator("Copied", indicatorX, indicatorY, outputValue);
-            },
-            function() {
-            }
-        );
-    }
-}
 
 function refresh() {
     for (let groupIndex = 0; groupIndex < conversionGroups.length; groupIndex++) {
@@ -399,14 +312,7 @@ function refresh() {
     /* Anything with the class outputvalue, which does not have the class
      * outputvaluenoautocopy, has its contents automatically linkified.
      * Clicking the link feeds in the output value as the input. */
-    let outputElements = document.getElementsByClassName("outputvalue");
-    for (let outputIndex = 0; outputIndex < outputElements.length; outputIndex++) {
-        let oe = outputElements[outputIndex];
-        if (!oe.classList.contains("clicktocopy") && !oe.classList.contains("outputvaluenoautocopy")) {
-            oe.addEventListener("click", outputValueClickHandler);
-            oe.classList.add("clicktocopy");
-        }
-    }
+    attachCopyHandlerToElementsWithClass("outputvalue", "outputvaluenoautocopy");
 
     setButtonsEnabledState();
 
