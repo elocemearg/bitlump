@@ -17,6 +17,11 @@ let outputExponentValue = document.getElementById("exponentvalue");
 let outputMantissaValue = document.getElementById("mantissavalue");
 let outputValueDecimal = document.getElementById("valuedecimal");
 
+/* <a> tags for linking back to the Bitlump main page with the two main
+ * output fields, the hex and decimal representations of the value */
+let linkValueRaw = document.getElementById("valuehexlink");
+let linkValueDecimal = document.getElementById("valuedecimallink");
+
 /* Radio buttons for 32/64-bit selection */
 let floatSchemeInputs = [
     document.getElementById("floatscheme32"),
@@ -420,6 +425,8 @@ function updateDisplay(bin) {
         outputExponentValue.innerText = "";
         outputMantissaValue.innerText = "";
         outputValueDecimal.innerText = "(invalid input)";
+        linkValueRaw.href = null;
+        linkValueDecimal.href = null;
         clearBitButtonValues();
         clearFPConditionLights();
         inputBox.classList.add("invalidinput");
@@ -430,15 +437,21 @@ function updateDisplay(bin) {
         inputBox.classList.remove("invalidinput");
     }
 
+    let hexValue = "0x" + scheme.getHex(bin);
+    let decimalValue = scheme.getValueString(bin);
+
     outputSignRaw.innerText = scheme.isNegative(bin) ? "1" : "0";
     outputExponentRaw.innerText = scheme.getExponentRawHex(bin);
     outputMantissaRaw.innerText = scheme.getMantissaRawHex(bin);
-    outputValueRaw.innerText = "0x" + scheme.getHex(bin);
+    outputValueRaw.innerText = hexValue;
 
     outputSignValue.innerText = scheme.getSign(bin);
     outputExponentValue.innerText = scheme.getExponent(bin);
     outputMantissaValue.innerText = scheme.getMantissaString(bin);
-    outputValueDecimal.innerText = scheme.getValueString(bin);
+    outputValueDecimal.innerText = decimalValue;
+
+    linkValueRaw.href = "index.html?i=" + encodeURIComponent(hexValue);
+    linkValueDecimal.href = "index.html?i=" + encodeURIComponent(decimalValue);
 
     setFPConditionLight("subnormal", scheme.isSubnormal(bin));
     setFPConditionLight("zero", scheme.isZero(bin));

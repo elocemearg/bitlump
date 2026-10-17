@@ -164,3 +164,7 @@ div.fpconditionnan.fpconditionlit {
     min-height: 20pt;
     line-height: 20pt;
 }
+
+a.bitlumplink {
+    font-size: 10pt;
+}

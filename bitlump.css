@@ -239,6 +239,16 @@ div.outputcellbigcharacter {
     border: 1px silver inset;
 }
 
+div.floattwiddlerlinksection {
+    font-size: 10pt;
+    text-align: left;
+}
+
+a.floattwiddlerlink {
+    margin-left: 0.75em;
+    font-family: monospace;
+}
+
 div.buttonblock {
     text-align: center;
 }
