@@ -397,8 +397,16 @@ const floatRegex = /^-?(([0-9]+)|([0-9]+\.[0-9]*)|(\.[0-9]+))([Ee][+-]?[0-9]+)?$
  * 1.234, but parseFloatStrict("1.234xyz") returns NaN. */
 function parseFloatStrict(s) {
     s = s.trim().toLowerCase();
-    if (!floatRegex.test(s.trim()) && s != "infinity" && s != "-infinity") {
-        return NaN;
+    if (!floatRegex.test(s)) {
+        if (s == "infinity" || s == "inf") {
+            return Infinity;
+        }
+        else if (s == "-infinity" || s == "-inf") {
+            return -Infinity;
+        }
+        else {
+            return NaN;
+        }
     }
     else {
         return parseFloat(s);
@@ -442,8 +450,13 @@ function inputHandler() {
 function refreshFromBinary(scheme, floatBinary, refreshHexInput) {
     inputFloatBinary = floatBinary;
     if (floatBinary != null) {
-        if (refreshHexInput && getInputFormat() == "hex") {
-            inputBox.value = scheme.getHex(floatBinary);
+        if (getInputFormat() == "hex") {
+            if (refreshHexInput) {
+                inputBox.value = scheme.getHex(floatBinary);
+            }
+        }
+        else {
+            inputBox.value = scheme.getValueString(floatBinary);
         }
     }
     refreshDisplay(floatBinary);
