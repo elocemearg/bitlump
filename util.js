@@ -19,3 +19,17 @@ function getContainingLabel(element) {
     }
     return element;
 }
+
+function setContentsByClass(className, contents) {
+    let elements = document.getElementsByClassName(className);
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].innerHTML = contents;
+    }
+}
+
+function setHrefByClass(className, url) {
+    let elements = document.getElementsByClassName(className);
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].href = url;
+    }
+}

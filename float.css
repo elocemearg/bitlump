@@ -1,5 +1,22 @@
 body {
     font-family: "Inter", sans-serif;
+    font-variant-ligatures: none;
+}
+
+section.sectioncolumn {
+    display: inline-block;
+    vertical-align: top;
+    padding-left: 2em;
+    margin-right: 2em;
+}
+
+section.controlsection {
+}
+
+section.longwindedexplanation {
+    max-width: 750px;
+    font-size: 11pt;
+    border-left: 2px silver groove;
 }
 
 div.maininputrow {
@@ -168,4 +185,8 @@ div.fpconditionnan.fpconditionlit {
 
 a.bitlumplink {
     font-size: 10pt;
+}
+
+.dottedunderline {
+    border-bottom: 1px gray dashed;
 }

@@ -175,8 +175,10 @@ function clearFPConditionLights() {
  * such as single-precision or double-precision. Bit positions and counts are
  * supplied on construction. */
 class FPScheme {
-    constructor(numBits, signBitIndex, topExpBitIndex, numExpBits,
-            topMantissaBitIndex, numMantissaBits, expBias, roundTripDecimalDigits) {
+    constructor(precisionWord, numBits, signBitIndex,
+            topExpBitIndex, numExpBits, topMantissaBitIndex, numMantissaBits,
+            expBias, roundTripDecimalDigits) {
+        this.precisionWord = precisionWord;
         this.numBits = numBits;
         this.signBitIndex = signBitIndex;
         this.topExpBitIndex = topExpBitIndex;
@@ -198,12 +200,32 @@ class FPScheme {
         this.mantissaHexDigits = Math.ceil(numMantissaBits / 4);
     }
 
-    howManyBits() {
+    getNumBits() {
         return this.numBits;
     }
 
     getRoundTripDecimalDigits() {
         return this.roundTripDecimalDigits;
+    }
+
+    getPrecisionWord() {
+        return this.precisionWord;
+    }
+
+    getNumExponentBits() {
+        return this.numExpBits;
+    }
+
+    getExponentBias() {
+        return this.expBias;
+    }
+
+    getNumMantissaBits() {
+        return this.numMantissaBits;
+    }
+
+    getSubnormalExponent() {
+        return this.minNormalExp;
     }
 
     isNegative(bin) {
@@ -264,6 +286,21 @@ class FPScheme {
     getMantissaString(bin) {
         return this.getMantissa(bin).toFixed(this.roundTripDecimalDigits - 1);
     }
+
+    getMantissaBinary(bin) {
+        let str = "";
+        if (this.isSubnormal(bin)) {
+            str += "0.";
+        }
+        else {
+            str += "1.";
+        }
+        for (let bit = this.topMantissaBitIndex; bit > this.topMantissaBitIndex - this.numMantissaBits; bit--) {
+            str += bin.getBit(bit) ? "1" : "0";
+        }
+        return str;
+    }
+
 
     getHex(bin) {
         return bin.formatHex();
@@ -355,8 +392,8 @@ class FPScheme {
  * the number of bits, which must be the same as the "value" attribute of
  * the associated radio button. */
 let floatSchemes = {
-    32 : new FPScheme(32, 31, 30, 8, 22, 23, 127, 9),
-    64 : new FPScheme(64, 63, 62, 11, 51, 52, 1023, 17),
+    32 : new FPScheme("single", 32, 31, 30, 8, 22, 23, 127, 9),
+    64 : new FPScheme("double", 64, 63, 62, 11, 51, 52, 1023, 17),
 };
 
 /* Return the "value" attribute of the selected precision radio button.
@@ -437,29 +474,91 @@ function updateDisplay(bin) {
         inputBox.classList.remove("invalidinput");
     }
 
-    let hexValue = "0x" + scheme.getHex(bin);
-    let decimalValue = scheme.getValueString(bin);
+    const hexValue = "0x" + scheme.getHex(bin);
+    const decimalValue = scheme.getValueString(bin);
+    const exponentRawHex = scheme.getExponentRawHex(bin);
+    const exponentRaw = scheme.getExponentRaw(bin);
+    const exponent = scheme.getExponent(bin);
+    const mantissaRawHex = scheme.getMantissaRawHex(bin);
+    const mantissaBinary = scheme.getMantissaBinary(bin);
+    const mantissaString = scheme.getMantissaString(bin);
+    const isNegative = scheme.isNegative(bin);
+    const isSubnormal = scheme.isSubnormal(bin);
+    const isZero = scheme.isZero(bin);
+    const isNotANumber = scheme.isNotANumber(bin);
+    const isInfinity = scheme.isInfinity(bin);
 
-    outputSignRaw.innerText = scheme.isNegative(bin) ? "1" : "0";
-    outputExponentRaw.innerText = scheme.getExponentRawHex(bin);
-    outputMantissaRaw.innerText = scheme.getMantissaRawHex(bin);
+    outputSignRaw.innerText = isNegative ? "1" : "0";
+    outputExponentRaw.innerText = exponentRawHex;
+    outputMantissaRaw.innerText = mantissaRawHex;
     outputValueRaw.innerText = hexValue;
 
     outputSignValue.innerText = scheme.getSign(bin);
-    outputExponentValue.innerText = scheme.getExponent(bin);
-    outputMantissaValue.innerText = scheme.getMantissaString(bin);
+    outputExponentValue.innerText = exponent.toString();
+    outputMantissaValue.innerText = mantissaString;
     outputValueDecimal.innerText = decimalValue;
 
     linkValueRaw.href = "index.html?i=" + encodeURIComponent(hexValue);
     linkValueDecimal.href = "index.html?i=" + encodeURIComponent(decimalValue);
 
-    setFPConditionLight("subnormal", scheme.isSubnormal(bin));
-    setFPConditionLight("zero", scheme.isZero(bin));
-    setFPConditionLight("negative", scheme.isNegative(bin));
-    setFPConditionLight("infinity", scheme.isInfinity(bin));
-    setFPConditionLight("nan", scheme.isNotANumber(bin));
+    setFPConditionLight("subnormal", isSubnormal);
+    setFPConditionLight("zero", isZero);
+    setFPConditionLight("negative", isNegative);
+    setFPConditionLight("infinity", isInfinity);
+    setFPConditionLight("nan", isNotANumber);
 
     scheme.setButtonValues(bin);
+
+    /* Fill in the long-winded explanation of all the fields, what they mean,
+     * and how we arrive at the final value from the bit fields. */
+    if (isNegative) {
+        setContentsByClass("signextratext", "The sign bit in the supplied number is 1, so this value is <b>negative</b>.");
+    }
+    else {
+        setContentsByClass("signextratext", "The sign bit in the supplied number is 0, so this value is <b>positive</b>.");
+    }
+
+    let valueHtml = "<p>The value of the number supplied is therefore:</p><blockquote>" + (isNegative ? "-1" : "1") +
+        "&nbsp;&#x00d7;&nbsp;2<sup>" + exponent.toString() + "</sup>" +
+        "&nbsp;&#x00d7;&nbsp;" + mantissaBinary + "<sub>2</sub></blockquote>";
+    valueHtml += "<p>which equals:</p>";
+    valueHtml += "<blockquote><b>" + decimalValue + "</b> (to " + scheme.getRoundTripDecimalDigits().toString() + " decimal digits).</blockquote>";
+
+    if (isZero) {
+        setContentsByClass("exponentextratext", "The supplied number is zero, so the exponent field's raw value " + exponentRaw.toString() + " doesn't matter.");
+        setContentsByClass("mantissaextratext", "The supplied number has a mantissa field of all 0-bits, so it is <b>zero</b>.");
+        setContentsByClass("valueextratext", "<p>In this case the value is <b>0</b>.</p>");
+    }
+    else if (isSubnormal) {
+        setContentsByClass("exponentextratext", "The supplied number's raw exponent field is all 0-bits, so it is <b>subnormal</b> and the exponent is <b>" + scheme.getSubnormalExponent() + ".</b>");
+        setContentsByClass("mantissaextratext", "The supplied subnormal number has the raw mantissa field " +
+            mantissaRawHex + " (hex) which translates to the binary mantissa <b>" +
+            mantissaBinary + "</b> (base 2) which is <b>" +
+            mantissaString + "</b> (decimal).");
+        setContentsByClass("valueextratext", valueHtml);
+    }
+    else if (isInfinity) {
+        setContentsByClass("exponentextratext", "The supplied number's raw exponent field is all 1-bits and the mantissa is zero, so there is no exponent, and the number is <b>" + (isNegative ? "-" : "") + "Infinity</b>.");
+        setContentsByClass("mantissaextratext", "The supplied number is infinite, so there is no meaningful mantissa.");
+        setContentsByClass("valueextratext", "<p>The value of the supplied number is <b>" + decimalValue + "</b>.</p>");
+    }
+    else if (isNotANumber) {
+        setContentsByClass("exponentextratext", "The supplied number's raw exponent field is all 1-bits and the mantissa is not zero, so there is no exponent, and the number is <b>NaN</b> (not a number).");
+        setContentsByClass("mantissaextratext", "The supplied number is NaN, so there is no meaningful mantissa.");
+        setContentsByClass("valueextratext", "<p>The value of the supplied number is <b>NaN</b> (not a number).</p>");
+    }
+    else {
+        setContentsByClass("exponentextratext",
+            "The supplied number's raw exponent field is " +
+                exponentRawHex + " (" + exponentRaw.toString() +
+                "). Subtracting " + scheme.getExponentBias().toString() +
+                " gives the true exponent: <b>" + exponent.toString() + "</b>.");
+        setContentsByClass("mantissaextratext", "The supplied number has the raw mantissa field " + mantissaRawHex +
+            " (hex), which when combined with the implied leading 1 bit gives the binary mantissa <b>" +
+            mantissaBinary + "</b> (base 2), which is <b>" +
+            mantissaString + "</b> (decimal).");
+        setContentsByClass("valueextratext", valueHtml);
+    }
 
     updateURL();
 }
@@ -501,7 +600,7 @@ function getFloatBinaryFromDecimalInput() {
     else {
         let scheme = getFloatScheme();
         let bin = null;
-        if (scheme.howManyBits() == 32) {
+        if (scheme.getNumBits() == 32) {
             bin = createBinaryIntFromFloat32Bin(value);
         }
         else {
@@ -556,7 +655,7 @@ function updateDisplayFromBinary(floatBinary, updateHexInput, scheme) {
  * long for the selected float precision, return null. */
 function getFloatBinaryFromHexInput() {
     let scheme = getFloatScheme();
-    let bits = scheme.howManyBits();
+    let bits = scheme.getNumBits();
     let numBytes = Math.ceil(bits / 8);
     let hexString = inputBox.value.trim();
 
@@ -595,9 +694,11 @@ function notifyFloatPrecisionChanged() {
 
     if (bits == 32) {
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Single-precision_floating-point_format";
+        setHrefByClass("wikipediaformatlink", "https://en.wikipedia.org/wiki/Single-precision_floating-point_format");
     }
     else {
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Double-precision_floating-point_format";
+        setHrefByClass("wikipediaformatlink", "https://en.wikipedia.org/wiki/Double-precision_floating-point_format");
     }
 
     /* Highlight the label containing the selected radio button */
@@ -628,10 +729,13 @@ function notifyFloatPrecisionChanged() {
 
     /* Any element which needs to contain 9 or 17 depending on whether we're
      * using 32-bit or 64-bit floats, set them now. */
-    let floatFormatDigits = document.getElementsByClassName("floatformatdigits");
-    for (let i = 0; i < floatFormatDigits.length; i++) {
-        floatFormatDigits[i].innerText = scheme.getRoundTripDecimalDigits().toString();
-    }
+    setContentsByClass("floatformatdigits", scheme.getRoundTripDecimalDigits().toString());
+    setContentsByClass("textnumbits", scheme.getNumBits().toString());
+    setContentsByClass("textprecisionword", scheme.getPrecisionWord());
+    setContentsByClass("textnumexponentbits", scheme.getNumExponentBits().toString());
+    setContentsByClass("textexponentbias", scheme.getExponentBias().toString());
+    setContentsByClass("textnummantissabits", scheme.getNumMantissaBits().toString());
+    setContentsByClass("textsubnormalexponent", scheme.getSubnormalExponent().toString());
 
     recreateBitButtons(scheme);
     updateDisplay(inputFloatBinary);

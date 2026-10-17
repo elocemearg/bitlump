@@ -27,21 +27,24 @@
         </noscript>
 
         <main>
-            <h1>Bitlump Float Twiddler</h1>
-            <h2>Input</h2>
-            <div class="maininputrow">
-                <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme32" value="32" checked> Single-precision (32 bit)</label>
-                <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme64" value="64"> Double-precision (64 bit)</label>
-            </div>
-            <div class="maininputrow">
-                <select id="floatinputformat" class="bigselect">
-                    <option value="string" selected>Decimal string</option>
-                    <option value="hex">IEEE 754 hex encoding</option>
-                </select>
-                <input class="floatinput" id="inputbox" type="text">
-            </div>
 
-            <div>
+            <div style="vertical-align: top;">
+
+            <section class="controlsection sectioncolumn">
+                <h1>Bitlump Float Twiddler</h1>
+                <h2>Input</h2>
+                <div class="maininputrow">
+                    <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme32" value="32" checked> Single-precision (32 bit)</label>
+                    <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme64" value="64"> Double-precision (64 bit)</label>
+                </div>
+                <div class="maininputrow">
+                    <select id="floatinputformat" class="bigselect">
+                        <option value="string" selected>Decimal string</option>
+                        <option value="hex">IEEE 754 hex encoding</option>
+                    </select>
+                    <input class="floatinput" id="inputbox" type="text">
+                </div>
+
                 <h2 id="outputheading">Closest representable value</h1>
                 <div class="mainoutputrow">
                     <div class="mainoutputrowitem">
@@ -120,6 +123,79 @@
                         </table>
                     </div>
                 </div>
+            </section>
+
+            <section class="longwindedexplanation sectioncolumn">
+                <h2>IEEE 754 binary format</h2>
+                <p>
+                An <a class="wikipediaformatlink" target="_blank">IEEE 754 floating point number</a> consists of three bit-fields:
+                the <b>sign bit</b>, the <b>exponent</b>, and the <b>mantissa</b>.
+                </p>
+                <p id="intro"></p>
+                <h3>Sign</h3>
+                <p>
+                The top bit is the sign bit.
+                </p>
+                <p class="signextratext">
+                </p>
+                <h3>Exponent</h3>
+                <p>
+                A floating point number has a base-2 exponent, indicating
+                the power of two by which the mantissa must be multiplied.
+                </p>
+                <p>
+                In a <span class="textnumbits">XXX</span>-bit
+                <span class="textprecisionword">XXX</span>-precision float,
+                the exponent field is <span class="textnumexponentbits"></span> bits.
+                </p>
+                <p>
+                An exponent field of all 0-bits indicates the value is
+                zero or a <a href="https://en.wikipedia.org/wiki/Subnormal_number" target="_blank">subnormal</a>
+                number, and the true exponent is <span class="textsubnormalexponent">XXX</span>.
+                An exponent field of all 1-bits indicates an Infinity or NaN.
+                In all other cases, the exponent field is stored biased by
+                <span class="textexponentbias">XXX</span>, so the true exponent
+                value is the raw value minus
+                <span class="textexponentbias">XXX</span>.
+                </p>
+                <p class="exponentextratext">
+                </p>
+                <h3>Mantissa</h3>
+                <p>
+                The mantissa is the binary fraction which must be multiplied
+                by 2<sup><i>exponent</i></sup> to produce the final value.
+                </p>
+                <p>
+                In a <span class="textnumbits">XXX</span>-bit
+                <span class="textprecisionword">XXX</span>-precision float,
+                the mantissa field stores
+                <span class="textnummantissabits">XXX</span> bits.
+                These are the bits after the mantissa's
+                <span class="dottedunderline" title="The same thing as a decimal point, but for base 2 rather than base 10.">binary point</span>;
+                the single leading bit, before the binary point, is implied.
+                The implied bit's value is usually 1, but it is 0 for subnormal
+                numbers (see above) and zero.
+                Therefore, the true value of the mantissa is in the range
+                1&nbsp;&le;&nbsp;<i>mantissa</i>&nbsp;&lt;&nbsp;2, except for
+                subnormal numbers and zero, where it is in the range
+                0&nbsp;&le;&nbsp;<i>mantissa</i>&nbsp;&lt;&nbsp;1.
+                </p>
+                <p class="mantissaextratext">
+                </p>
+
+                <h3>Value</h3>
+                <p>
+                The overall value is given by:
+                </p>
+                <blockquote>
+                <i>signvalue</i>&nbsp;&#x00d7;&nbsp;2<sup><i>exponent</i></sup>&nbsp;&#x00d7;&nbsp;<i>mantissa</i>
+                </blockquote>
+                <p>
+                where <i>signvalue</i> is 1 if the number is positive or -1 if negative.
+                </p>
+                <div class="valueextratext"></div>
+            </section>
+
             </div>
 
         </main>
