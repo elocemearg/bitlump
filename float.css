@@ -83,7 +83,7 @@ button.bitbutton {
     margin-right: 1px;
     margin-top: 4px;
     font-family: "Fira Code";
-    background-color: #dddddd;
+    background-color: white;
 }
 
 button.bitbutton:active {
@@ -91,11 +91,13 @@ button.bitbutton:active {
 }
 
 button.bitbutton[data-value="0"] {
-    background-color: white;
+    background-color: black;
+    color: white;
 }
 
 button.bitbutton[data-value="1"] {
-    background-color: hsl(120deg, 100%, 80%);
+    background: radial-gradient(hsl(120deg, 100%, 85%), hsl(120deg, 100%, 45%));
+    color: black;
 }
 
 button.bitbutton.bitbuttonstartofgroup {
