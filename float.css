@@ -3,7 +3,6 @@ body {
 }
 
 div.maininputrow {
-    text-align: center;
     margin-top: 15px;
     margin-bottom: 15px;
 }
@@ -42,7 +41,6 @@ select.bigselect {
 div.mainoutputrow {
     display: block;
     margin-bottom: 10px;
-    text-align: center;
 }
 
 div.mainoutputrowitem {

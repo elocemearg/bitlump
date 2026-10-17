@@ -1,6 +1,8 @@
 let decimalInput = document.getElementById("decimalinput");
 let hexInput = document.getElementById("hexinput");
 
+let outputHeading = document.getElementById("outputheading");
+
 let outputSignRaw = document.getElementById("signraw");
 let outputExponentRaw = document.getElementById("exponentraw");
 let outputMantissaRaw = document.getElementById("mantissaraw");
@@ -52,8 +54,9 @@ let impliedMantissaBit = document.createElement("DIV");
 impliedMantissaBit.classList.add("leadingmantissadigit");
 impliedMantissaBit.innerText = "1.";
 
-/* The current value we're working with, as both a float and a binary string. */
-let inputFloatValue = 0;
+/* A BinaryInt object converted from either the decimal input box or the hex
+ * input box. This is where we remember the binary reprsentation of the float
+ * value we're currently showing. */
 let inputFloatBinary = null;
 
 function getContainingLabel(element) {
@@ -206,7 +209,7 @@ class FPScheme {
         button.addEventListener("click", function() {
             if (inputFloatBinary != null) {
                 inputFloatBinary.toggleBit(b);
-                refreshFromInputFloatBinary(scheme, true);
+                refreshFromBinary(scheme, inputFloatBinary, true);
             }
         });
         return button;
@@ -322,9 +325,10 @@ function updateURL() {
     }
 }
 
-function refreshDisplay() {
+/* Update the state of the output fields a bit button state to reflect the
+ * IEEE 754 bit pattern represented by "bin". */
+function refreshDisplay(bin) {
     let scheme = getFloatScheme();
-    let bin = inputFloatBinary;
     if (scheme == null || bin == null) {
         return null;
     }
@@ -350,51 +354,56 @@ function refreshDisplay() {
     updateURL();
 }
 
-function setInputFloatFromDecimalInput() {
+function getFloatBinaryFromDecimalInput() {
     let valueString = decimalInput.value.trim();
     let value = valueString.length == 0 ? 0 : parseFloat(valueString);
     if (isNaN(value)) {
-        return false;
+        return null;
     }
     else {
         let scheme = getFloatScheme();
+        let bin = null;
         hexInput.value = "";
-        inputFloatValue = value;
         if (scheme.howManyBits() == 32) {
-            inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
+            bin = createBinaryIntFromFloat32Bin(value);
         }
         else {
-            inputFloatBinary = createBinaryIntFromFloat64Bin(inputFloatValue);
+            bin = createBinaryIntFromFloat64Bin(value);
         }
         if (scheme) {
-            hexInput.value = scheme.getHex(inputFloatBinary);
+            hexInput.value = scheme.getHex(bin);
         }
-        return true;
+        return bin;
     }
 }
 
 function decimalInputHandler() {
-    if (!setInputFloatFromDecimalInput()) {
+    let bin = getFloatBinaryFromDecimalInput();
+    if (bin == null) {
         decimalInput.classList.add("invalidinput");
     }
     else {
         if (decimalInput.classList.contains("invalidinput")) {
             decimalInput.classList.remove("invalidinput");
         }
-        refreshDisplay();
+        inputFloatBinary = bin;
+        refreshDisplay(bin);
     }
 }
 
-function refreshFromInputFloatBinary(scheme, refreshHexInput) {
-    inputFloatValue = scheme.getValue(inputFloatBinary);
-    decimalInput.value = scheme.getValueString(inputFloatBinary);
+function refreshFromBinary(scheme, floatBinary, refreshHexInput) {
+    inputFloatBinary = floatBinary;
+    decimalInput.value = scheme.getValueString(floatBinary);
+    if (decimalInput.classList.contains("invalidinput")) {
+        decimalInput.classList.remove("invalidinput");
+    }
     if (refreshHexInput) {
-        hexInput.value = scheme.getHex(inputFloatBinary);
+        hexInput.value = scheme.getHex(floatBinary);
     }
-    refreshDisplay();
+    refreshDisplay(floatBinary);
 }
 
-function setInputFloatBinaryFromHexInput() {
+function getFloatBinaryFromHexInput() {
     let scheme = getFloatScheme();
     let bits = scheme.howManyBits();
     let numBytes = Math.ceil(bits / 8);
@@ -406,16 +415,12 @@ function setInputFloatBinaryFromHexInput() {
         hexString = "0";
     }
 
-    let bin = createBinaryIntFromHex(hexString, numBytes);
-    if (bin != null) {
-        inputFloatBinary = bin;
-        return true;
-    }
-    return false;
+    return createBinaryIntFromHex(hexString, numBytes);
 }
 
 function hexInputHandler() {
-    if (!setInputFloatBinaryFromHexInput()) {
+    let bin = getFloatBinaryFromHexInput();
+    if (bin == null) {
         hexInput.classList.add("invalidinput");
     }
     else {
@@ -423,7 +428,8 @@ function hexInputHandler() {
         if (hexInput.classList.contains("invalidinput")) {
             hexInput.classList.remove("invalidinput");
         }
-        refreshFromInputFloatBinary(scheme, false);
+        inputFloatBinary = bin;
+        refreshFromBinary(scheme, inputFloatBinary, false);
     }
 }
 
@@ -497,12 +503,13 @@ function changeFloatPrecision() {
         }
     }
 
-    /* Set inputFloat and/or inputFloatBinary from whatever input box is showing. */
+    /* Set inputFloatBinary from whatever input box is showing. */
+    let inputFloatBinary = null;
     if (format == "string") {
-        setInputFloatFromDecimalInput();
+        inputFloatBinary = getFloatBinaryFromDecimalInput();
     }
     else if (format == "hex") {
-        setInputFloatBinaryFromHexInput();
+        inputFloatBinary = getFloatBinaryFromHexInput();
     }
 
     /* Any element which needs to contain 9 or 17 depending on whether we're
@@ -513,7 +520,7 @@ function changeFloatPrecision() {
     }
 
     recreateBitButtons(scheme);
-    refreshDisplay();
+    refreshDisplay(inputFloatBinary);
 }
 
 function changeInputFormat() {
@@ -521,6 +528,7 @@ function changeInputFormat() {
     if (format == "string") {
         decimalInput.style.display = null;
         hexInput.style.display = "none";
+        outputHeading.innerText = "Closest representable value";
         valueHexTitle.innerHTML = "";
         valueHexTitle.appendChild(document.createTextNode("Closest representable value, "));
         valueHexTitle.appendChild(ieee754EncodingLink);
@@ -528,6 +536,7 @@ function changeInputFormat() {
     else {
         decimalInput.style.display = "none";
         hexInput.style.display = null;
+        outputHeading.innerText = "IEEE 754 bit fields";
         valueHexTitle.innerHTML = "";
         valueHexTitle.appendChild(ieee754EncodingLink);
     }
@@ -549,13 +558,13 @@ function setInputFormat(formatName) {
 function modifyExponent(delta) {
     let scheme = getFloatScheme();
     scheme.modifyExponent(inputFloatBinary, delta);
-    refreshFromInputFloatBinary(scheme, true);
+    refreshFromBinary(scheme, inputFloatBinary, true);
 }
 
 function modifyMantissa(delta) {
     let scheme = getFloatScheme();
     scheme.modifyMantissa(inputFloatBinary, delta);
-    refreshFromInputFloatBinary(scheme, true);
+    refreshFromBinary(scheme, inputFloatBinary, true);
 }
 
 function decrementExponentHandler() {
@@ -609,8 +618,7 @@ function initPage() {
         }
     }
 
-    inputFloatValue = 0;
-    inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
+    inputFloatBinary = createBinaryIntFromFloat32Bin(0);
 
     /* If the URL's query string has parameters, apply them to the precision
      * selector and input box.
