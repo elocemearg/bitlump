@@ -290,6 +290,38 @@ function getFloatScheme() {
     return floatSchemes[bits];
 }
 
+function getInputFormat() {
+    for (let i = 0; i < floatInputSelector.options.length; i++) {
+        let option = floatInputSelector.options[i];
+        if (option.selected) {
+            return option.value;
+        }
+    }
+    return null;
+}
+
+function updateURL() {
+    let bits = getFloatBits();
+    let format = getInputFormat();
+    let params = {};
+
+    if (bits) {
+        params["p"] = bits;
+    }
+    if (format == "string" && decimalInput.value.length > 0) {
+        params["f"] = decimalInput.value;
+    }
+    else if (format == "hex" && hexInput.value.length > 0) {
+        params["h"] = hexInput.value;
+    }
+
+    let newUrl = "?" + buildQueryString(params);
+
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, newUrl);
+    }
+}
+
 function refreshDisplay() {
     let scheme = getFloatScheme();
     let bin = inputFloatBinary;
@@ -314,19 +346,18 @@ function refreshDisplay() {
     setFPConditionLight("nan", scheme.isNotANumber(bin));
 
     scheme.setButtonValues(bin);
+
+    updateURL();
 }
 
-function decimalInputHandler() {
+function setInputFloatFromDecimalInput() {
     let valueString = decimalInput.value.trim();
     let value = valueString.length == 0 ? 0 : parseFloat(valueString);
     if (isNaN(value)) {
-        decimalInput.classList.add("invalidinput");
+        return false;
     }
     else {
         let scheme = getFloatScheme();
-        if (decimalInput.classList.contains("invalidinput")) {
-            decimalInput.classList.remove("invalidinput");
-        }
         hexInput.value = "";
         inputFloatValue = value;
         if (scheme.howManyBits() == 32) {
@@ -337,6 +368,18 @@ function decimalInputHandler() {
         }
         if (scheme) {
             hexInput.value = scheme.getHex(inputFloatBinary);
+        }
+        return true;
+    }
+}
+
+function decimalInputHandler() {
+    if (!setInputFloatFromDecimalInput()) {
+        decimalInput.classList.add("invalidinput");
+    }
+    else {
+        if (decimalInput.classList.contains("invalidinput")) {
+            decimalInput.classList.remove("invalidinput");
         }
         refreshDisplay();
     }
@@ -351,7 +394,7 @@ function refreshFromInputFloatBinary(scheme, refreshHexInput) {
     refreshDisplay();
 }
 
-function hexInputHandler() {
+function setInputFloatBinaryFromHexInput() {
     let scheme = getFloatScheme();
     let bits = scheme.howManyBits();
     let numBytes = Math.ceil(bits / 8);
@@ -364,14 +407,22 @@ function hexInputHandler() {
     }
 
     let bin = createBinaryIntFromHex(hexString, numBytes);
-    if (bin == null) {
+    if (bin != null) {
+        inputFloatBinary = bin;
+        return true;
+    }
+    return false;
+}
+
+function hexInputHandler() {
+    if (!setInputFloatBinaryFromHexInput()) {
         hexInput.classList.add("invalidinput");
     }
     else {
+        let scheme = getFloatScheme();
         if (hexInput.classList.contains("invalidinput")) {
             hexInput.classList.remove("invalidinput");
         }
-        inputFloatBinary = bin;
         refreshFromInputFloatBinary(scheme, false);
     }
 }
@@ -416,14 +467,14 @@ function recreateBitButtons(scheme) {
 function changeFloatPrecision() {
     let bits = getFloatBits();
     let scheme = getFloatScheme();
+    let format = getInputFormat();
+
     if (bits == 32) {
-        inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
         decimalInput.setAttribute("placeholder", "e.g. 1.23456789e-10...");
         hexInput.setAttribute("placeholder", "e.g. 40490FDB");
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Single-precision_floating-point_format";
     }
     else {
-        inputFloatBinary = createBinaryIntFromFloat64Bin(inputFloatValue);
         decimalInput.setAttribute("placeholder", "e.g. 1.2345678901234567e-89...");
         hexInput.setAttribute("placeholder", "e.g. 400921FB54442D18")
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Double-precision_floating-point_format";
@@ -446,6 +497,14 @@ function changeFloatPrecision() {
         }
     }
 
+    /* Set inputFloat and/or inputFloatBinary from whatever input box is showing. */
+    if (format == "string") {
+        setInputFloatFromDecimalInput();
+    }
+    else if (format == "hex") {
+        setInputFloatBinaryFromHexInput();
+    }
+
     /* Any element which needs to contain 9 or 17 depending on whether we're
      * using 32-bit or 64-bit floats, set them now. */
     let floatFormatDigits = document.getElementsByClassName("floatformatdigits");
@@ -458,25 +517,33 @@ function changeFloatPrecision() {
 }
 
 function changeInputFormat() {
+    let format = getInputFormat();
+    if (format == "string") {
+        decimalInput.style.display = null;
+        hexInput.style.display = "none";
+        valueHexTitle.innerHTML = "";
+        valueHexTitle.appendChild(document.createTextNode("Closest representable value, "));
+        valueHexTitle.appendChild(ieee754EncodingLink);
+    }
+    else {
+        decimalInput.style.display = "none";
+        hexInput.style.display = null;
+        valueHexTitle.innerHTML = "";
+        valueHexTitle.appendChild(ieee754EncodingLink);
+    }
+}
+
+/* formatName is the "value" attribute of one of the <option> tags inside
+ * the <select id="floatinputformat"> element. */
+function setInputFormat(formatName) {
     for (let i = 0; i < floatInputSelector.options.length; i++) {
         let option = floatInputSelector.options[i];
-        if (option.selected) {
-            if (option.value == "string") {
-                decimalInput.style.display = null;
-                hexInput.style.display = "none";
-                valueHexTitle.innerHTML = "";
-                valueHexTitle.appendChild(document.createTextNode("Closest representable value, "));
-                valueHexTitle.appendChild(ieee754EncodingLink);
-            }
-            else {
-                decimalInput.style.display = "none";
-                hexInput.style.display = null;
-                valueHexTitle.innerHTML = "";
-                valueHexTitle.appendChild(ieee754EncodingLink);
-            }
+        if (option.value == formatName) {
+            option.selected = true;
             break;
         }
     }
+    changeInputFormat();
 }
 
 function modifyExponent(delta) {
@@ -542,11 +609,45 @@ function initPage() {
         }
     }
 
-    decimalInput.focus();
     inputFloatValue = 0;
     inputFloatBinary = createBinaryIntFromFloat32Bin(inputFloatValue);
+
+    /* If the URL's query string has parameters, apply them to the precision
+     * selector and input box.
+     * Query parameter "p" specifies the precision level, 32 or 64 bit. */
+    let queryString = parseQueryString();
+    if ("p" in queryString) {
+        let bits = parseInt(queryString["p"]);
+        if (!isNaN(bits)) {
+            for (let i = 0; i < floatSchemeInputs.length; i++) {
+                if (parseInt(floatSchemeInputs[i].value) == bits) {
+                    floatSchemeInputs[i].checked = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    /* Set up the bit-twiddling buttons for the selected precision. */
     changeFloatPrecision();
-    changeInputFormat();
+
+    /* Handle parameters like h=0x12345678 (enter hex input mode) and f=3.142
+     * (enter decimal input mode). */
+    if ("h" in queryString) {
+        setInputFormat("hex");
+        hexInput.value = queryString["h"];
+        hexInputHandler();
+    }
+    else if ("f" in queryString) {
+        setInputFormat("string");
+        decimalInput.value = queryString["f"];
+        decimalInputHandler();
+    }
+    else {
+        decimalInput.value = "";
+        decimalInputHandler();
+        changeInputFormat();
+    }
 
     attachCopyHandlerToElementsWithClass("outputvalue", null);
 }

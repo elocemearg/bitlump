@@ -14,6 +14,7 @@
     <body onload="initPage();">
 
         <script src="util.js" defer></script>
+        <script src="webutils.js" defer></script>
         <script src="clicktocopy.js" defer></script>
         <script src="binaryint.js" defer></script>
         <script src="floatmain.js" defer></script>
@@ -32,7 +33,7 @@
             </div>
             <div class="maininputrow">
                 <select id="floatinputformat" class="bigselect">
-                    <option value="string">Decimal string</option>
+                    <option value="string" selected>Decimal string</option>
                     <option value="hex">IEEE 754 hex encoding</option>
                 </select>
                 <input class="floatinput" id="decimalinput" type="text" placeholder="e.g. 1.23456789e-10">
