@@ -385,9 +385,29 @@ function refreshDisplay(bin) {
     updateURL();
 }
 
+/* Floating point format:
+ *     Optional minus sign;
+ *     A nonzero number of digits, with at most one decimal point amongst them;
+ *     Optionally: a letter E, an optional sign, and one or more digits.
+ */
+const floatRegex = /^-?(([0-9]+)|([0-9]+\.[0-9]*)|(\.[0-9]+))([Ee][+-]?[0-9]+)?$/;
+/* parseFloatStrict()
+ * Like parseFloat(), but returns NaN if the string has any junk on the end of
+ * an otherwise valid string. For example, parseFloat("1.234xyz") returns
+ * 1.234, but parseFloatStrict("1.234xyz") returns NaN. */
+function parseFloatStrict(s) {
+    s = s.trim().toLowerCase();
+    if (!floatRegex.test(s.trim()) && s != "infinity" && s != "-infinity") {
+        return NaN;
+    }
+    else {
+        return parseFloat(s);
+    }
+}
+
 function getFloatBinaryFromDecimalInput() {
     let valueString = inputBox.value.trim();
-    let value = valueString.length == 0 ? 0 : parseFloat(valueString);
+    let value = valueString.length == 0 ? 0 : parseFloatStrict(valueString);
     if (isNaN(value)) {
         return null;
     }
@@ -558,22 +578,37 @@ function changeInputFormat() {
         valueHexTitle.innerHTML = "";
         valueHexTitle.appendChild(document.createTextNode("Closest representable value, "));
         valueHexTitle.appendChild(ieee754EncodingLink);
-        if (inputFloatBinary != null) {
-            inputBox.value = scheme.getValueString(inputFloatBinary);
+        if (inputFloatBinary == null) {
+            /* Input was previously invalid. If it's valid for the string
+             * format, then use it. This helps the user if they type "1.4",
+             * realise that they're still in hex mode, and change the format
+             * to decimal - don't make them retype the "1.4". */
+            inputFloatBinary = getFloatBinaryFromDecimalInput();
+            if (inputFloatBinary == null) {
+                /* Input is still invalid - just clear it */
+                inputBox.value = "";
+            }
         }
         else {
-            inputBox.value = "";
+            /* Set the input box to the decimal representation of
+             * the existing inputFloatBinary value. */
+            inputBox.value = scheme.getValueString(inputFloatBinary);
         }
     }
     else {
         outputHeading.innerText = "IEEE 754 bit fields";
         valueHexTitle.innerHTML = "";
         valueHexTitle.appendChild(ieee754EncodingLink);
-        if (inputFloatBinary != null) {
-            inputBox.value = scheme.getHex(inputFloatBinary);
+        if (inputFloatBinary == null) {
+            /* Again, if the input was previously invalid but is valid for
+             * this new selected format, keep the input. */
+            inputFloatBinary = getFloatBinaryFromHexInput();
+            if (inputFloatBinary == null) {
+                inputBox.value = "";
+            }
         }
         else {
-            inputBox.value = "";
+            inputBox.value = scheme.getHex(inputFloatBinary);
         }
     }
     refreshDisplay(inputFloatBinary);
