@@ -1,7 +1,13 @@
+/* References to fixed HTML elements */
+
+/* Input box */
 let inputBox = document.getElementById("inputbox");
 
+/* <h1> tag for output */
 let outputHeading = document.getElementById("outputheading");
 
+/* Outputs for the sign, exponent and mantissa fields of the float, and the
+ * full hex and decimal strings. */
 let outputSignRaw = document.getElementById("signraw");
 let outputExponentRaw = document.getElementById("exponentraw");
 let outputMantissaRaw = document.getElementById("mantissaraw");
@@ -11,23 +17,31 @@ let outputExponentValue = document.getElementById("exponentvalue");
 let outputMantissaValue = document.getElementById("mantissavalue");
 let outputValueDecimal = document.getElementById("valuedecimal");
 
+/* Radio buttons for 32/64-bit selection */
 let floatSchemeInputs = [
     document.getElementById("floatscheme32"),
     document.getElementById("floatscheme64")
 ];
+
+/* Containing labels for the radio buttons, populated further down */
 let floatSchemeInputLabels = [];
 
+/* Drop-down list containing the input formats */
 let floatInputSelector = document.getElementById("floatinputformat");
 
+/* Three table cells containing the bit-buttons for the sign bit, the
+ * exponent bits, and the mantissa bits. */
 let signBitButtonsCell = document.getElementById("signbitbuttons");
 let exponentBitButtonsCell = document.getElementById("exponentbitbuttons");
 let mantissaBitButtonsCell = document.getElementById("mantissabitbuttons");
 
+/* Decrement/increment buttons */
 let decrementExponentButton = document.getElementById("decrementexponent");
 let incrementExponentButton = document.getElementById("incrementexponent");
 let decrementMantissaButton = document.getElementById("decrementmantissa");
 let incrementMantissaButton = document.getElementById("incrementmantissa");
 
+/* Link for the "IEEE 754 hex encoding" text */
 let ieee754EncodingLink = document.createElement("A");
 ieee754EncodingLink.setAttribute("target", "_blank");
 ieee754EncodingLink.innerText = "IEEE 754 hex encoding";
@@ -59,13 +73,9 @@ impliedMantissaBit.innerText = "1.";
  * If the input is invalid, inputFloatBinary is null. */
 let inputFloatBinary = null;
 
-function getContainingLabel(element) {
-    while (element != null && element.tagName.toLowerCase() != "label") {
-        element = element.parentElement;
-    }
-    return element;
-}
 
+/* Functions for manipulating the state of the bit-toggling buttons, and
+ * for recreating them when we change between 32 and 64 bit precision. */
 function setBitButtonValue(button, value) {
     if (value) {
         button.innerText = "1";
@@ -87,6 +97,45 @@ function clearBitButtonValues() {
     }
 }
 
+function recreateBitButtons(scheme) {
+    signBitButton = scheme.createSignBitButton();
+    exponentBitButtons = scheme.createExponentBitButtons();
+    mantissaBitButtons = scheme.createMantissaBitButtons();
+    signBitButtonsCell.innerHTML = "";
+    exponentBitButtonsCell.innerHTML = "";
+    mantissaBitButtonsCell.innerHTML = "";
+
+    signBitButtonsCell.appendChild(signBitButton);
+
+    let buttonLists = [
+        [ exponentBitButtons, exponentBitButtonsCell ],
+        [ mantissaBitButtons, mantissaBitButtonsCell ]
+    ];
+
+    for (let i = 0; i < buttonLists.length; i++) {
+        let src = buttonLists[i][0];
+        let dest = buttonLists[i][1];
+        if (i == 1) {
+            /* Display the implied leading "1." at the start of the mantissa */
+            dest.appendChild(impliedMantissaBit);
+        }
+        for (let j = 0; j < src.length; j++) {
+            let bitsFromEnd = src.length - 1 - j;
+            dest.appendChild(src[j]);
+            if (bitsFromEnd > 0) {
+                if (bitsFromEnd % 8 == 0) {
+                    dest.appendChild(document.createElement("BR"));
+                }
+                else if (bitsFromEnd % 4 == 3) {
+                    src[j].classList.add("bitbuttonstartofgroup");
+                }
+            }
+        }
+    }
+}
+
+/* Functions for manipulating the state of the condition lights on the display:
+ * negative, zero, subnormal, infinity, NaN. */
 function setFPConditionLight(key, on) {
     let list = fpConditionLights[key];
     if (list) {
@@ -112,6 +161,9 @@ function clearFPConditionLights() {
     }
 }
 
+/* FPScheme: represents a floating-point precision and associated encoding
+ * such as single-precision or double-precision. Bit positions and counts are
+ * supplied on construction. */
 class FPScheme {
     constructor(numBits, signBitIndex, topExpBitIndex, numExpBits,
             topMantissaBitIndex, numMantissaBits, expBias, roundTripDecimalDigits) {
@@ -225,7 +277,7 @@ class FPScheme {
         button.addEventListener("click", function() {
             if (inputFloatBinary != null) {
                 inputFloatBinary.toggleBit(b);
-                refreshFromBinary(scheme, inputFloatBinary, true);
+                updateDisplayFromBinary(scheme, inputFloatBinary, true);
             }
         });
         return button;
@@ -289,12 +341,16 @@ class FPScheme {
     }
 }
 
-
+/* List of all floating-point schemes (FPScheme). The key to this map is
+ * the number of bits, which must be the same as the "value" attribute of
+ * the associated radio button. */
 let floatSchemes = {
     32 : new FPScheme(32, 31, 30, 8, 22, 23, 127, 9),
     64 : new FPScheme(64, 63, 62, 11, 51, 52, 1023, 17),
 };
 
+/* Return the "value" attribute of the selected precision radio button.
+ * The return value may be used as a key to floatSchemes. */
 function getFloatBits() {
     for (let i = 0; i < floatSchemeInputs.length; i++) {
         if (floatSchemeInputs[i].checked) {
@@ -304,11 +360,14 @@ function getFloatBits() {
     return null;
 }
 
+/* Return the FPScheme object currently selected by the radio buttons. */
 function getFloatScheme() {
     let bits = getFloatBits();
     return floatSchemes[bits];
 }
 
+/* Return the value of the <option> element selected in the "input format"
+ * drop-down. Example values are "string" and "hex". */
 function getInputFormat() {
     for (let i = 0; i < floatInputSelector.options.length; i++) {
         let option = floatInputSelector.options[i];
@@ -319,6 +378,8 @@ function getInputFormat() {
     return null;
 }
 
+/* Update the query-string of the URL in the address bar to reflect the
+ * currently selected precision and the current input. */
 function updateURL() {
     let bits = getFloatBits();
     let format = getInputFormat();
@@ -343,7 +404,7 @@ function updateURL() {
 
 /* Update the state of the output fields a bit button state to reflect the
  * IEEE 754 bit pattern represented by "bin". */
-function refreshDisplay(bin) {
+function updateDisplay(bin) {
     let scheme = getFloatScheme();
     if (scheme == null || bin == null) {
         outputSignRaw.innerText = "";
@@ -434,7 +495,7 @@ function getFloatBinaryFromDecimalInput() {
 
 function decimalInputHandler() {
     inputFloatBinary = getFloatBinaryFromDecimalInput();
-    refreshDisplay(inputFloatBinary);
+    updateDisplay(inputFloatBinary);
 }
 
 function inputHandler() {
@@ -447,11 +508,15 @@ function inputHandler() {
     }
 }
 
-function refreshFromBinary(scheme, floatBinary, refreshHexInput) {
+/* Set inputFloatBinary to floatBinary, then update the display output
+ * according to the value of floatBinary, rather than by re-parsing the input.
+ * If updateHexInput is set, and the input format is hex, update the input box
+ * to the hex representation of floatBinary. */
+function updateDisplayFromBinary(scheme, floatBinary, updateHexInput) {
     inputFloatBinary = floatBinary;
     if (floatBinary != null) {
         if (getInputFormat() == "hex") {
-            if (refreshHexInput) {
+            if (updateHexInput) {
                 inputBox.value = scheme.getHex(floatBinary);
             }
         }
@@ -459,9 +524,13 @@ function refreshFromBinary(scheme, floatBinary, refreshHexInput) {
             inputBox.value = scheme.getValueString(floatBinary);
         }
     }
-    refreshDisplay(floatBinary);
+    updateDisplay(floatBinary);
 }
 
+/* Parse the contents of the input box as hex, and try to make a BinaryInt
+ * of the appropriate length (according to getFloatScheme()) from it.
+ * If the contents of the input box doesn't parse as a hex string or is too
+ * long for the selected float precision, return null. */
 function getFloatBinaryFromHexInput() {
     let scheme = getFloatScheme();
     let bits = scheme.howManyBits();
@@ -491,47 +560,14 @@ function hexInputHandler() {
     let bin = getFloatBinaryFromHexInput();
     let scheme = getFloatScheme();
     inputFloatBinary = bin;
-    refreshFromBinary(scheme, inputFloatBinary, false);
+    updateDisplayFromBinary(scheme, inputFloatBinary, false);
 }
 
-function recreateBitButtons(scheme) {
-    signBitButton = scheme.createSignBitButton();
-    exponentBitButtons = scheme.createExponentBitButtons();
-    mantissaBitButtons = scheme.createMantissaBitButtons();
-    signBitButtonsCell.innerHTML = "";
-    exponentBitButtonsCell.innerHTML = "";
-    mantissaBitButtonsCell.innerHTML = "";
-
-    signBitButtonsCell.appendChild(signBitButton);
-
-    let buttonLists = [
-        [ exponentBitButtons, exponentBitButtonsCell ],
-        [ mantissaBitButtons, mantissaBitButtonsCell ]
-    ];
-
-    for (let i = 0; i < buttonLists.length; i++) {
-        let src = buttonLists[i][0];
-        let dest = buttonLists[i][1];
-        if (i == 1) {
-            /* Display the implied leading "1." at the start of the mantissa */
-            dest.appendChild(impliedMantissaBit);
-        }
-        for (let j = 0; j < src.length; j++) {
-            let bitsFromEnd = src.length - 1 - j;
-            dest.appendChild(src[j]);
-            if (bitsFromEnd > 0) {
-                if (bitsFromEnd % 8 == 0) {
-                    dest.appendChild(document.createElement("BR"));
-                }
-                else if (bitsFromEnd % 4 == 3) {
-                    src[j].classList.add("bitbuttonstartofgroup");
-                }
-            }
-        }
-    }
-}
-
-function changeFloatPrecision() {
+/* Update the display to reflect that the selected floating point precision
+ * has just changed. Among other things, this re-parses the input as a float
+ * of the new precision, recreates the bit-toggle buttons, and calls
+ * updateDisplay(). */
+function notifyFloatPrecisionChanged() {
     let bits = getFloatBits();
     let scheme = getFloatScheme();
     let format = getInputFormat();
@@ -577,10 +613,10 @@ function changeFloatPrecision() {
     }
 
     recreateBitButtons(scheme);
-    refreshDisplay(inputFloatBinary);
+    updateDisplay(inputFloatBinary);
 }
 
-function changeInputFormat() {
+function notifyInputFormatChanged() {
     let format = getInputFormat();
     let scheme = getFloatScheme();
     if (scheme == null || format == null) {
@@ -624,7 +660,7 @@ function changeInputFormat() {
             inputBox.value = scheme.getHex(inputFloatBinary);
         }
     }
-    refreshDisplay(inputFloatBinary);
+    updateDisplay(inputFloatBinary);
 }
 
 /* formatName is the "value" attribute of one of the <option> tags inside
@@ -637,14 +673,14 @@ function setInputFormat(formatName) {
             break;
         }
     }
-    changeInputFormat();
+    notifyInputFormatChanged();
 }
 
 function modifyExponent(delta) {
     if (inputFloatBinary != null) {
         let scheme = getFloatScheme();
         scheme.modifyExponent(inputFloatBinary, delta);
-        refreshFromBinary(scheme, inputFloatBinary, true);
+        updateDisplayFromBinary(scheme, inputFloatBinary, true);
     }
 }
 
@@ -652,7 +688,7 @@ function modifyMantissa(delta) {
     if (inputFloatBinary != null) {
         let scheme = getFloatScheme();
         scheme.modifyMantissa(inputFloatBinary, delta);
-        refreshFromBinary(scheme, inputFloatBinary, true);
+        updateDisplayFromBinary(scheme, inputFloatBinary, true);
     }
 }
 
@@ -675,11 +711,11 @@ function incrementMantissaHandler() {
 inputBox.addEventListener("input", inputHandler);
 
 for (let i = 0; i < floatSchemeInputs.length; i++) {
-    floatSchemeInputs[i].addEventListener("change", changeFloatPrecision);
+    floatSchemeInputs[i].addEventListener("change", notifyFloatPrecisionChanged);
     floatSchemeInputLabels.push(getContainingLabel(floatSchemeInputs[i]));
 }
 
-floatInputSelector.addEventListener("change", changeInputFormat);
+floatInputSelector.addEventListener("change", notifyInputFormatChanged);
 
 decrementExponentButton.addEventListener("click", decrementExponentHandler);
 incrementExponentButton.addEventListener("click", incrementExponentHandler);
@@ -725,7 +761,7 @@ function initPage() {
     }
 
     /* Set up the bit-twiddling buttons for the selected precision. */
-    changeFloatPrecision();
+    notifyFloatPrecisionChanged();
 
     /* Handle parameters like h=0x12345678 (enter hex input mode) and f=3.142
      * (enter decimal input mode). */
