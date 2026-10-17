@@ -449,8 +449,9 @@ function updateURL() {
     }
 }
 
-/* Update the state of the output fields a bit button state to reflect the
- * IEEE 754 bit pattern represented by "bin". */
+/* Update the state of the output fields, bit-toggling buttons, and
+ * long-winded explanation column, to reflect the IEEE 754 bit pattern
+ * represented by "bin". */
 function updateDisplay(bin) {
     let scheme = getFloatScheme();
     if (scheme == null || bin == null) {
