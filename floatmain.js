@@ -1,5 +1,4 @@
-let decimalInput = document.getElementById("decimalinput");
-let hexInput = document.getElementById("hexinput");
+let inputBox = document.getElementById("inputbox");
 
 let outputHeading = document.getElementById("outputheading");
 
@@ -56,7 +55,8 @@ impliedMantissaBit.innerText = "1.";
 
 /* A BinaryInt object converted from either the decimal input box or the hex
  * input box. This is where we remember the binary reprsentation of the float
- * value we're currently showing. */
+ * value we're currently showing.
+ * If the input is invalid, inputFloatBinary is null. */
 let inputFloatBinary = null;
 
 function getContainingLabel(element) {
@@ -77,6 +77,16 @@ function setBitButtonValue(button, value) {
     }
 }
 
+function clearBitButtonValues() {
+    setBitButtonValue(signBitButton, 0);
+    for (let i = 0; i < exponentBitButtons.length; i++) {
+        setBitButtonValue(exponentBitButtons[i], 0);
+    }
+    for (let i = 0; i < mantissaBitButtons.length; i++) {
+        setBitButtonValue(mantissaBitButtons[i], 0);
+    }
+}
+
 function setFPConditionLight(key, on) {
     let list = fpConditionLights[key];
     if (list) {
@@ -93,6 +103,12 @@ function setFPConditionLight(key, on) {
                 }
             }
         }
+    }
+}
+
+function clearFPConditionLights() {
+    for (let key in fpConditionLights) {
+        setFPConditionLight(key, false);
     }
 }
 
@@ -311,11 +327,11 @@ function updateURL() {
     if (bits) {
         params["p"] = bits;
     }
-    if (format == "string" && decimalInput.value.length > 0) {
-        params["f"] = decimalInput.value;
+    if (format == "string" && inputBox.value.length > 0) {
+        params["f"] = inputBox.value;
     }
-    else if (format == "hex" && hexInput.value.length > 0) {
-        params["h"] = hexInput.value;
+    else if (format == "hex" && inputBox.value.length > 0) {
+        params["h"] = inputBox.value;
     }
 
     let newUrl = "?" + buildQueryString(params);
@@ -330,7 +346,22 @@ function updateURL() {
 function refreshDisplay(bin) {
     let scheme = getFloatScheme();
     if (scheme == null || bin == null) {
+        outputSignRaw.innerText = "";
+        outputExponentRaw.innerText = "";
+        outputMantissaRaw.innerText = "";
+        outputValueRaw.innerText = "(invalid input)";
+        outputSignValue.innerText = "";
+        outputExponentValue.innerText = "";
+        outputMantissaValue.innerText = "";
+        outputValueDecimal.innerText = "(invalid input)";
+        clearBitButtonValues();
+        clearFPConditionLights();
+        inputBox.classList.add("invalidinput");
         return null;
+    }
+
+    if (inputBox.classList.contains("invalidinput")) {
+        inputBox.classList.remove("invalidinput");
     }
 
     outputSignRaw.innerText = scheme.isNegative(bin) ? "1" : "0";
@@ -355,7 +386,7 @@ function refreshDisplay(bin) {
 }
 
 function getFloatBinaryFromDecimalInput() {
-    let valueString = decimalInput.value.trim();
+    let valueString = inputBox.value.trim();
     let value = valueString.length == 0 ? 0 : parseFloat(valueString);
     if (isNaN(value)) {
         return null;
@@ -363,42 +394,37 @@ function getFloatBinaryFromDecimalInput() {
     else {
         let scheme = getFloatScheme();
         let bin = null;
-        hexInput.value = "";
         if (scheme.howManyBits() == 32) {
             bin = createBinaryIntFromFloat32Bin(value);
         }
         else {
             bin = createBinaryIntFromFloat64Bin(value);
         }
-        if (scheme) {
-            hexInput.value = scheme.getHex(bin);
-        }
         return bin;
     }
 }
 
 function decimalInputHandler() {
-    let bin = getFloatBinaryFromDecimalInput();
-    if (bin == null) {
-        decimalInput.classList.add("invalidinput");
+    inputFloatBinary = getFloatBinaryFromDecimalInput();
+    refreshDisplay(inputFloatBinary);
+}
+
+function inputHandler() {
+    let format = getInputFormat();
+    if (format == "string") {
+        decimalInputHandler();
     }
-    else {
-        if (decimalInput.classList.contains("invalidinput")) {
-            decimalInput.classList.remove("invalidinput");
-        }
-        inputFloatBinary = bin;
-        refreshDisplay(bin);
+    else if (format == "hex") {
+        hexInputHandler();
     }
 }
 
 function refreshFromBinary(scheme, floatBinary, refreshHexInput) {
     inputFloatBinary = floatBinary;
-    decimalInput.value = scheme.getValueString(floatBinary);
-    if (decimalInput.classList.contains("invalidinput")) {
-        decimalInput.classList.remove("invalidinput");
-    }
-    if (refreshHexInput) {
-        hexInput.value = scheme.getHex(floatBinary);
+    if (floatBinary != null) {
+        if (refreshHexInput && getInputFormat() == "hex") {
+            inputBox.value = scheme.getHex(floatBinary);
+        }
     }
     refreshDisplay(floatBinary);
 }
@@ -407,30 +433,32 @@ function getFloatBinaryFromHexInput() {
     let scheme = getFloatScheme();
     let bits = scheme.howManyBits();
     let numBytes = Math.ceil(bits / 8);
-    let hexString = hexInput.value.trim();
+    let hexString = inputBox.value.trim();
 
+    /* Remove any leading zeroes */
+    if (hexString.toLowerCase().startsWith("0x")) {
+        hexString = hexString.substring(2);
+    }
+    while (hexString.length > 0 && hexString.charAt(0) == "0" || hexString.charAt(0) == " ") {
+        hexString = hexString.substring(1);
+    }
+
+    /* If the string is empty, take it as zero */
     if (hexString == "") {
-        /* If the user deletes the contents of the hex string input, take
-         * this as 0 rather than turning it red like it's an error. */
         hexString = "0";
     }
 
+    /* Return a BinaryInt object, which is at most numBytes bytes. If we have
+     * too many hex digits after removing the leading zeroes, this will
+     * return zero. */
     return createBinaryIntFromHex(hexString, numBytes);
 }
 
 function hexInputHandler() {
     let bin = getFloatBinaryFromHexInput();
-    if (bin == null) {
-        hexInput.classList.add("invalidinput");
-    }
-    else {
-        let scheme = getFloatScheme();
-        if (hexInput.classList.contains("invalidinput")) {
-            hexInput.classList.remove("invalidinput");
-        }
-        inputFloatBinary = bin;
-        refreshFromBinary(scheme, inputFloatBinary, false);
-    }
+    let scheme = getFloatScheme();
+    inputFloatBinary = bin;
+    refreshFromBinary(scheme, inputFloatBinary, false);
 }
 
 function recreateBitButtons(scheme) {
@@ -476,13 +504,9 @@ function changeFloatPrecision() {
     let format = getInputFormat();
 
     if (bits == 32) {
-        decimalInput.setAttribute("placeholder", "e.g. 1.23456789e-10...");
-        hexInput.setAttribute("placeholder", "e.g. 40490FDB");
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Single-precision_floating-point_format";
     }
     else {
-        decimalInput.setAttribute("placeholder", "e.g. 1.2345678901234567e-89...");
-        hexInput.setAttribute("placeholder", "e.g. 400921FB54442D18")
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Double-precision_floating-point_format";
     }
 
@@ -504,7 +528,7 @@ function changeFloatPrecision() {
     }
 
     /* Set inputFloatBinary from whatever input box is showing. */
-    let inputFloatBinary = null;
+    inputFloatBinary = null;
     if (format == "string") {
         inputFloatBinary = getFloatBinaryFromDecimalInput();
     }
@@ -525,21 +549,34 @@ function changeFloatPrecision() {
 
 function changeInputFormat() {
     let format = getInputFormat();
+    let scheme = getFloatScheme();
+    if (scheme == null || format == null) {
+        return;
+    }
     if (format == "string") {
-        decimalInput.style.display = null;
-        hexInput.style.display = "none";
         outputHeading.innerText = "Closest representable value";
         valueHexTitle.innerHTML = "";
         valueHexTitle.appendChild(document.createTextNode("Closest representable value, "));
         valueHexTitle.appendChild(ieee754EncodingLink);
+        if (inputFloatBinary != null) {
+            inputBox.value = scheme.getValueString(inputFloatBinary);
+        }
+        else {
+            inputBox.value = "";
+        }
     }
     else {
-        decimalInput.style.display = "none";
-        hexInput.style.display = null;
         outputHeading.innerText = "IEEE 754 bit fields";
         valueHexTitle.innerHTML = "";
         valueHexTitle.appendChild(ieee754EncodingLink);
+        if (inputFloatBinary != null) {
+            inputBox.value = scheme.getHex(inputFloatBinary);
+        }
+        else {
+            inputBox.value = "";
+        }
     }
+    refreshDisplay(inputFloatBinary);
 }
 
 /* formatName is the "value" attribute of one of the <option> tags inside
@@ -556,15 +593,19 @@ function setInputFormat(formatName) {
 }
 
 function modifyExponent(delta) {
-    let scheme = getFloatScheme();
-    scheme.modifyExponent(inputFloatBinary, delta);
-    refreshFromBinary(scheme, inputFloatBinary, true);
+    if (inputFloatBinary != null) {
+        let scheme = getFloatScheme();
+        scheme.modifyExponent(inputFloatBinary, delta);
+        refreshFromBinary(scheme, inputFloatBinary, true);
+    }
 }
 
 function modifyMantissa(delta) {
-    let scheme = getFloatScheme();
-    scheme.modifyMantissa(inputFloatBinary, delta);
-    refreshFromBinary(scheme, inputFloatBinary, true);
+    if (inputFloatBinary != null) {
+        let scheme = getFloatScheme();
+        scheme.modifyMantissa(inputFloatBinary, delta);
+        refreshFromBinary(scheme, inputFloatBinary, true);
+    }
 }
 
 function decrementExponentHandler() {
@@ -583,8 +624,7 @@ function incrementMantissaHandler() {
     modifyMantissa(1);
 }
 
-decimalInput.addEventListener("input", decimalInputHandler);
-hexInput.addEventListener("input", hexInputHandler);
+inputBox.addEventListener("input", inputHandler);
 
 for (let i = 0; i < floatSchemeInputs.length; i++) {
     floatSchemeInputs[i].addEventListener("change", changeFloatPrecision);
@@ -643,16 +683,16 @@ function initPage() {
      * (enter decimal input mode). */
     if ("h" in queryString) {
         setInputFormat("hex");
-        hexInput.value = queryString["h"];
+        inputBox.value = queryString["h"];
         hexInputHandler();
     }
     else if ("f" in queryString) {
         setInputFormat("string");
-        decimalInput.value = queryString["f"];
+        inputBox.value = queryString["f"];
         decimalInputHandler();
     }
     else {
-        decimalInput.value = "";
+        inputBox.value = "";
         decimalInputHandler();
         changeInputFormat();
     }
