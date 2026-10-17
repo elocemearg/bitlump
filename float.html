@@ -27,7 +27,8 @@
         </noscript>
 
         <main>
-            <h1>Input</h1>
+            <h1>Bitlump Float Twiddler</h1>
+            <h2>Input</h2>
             <div class="maininputrow">
                 <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme32" value="32" checked> Single-precision (32 bit)</label>
                 <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme64" value="64"> Double-precision (64 bit)</label>
@@ -41,7 +42,7 @@
             </div>
 
             <div>
-                <h1 id="outputheading">Closest representable value</h1>
+                <h2 id="outputheading">Closest representable value</h1>
                 <div class="mainoutputrow">
                     <div class="mainoutputrowitem">
                         <table class="floatoutput">
@@ -66,13 +67,21 @@
                             <tr class="nudgebuttons">
                                 <td></td>
                                 <td></td>
-                                <td>
+                                <td class="cupborder">
                                     <button id="decrementexponent" title="Decrement binary exponent">-1</button>
                                     <button id="incrementexponent" title="Increment binary exponent">+1</button>
                                 </td>
-                                <td>
+                                <td class="cupborder">
                                     <button id="decrementmantissa" title="Next representable value closer to zero">-1</button>
                                     <button id="incrementmantissa" title="Next representable value further from zero">+1</button>
+                                </td>
+                            </tr>
+                            <tr class="nudgebuttons">
+                                <td></td>
+                                <td colspan="3" class="lidborder">
+                                    <button id="setzero" title="Set all bits to zero">Zero</button>
+                                    <button id="flipbits" title="Set all 1-bits in this float to 0 and vice versa">Flip all bits</button>
+                                    <button id="endianswap" title="Reverse the order of the bytes comprising this float">Endian swap</button>
                                 </td>
                             </tr>
                             <tr>

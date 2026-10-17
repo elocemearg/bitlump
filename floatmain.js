@@ -3,7 +3,7 @@
 /* Input box */
 let inputBox = document.getElementById("inputbox");
 
-/* <h1> tag for output */
+/* <h2> tag for output */
 let outputHeading = document.getElementById("outputheading");
 
 /* Outputs for the sign, exponent and mantissa fields of the float, and the
@@ -40,6 +40,11 @@ let decrementExponentButton = document.getElementById("decrementexponent");
 let incrementExponentButton = document.getElementById("incrementexponent");
 let decrementMantissaButton = document.getElementById("decrementmantissa");
 let incrementMantissaButton = document.getElementById("incrementmantissa");
+
+/* Other bit manipulation buttons */
+let endianSwapButton = document.getElementById("endianswap");
+let flipBitsButton = document.getElementById("flipbits");
+let setZeroButton = document.getElementById("setzero");
 
 /* Link for the "IEEE 754 hex encoding" text */
 let ieee754EncodingLink = document.createElement("A");
@@ -277,7 +282,7 @@ class FPScheme {
         button.addEventListener("click", function() {
             if (inputFloatBinary != null) {
                 inputFloatBinary.toggleBit(b);
-                updateDisplayFromBinary(scheme, inputFloatBinary, true);
+                updateDisplayFromBinary(inputFloatBinary, true, scheme);
             }
         });
         return button;
@@ -511,8 +516,13 @@ function inputHandler() {
 /* Set inputFloatBinary to floatBinary, then update the display output
  * according to the value of floatBinary, rather than by re-parsing the input.
  * If updateHexInput is set, and the input format is hex, update the input box
- * to the hex representation of floatBinary. */
-function updateDisplayFromBinary(scheme, floatBinary, updateHexInput) {
+ * to the hex representation of floatBinary.
+ * The display is updated according to the precision specified by "scheme";
+ * if scheme is null, we'll call getFloatScheme() ourselves. */
+function updateDisplayFromBinary(floatBinary, updateHexInput, scheme) {
+    if (scheme == null) {
+        scheme = getFloatScheme();
+    }
     inputFloatBinary = floatBinary;
     if (floatBinary != null) {
         if (getInputFormat() == "hex") {
@@ -557,10 +567,8 @@ function getFloatBinaryFromHexInput() {
 }
 
 function hexInputHandler() {
-    let bin = getFloatBinaryFromHexInput();
-    let scheme = getFloatScheme();
-    inputFloatBinary = bin;
-    updateDisplayFromBinary(scheme, inputFloatBinary, false);
+    inputFloatBinary = getFloatBinaryFromHexInput();
+    updateDisplayFromBinary(inputFloatBinary, false);
 }
 
 /* Update the display to reflect that the selected floating point precision
@@ -680,7 +688,7 @@ function modifyExponent(delta) {
     if (inputFloatBinary != null) {
         let scheme = getFloatScheme();
         scheme.modifyExponent(inputFloatBinary, delta);
-        updateDisplayFromBinary(scheme, inputFloatBinary, true);
+        updateDisplayFromBinary(inputFloatBinary, true, scheme);
     }
 }
 
@@ -688,7 +696,7 @@ function modifyMantissa(delta) {
     if (inputFloatBinary != null) {
         let scheme = getFloatScheme();
         scheme.modifyMantissa(inputFloatBinary, delta);
-        updateDisplayFromBinary(scheme, inputFloatBinary, true);
+        updateDisplayFromBinary(inputFloatBinary, true, scheme);
     }
 }
 
@@ -708,6 +716,27 @@ function incrementMantissaHandler() {
     modifyMantissa(1);
 }
 
+function endianSwapHandler() {
+    if (inputFloatBinary != null) {
+        inputFloatBinary.swapEndianity();
+        updateDisplayFromBinary(inputFloatBinary, true);
+    }
+}
+
+function flipBitsHandler() {
+    if (inputFloatBinary != null) {
+        inputFloatBinary.flipAllBits();
+        updateDisplayFromBinary(inputFloatBinary, true);
+    }
+}
+
+function setZeroHandler() {
+    if (inputFloatBinary != null) {
+        inputFloatBinary.zeroAllBits();
+        updateDisplayFromBinary(inputFloatBinary, true);
+    }
+}
+
 inputBox.addEventListener("input", inputHandler);
 
 for (let i = 0; i < floatSchemeInputs.length; i++) {
@@ -722,6 +751,9 @@ incrementExponentButton.addEventListener("click", incrementExponentHandler);
 decrementMantissaButton.addEventListener("click", decrementMantissaHandler);
 incrementMantissaButton.addEventListener("click", incrementMantissaHandler);
 
+endianSwapButton.addEventListener("click", endianSwapHandler);
+flipBitsButton.addEventListener("click", flipBitsHandler);
+setZeroButton.addEventListener("click", setZeroHandler);
 
 function initPage() {
     /* Put the element with id "fpconditionnegative" in the fpConditionLights

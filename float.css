@@ -67,6 +67,24 @@ div.mainoutputrowitem {
     text-align: left;
 }
 
+/* U-shaped cell border, indicating that buttons in this cell refer to the
+ * thing in the cell above. */
+.floatoutput td.cupborder {
+    border-top: none;
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+    border-bottom: 1px solid gray;
+}
+
+/* Inverted-U-shaped border, indicating that buttons in this cell refer to
+ * what's in the cell below. */
+.floatoutput td.lidborder {
+    border-top: 1px solid gray;
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+    border-bottom: none;
+}
+
 button.bitbutton {
     border: 1px gray outset;
     margin-right: 1px;

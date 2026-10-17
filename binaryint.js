@@ -644,6 +644,18 @@ class BinaryInt {
         return true;
     }
 
+    flipAllBits() {
+        for (let i = 0; i < this.bytes.length; i++) {
+            this.bytes[i] = (~this.bytes[i] & 0xff);
+        }
+    }
+
+    zeroAllBits() {
+        for (let i = 0; i < this.bytes.length; i++) {
+            this.bytes[i] = 0;
+        }
+    }
+
     formatDecimal() {
         let digits = [];
         if (this.isZero()) {
