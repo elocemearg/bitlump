@@ -526,8 +526,8 @@ function updateDisplay(bin) {
     valueHtml += "<blockquote><b>" + decimalValue + "</b> (to " + scheme.getRoundTripDecimalDigits().toString() + " decimal digits).</blockquote>";
 
     if (isZero) {
-        setContentsByClass("exponentextratext", "The supplied number is zero, so the exponent field's raw value " + exponentRaw.toString() + " doesn't matter.");
-        setContentsByClass("mantissaextratext", "The supplied number has a mantissa field of all 0-bits, so it is <b>zero</b>.");
+        setContentsByClass("exponentextratext", "The supplied number is zero because the exponent and mantissa fields are all 0-bits, so there is no meaningful exponent value.");
+        setContentsByClass("mantissaextratext", "The supplied number's exponent and mantissa fields are all 0-bits, so this is <b>zero</b>.");
         setContentsByClass("valueextratext", "<p>In this case the value is <b>0</b>.</p>");
     }
     else if (isSubnormal) {
