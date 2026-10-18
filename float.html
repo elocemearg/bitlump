@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Bitlump Float Twiddler</title>
+        <meta name="description" content="Display and manipulate the bits of an IEEE 754 single or double precision floating point value" />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="bitlump.css" />
+        <link rel="stylesheet" type="text/css" href="float.css" />
+    </head>
+    <body onload="initPage();">
+
+        <script src="util.js" defer></script>
+        <script src="webutils.js" defer></script>
+        <script src="clicktocopy.js" defer></script>
+        <script src="binaryint.js" defer></script>
+        <script src="floatmain.js" defer></script>
+
+        <noscript>
+            <p>
+            If you had JavaScript enabled in your browser, this tool might be
+            useful to you, but you haven't, so it isn't.
+            </p>
+        </noscript>
+
+        <main>
+
+            <section class="controlsection sectioncolumn">
+                <h1>Bitlump Float Twiddler</h1>
+                <h2>Input</h2>
+                <div class="maininputrow">
+                    <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme32" value="32" checked> Single-precision (32 bit)</label>
+                    <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme64" value="64"> Double-precision (64 bit)</label>
+                </div>
+                <div class="maininputrow">
+                    <select id="floatinputformat" class="bigselect">
+                        <option value="string" selected>Decimal string</option>
+                        <option value="hex">IEEE 754 hex encoding</option>
+                    </select>
+                    <input class="floatinput" id="inputbox" type="text">
+                </div>
+
+                <h2 id="outputheading">Closest representable value</h1>
+                <div class="mainoutputrow">
+                    <div class="mainoutputrowitem">
+                        <table class="floatoutput">
+                            <tr>
+                                <th></th>
+                                <th>Sign</th>
+                                <th>Exponent</th>
+                                <th>Mantissa</th>
+                            </tr>
+                            <tr>
+                                <th>Fields</th>
+                                <td class="outputcontainer outputvalue" id="signvalue"></td>
+                                <td class="outputcontainer outputvalue" id="exponentvalue"></td>
+                                <td class="outputcontainer outputvalue" id="mantissavalue"></td>
+                            </tr>
+                            <tr>
+                                <th>Raw</th>
+                                <td class="outputcontainer outputvalue" id="signraw"></td>
+                                <td class="outputcontainer outputvalue" id="exponentraw"></td>
+                                <td class="outputcontainer outputvalue" id="mantissaraw"></td>
+                            </tr>
+                            <tr class="nudgebuttons">
+                                <td></td>
+                                <td></td>
+                                <td class="cupborder">
+                                    <button id="decrementexponent" title="Decrement binary exponent">-1</button>
+                                    <button id="incrementexponent" title="Increment binary exponent">+1</button>
+                                </td>
+                                <td class="cupborder">
+                                    <button id="decrementmantissa" title="Next representable value closer to zero">-1</button>
+                                    <button id="incrementmantissa" title="Next representable value further from zero">+1</button>
+                                </td>
+                            </tr>
+                            <tr class="nudgebuttons">
+                                <td></td>
+                                <td colspan="3" class="lidborder">
+                                    <button id="setzero" title="Set all bits to zero">Zero</button>
+                                    <button id="flipbits" title="Set all 1-bits in this float to 0 and vice versa">Flip all bits</button>
+                                    <button id="endianswap" title="Reverse the order of the bytes comprising this float">Endian swap</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Bits</th>
+                                <td id="signbitbuttons"></td>
+                                <td id="exponentbitbuttons"></td>
+                                <td id="mantissabitbuttons"></td>
+                                <td></td>
+                            </tr>
+                            <tr class="conditions">
+                                <th>Conditions</th>
+                                <td colspan="3">
+                                    <div class="fpcondition fpconditionnegative">Negative</div>
+                                    <div class="fpcondition fpconditionzero">Zero</div>
+                                    <div class="fpcondition fpconditionsubnormal">Subnormal</div>
+                                    <div class="fpcondition fpconditioninfinity">Infinity</div>
+                                    <div class="fpcondition fpconditionnan">NaN</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th colspan="3" style="text-align: left;" id="valuehextitle"></th>
+                            </tr>
+                            <tr>
+                                <th><a class="bitlumplink" id="valuehexlink" title="Open the hex representation of this value in the Bitlump main page">To Bitlump</a></th>
+                                <td colspan="3" class="outputcontainer outputvalue outputvaluelarge" id="valuehex"></td>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th colspan="3" style="text-align: left;" id="valuedecimaltitle">Closest representable value, to <span class="floatformatdigits"></span> decimal digits</th>
+                            </tr>
+                            <tr>
+                                <th><a class="bitlumplink" id="valuedecimallink" title="Open the decimal representation of this value in the Bitlump main page">To Bitlump</a></th>
+                                <td colspan="3" class="outputcontainer outputvalue outputvaluelarge" id="valuedecimal"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="longwindedexplanation sectioncolumn">
+                <h2>IEEE 754 binary format</h2>
+                <p>
+                An <a class="wikipediaformatlink" target="_blank">IEEE 754 floating point number</a> consists of three bit-fields:
+                the <b>sign bit</b>, the <b>exponent</b>, and the <b>mantissa</b>.
+                </p>
+                <h3>Sign</h3>
+                <p>
+                The top bit is the sign bit.
+                </p>
+                <p class="signextratext">
+                </p>
+                <h3>Exponent</h3>
+                <p>
+                A floating point number has a base-2 exponent, indicating
+                the power of two by which the mantissa must be multiplied.
+                </p>
+                <p>
+                In a <span class="textnumbits">XXX</span>-bit
+                <span class="textprecisionword">XXX</span>-precision float,
+                the exponent field is <span class="textnumexponentbits"></span> bits.
+                </p>
+                <p>
+                An exponent field of all 0-bits indicates the value is
+                zero or a <a href="https://en.wikipedia.org/wiki/Subnormal_number" target="_blank">subnormal</a>
+                number, and the true exponent is <span class="textsubnormalexponent">XXX</span>.
+                An exponent field of all 1-bits indicates an Infinity or NaN.
+                In all other cases, the exponent field is stored biased by
+                <span class="textexponentbias">XXX</span>, so the true exponent
+                value is the raw value minus
+                <span class="textexponentbias">XXX</span>.
+                </p>
+                <p class="exponentextratext">
+                </p>
+                <h3>Mantissa</h3>
+                <p>
+                The mantissa is the binary fraction which must be multiplied
+                by 2<sup><i>exponent</i></sup> to produce the final value.
+                </p>
+                <p>
+                In a <span class="textnumbits">XXX</span>-bit
+                <span class="textprecisionword">XXX</span>-precision float,
+                the mantissa field stores
+                <span class="textnummantissabits">XXX</span> bits.
+                These are the bits after the mantissa's
+                <span class="dottedunderline" title="The same thing as a decimal point, but for base 2 rather than base 10.">binary point</span>;
+                the single leading bit, before the binary point, is implied.
+                The implied bit's value is usually 1, but it is 0 for subnormal
+                numbers (see above) and zero.
+                Therefore, the true value of the mantissa is in the range
+                1&nbsp;&le;&nbsp;<i>mantissa</i>&nbsp;&lt;&nbsp;2, except for
+                subnormal numbers and zero, where it is in the range
+                0&nbsp;&le;&nbsp;<i>mantissa</i>&nbsp;&lt;&nbsp;1.
+                </p>
+                <p class="mantissaextratext">
+                </p>
+
+                <h3>Value</h3>
+                <p>
+                The overall value is given by:
+                </p>
+                <blockquote>
+                <i>signvalue</i>&nbsp;&#x00d7;&nbsp;2<sup><i>exponent</i></sup>&nbsp;&#x00d7;&nbsp;<i>mantissa</i>
+                </blockquote>
+                <p>
+                where <i>signvalue</i> is 1 if the number is positive or -1 if negative.
+                </p>
+                <div class="valueextratext"></div>
+
+                <h3>Limits and constants</h3>
+                <p>
+                The following limits and attributes apply to IEEE 754 <span class="textprecisionword">XXX</span>-precision floating point numbers.
+                </p>
+                <table class="limits">
+                    <tr>
+                        <th>Number of bits</th><td class="textnumbits"></td>
+                    </tr>
+                    <tr>
+                        <th>Sign bit</th><td>1 bit, mask <span class="textsignbitmask hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Exponent bits</th><td><span class="textnumexponentbits">XXX</span> bits (biased +<span class="textexponentbias">XXX</span>), mask <span class="textexponentbitmask hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Mantissa bits</th><td><span class="textnummantissabits">XXX</span> bits (not including implied leading bit), mask <span class="textmantissabitmask hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Exponent range</th>
+                        <td>2<sup><span class="textminexponent">XXX</span></sup> to 2<sup><span class="textmaxexponent">XXX</span></sup></td>
+                    <tr>
+                        <th>Smallest subnormal value</th>
+                        <td><span class="textsmallestsubnormal">XXX</span>, <span class="textsmallestsubnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Largest subnormal value</th>
+                        <td><span class="textlargestsubnormal">XXX</span>, <span class="textlargestsubnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Smallest normal value</th>
+                        <td><span class="textsmallestnormal">XXX</span>, <span class="textsmallestnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Largest normal value</th>
+                        <td><span class="textlargestnormal">XXX</span>, <span class="textlargestnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Decimal digits required<br>for <span class="dottedunderline" title="This is the minimum number of decimal digits which must be used when formatting the value as a string, such that when the string is converted back to binary, the original value is always recovered.">lossless round-trip</span></th>
+                        <td><span class="floatformatdigits">XXX</span></td>
+                    </tr>
+                </table>
+            </section>
+
+        </main>
+
+    </body>
+</html>

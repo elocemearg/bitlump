@@ -2,20 +2,6 @@
 /* conversion name -> Conversion */
 let conversions = {};
 
-function leftPad(s, padChar, desiredLength) {
-    let numPads = desiredLength - s.length;
-    if (numPads > 0) {
-        return Array(numPads).fill(padChar).join("") + s;
-    }
-    else {
-        return s;
-    }
-}
-
-function intToHex(i, fieldWidth=0) {
-    return leftPad(i.toString(16).toUpperCase(), '0', fieldWidth);
-}
-
 function setFlagActive(flags, name, active) {
     if (name in flags) {
         if (active)
@@ -27,6 +13,17 @@ function setFlagActive(flags, name, active) {
 
 function isUnicodeCodepoint(cp) {
     return cp >= 0 && cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
+}
+
+function setFloatTwiddlerLink(id, bits, isHex, value) {
+    let link = document.getElementById(id);
+    if (link == null) {
+        console.error("setFloatTwiddlerLink(): element ID " + id + " not found");
+        return;
+    }
+    link.href = "float.html?p=" + encodeURIComponent(bits.toString()) +
+        "&" + (isHex ? "h=" : "f=") + encodeURIComponent(value);
+    link.innerText = value;
 }
 
 
@@ -1352,7 +1349,9 @@ function initConversions() {
     createConversionFromBinaryInt("float32bin2value",
         function(binaryInt, inputValue, params, flags) {
             setFlagActive(flags, "float32binsubnormal", binaryInt.isFloat32Subnormal());
-            return binaryInt.getCastFloat32().toPrecision(FLOAT32_DECIMAL_DIGITS);
+            const str = binaryInt.getCastFloat32().toPrecision(FLOAT32_DECIMAL_DIGITS);
+            setFloatTwiddlerLink("floattwiddlerlinkint32decimal", 32, false, str);
+            return str;
         }
     );
 
@@ -1383,7 +1382,9 @@ function initConversions() {
     createConversionFromBinaryInt("float64bin2value",
         function(binaryInt, inputValue, params, flags) {
             setFlagActive(flags, "float64binsubnormal", binaryInt.isFloat64Subnormal());
-            return binaryInt.getCastFloat64().toPrecision(FLOAT64_DECIMAL_DIGITS);
+            const str = binaryInt.getCastFloat64().toPrecision(FLOAT64_DECIMAL_DIGITS);
+            setFloatTwiddlerLink("floattwiddlerlinkint64decimal", 64, false, str);
+            return str;
         }
     );
 
@@ -1415,7 +1416,11 @@ function initConversions() {
         );
 
         createConversionFromFloat(namePreamble + "hexvalue",
-            f => "0x" + createBinaryIntFromFloatBin(f, fBits).formatHex()
+            function(f, inputValue, params, flags) {
+                const str = "0x" + createBinaryIntFromFloatBin(f, fBits).formatHex();
+                setFloatTwiddlerLink("floattwiddlerlinkfloat" + fBits.toString() + "hex", fBits, true, str);
+                return str;
+            }
         );
 
     }
@@ -1426,7 +1431,9 @@ function initConversions() {
         function(f, inputValue, params, flags) {
             setFlagActive(flags, "float64subnormal",
                 getFloatExponent(f, 64, true) == 0 && getFloatMantissa(f, 64, true) != 0);
-            return f.toPrecision(FLOAT64_DECIMAL_DIGITS);
+            const str = f.toPrecision(FLOAT64_DECIMAL_DIGITS);
+            setFloatTwiddlerLink("floattwiddlerlinkfloat64decimal", 64, false, str);
+            return str;
         }
     );
 
@@ -1438,7 +1445,9 @@ function initConversions() {
             f = fa[0];
             setFlagActive(flags, "float32subnormal",
                 getFloatExponent(f, 32, true) == 0 && getFloatMantissa(f, 32, true) != 0);
-            return f.toPrecision(FLOAT32_DECIMAL_DIGITS);
+            const str = f.toPrecision(FLOAT32_DECIMAL_DIGITS);
+            setFloatTwiddlerLink("floattwiddlerlinkfloat32decimal", 32, false, str);
+            return str;
         }
     );
 

@@ -17,9 +17,6 @@ input[type=text] {
     width: 400px;
 }
 
-#main {
-}
-
 .mono {
     font-family: monospace;
 }
@@ -189,6 +186,7 @@ div.outputcell {
 .outputvalue {
     position: relative;
     font-family: monospace;
+    font-variant-ligatures: none;
     min-height: 16pt;
     line-height: 16pt;
     background-color: white;
@@ -239,6 +237,16 @@ div.outputcellbigcharacter {
     font-size: 80px;
     text-align: center;
     border: 1px silver inset;
+}
+
+div.floattwiddlerlinksection {
+    font-size: 10pt;
+    text-align: left;
+}
+
+a.floattwiddlerlink {
+    margin-left: 0.75em;
+    font-family: monospace;
 }
 
 div.buttonblock {

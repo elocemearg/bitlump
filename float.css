@@ -1,0 +1,205 @@
+body {
+    font-family: "Inter", sans-serif;
+    font-variant-ligatures: none;
+}
+
+section.sectioncolumn {
+    display: inline-block;
+    vertical-align: top;
+    padding-left: 2em;
+    margin-right: 2em;
+}
+
+section.controlsection {
+}
+
+section.longwindedexplanation {
+    max-width: 750px;
+    font-size: 11pt;
+    border-left: 2px silver groove;
+}
+
+div.maininputrow {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+label.radiolabel {
+    background-color: white;
+    font-family: "Fira Sans Condensed", sans-serif;
+    border-radius: 5px;
+    border: 2px silver outset;
+    padding: 5px 10px 5px 10px;
+    margin-left: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+label.radiolabelselected {
+    background-color: royalblue;
+    border: 2px silver inset !important;
+    color: white;
+}
+
+input.floatinput {
+    width: 15em;
+    font-family: monospace;
+    font-variant-ligatures: none;
+}
+
+input.invalidinput {
+    background-color: hsl(0deg, 100%, 80%);
+}
+
+select.bigselect {
+    font-size: 16pt;
+    font-family: "Fira Sans Condensed", sans-serif;
+}
+
+div.mainoutputrow {
+    display: block;
+    margin-bottom: 10px;
+}
+
+div.mainoutputrowitem {
+    display: inline-block;
+}
+
+.floatoutput th {
+    text-align: right;
+    font-weight: normal;
+}
+
+.floatoutput td {
+    font-family: monospace;
+    font-size: 12pt;
+    text-align: right;
+    font-variant-ligatures: none;
+}
+
+.floatoutput tr.nudgebuttons td {
+    text-align: center;
+}
+
+.floatoutput tr.conditions td {
+    text-align: left;
+}
+
+/* U-shaped cell border, indicating that buttons in this cell refer to the
+ * thing in the cell above. */
+.floatoutput td.cupborder {
+    border-top: none;
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+    border-bottom: 1px solid gray;
+}
+
+/* Inverted-U-shaped border, indicating that buttons in this cell refer to
+ * what's in the cell below. */
+.floatoutput td.lidborder {
+    border-top: 1px solid gray;
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+    border-bottom: none;
+}
+
+button.bitbutton {
+    border: 1px gray outset;
+    margin-right: 1px;
+    margin-top: 4px;
+    font-family: monospace;
+    font-size: 10pt;
+    cursor: pointer;
+}
+
+.leadingmantissadigit {
+    display: inline-block;
+    padding: 2px;
+    font-size: 10pt;
+    margin-right: 1px;
+    margin-top: 4px;
+    font-family: monospace;
+    background-color: white;
+}
+
+button.bitbutton:active {
+    border: 1px gray inset;
+}
+
+button.bitbutton[data-value="0"] {
+    background-color: black;
+    color: white;
+}
+
+button.bitbutton[data-value="1"] {
+    background: radial-gradient(hsl(120deg, 100%, 85%), hsl(120deg, 100%, 45%));
+    color: black;
+}
+
+button.bitbutton.bitbuttonstartofgroup {
+    margin-left: 4px !important;
+}
+
+/* Illuminated status lights for conditions like negative, zero, infinity etc */
+div.fpcondition {
+    display: inline-block;
+    text-align: center;
+    min-width: 5em;
+    font-size: 10pt;
+    font-family: "Fira Sans Condensed", sans-serif;
+    background: black;
+    color: #444444;
+    border-radius: 0.2em;
+    padding: 0.2em;
+}
+
+div.fpcondition.fpconditionlit {
+    color: black;
+}
+
+div.fpconditionnegative.fpconditionlit {
+    background: radial-gradient(yellow, orange);
+}
+
+div.fpconditionzero.fpconditionlit {
+    background: radial-gradient(#00ff00, limegreen);
+}
+
+div.fpconditionsubnormal.fpconditionlit {
+    background: radial-gradient(cyan, lightblue);
+}
+
+div.fpconditioninfinity.fpconditionlit {
+    background: radial-gradient(hsl(300deg, 100%, 90%), hsl(300deg, 100%, 40%));
+}
+
+div.fpconditionnan.fpconditionlit {
+    background: radial-gradient(hsl(0deg, 100%, 85%), hsl(0deg, 100%, 40%));
+}
+
+.outputvalue.outputvaluelarge {
+    font-size: 16pt;
+    min-height: 20pt;
+    line-height: 20pt;
+}
+
+a.bitlumplink {
+    font-size: 10pt;
+}
+
+.dottedunderline {
+    border-bottom: 1px gray dashed;
+}
+
+table.limits th,td {
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+}
+
+table.limits th {
+    text-align: right;
+}
+
+.hexvalue {
+    font-family: monospace;
+}

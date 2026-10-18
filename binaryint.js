@@ -547,9 +547,23 @@ class BinaryInt {
         return this.cmp(other) <= 0;
     }
 
-    addByte(n) {
+    bitwiseOr(other) {
+        for (let i = 0; i < this.bytes.length; i++) {
+            let thisByteIndex = this.bytes.length - i - 1;
+            let otherByteIndex = other.bytes.length - i - 1;
+            if (otherByteIndex < 0) {
+                break;
+            }
+            this.bytes[thisByteIndex] |= other.bytes[otherByteIndex];
+        }
+    }
+
+    addByte(n, fromByte=null) {
         let carry = n;
-        for (let i = this.bytes.length - 1; i >= 0; i--) {
+        if (fromByte == null) {
+            fromByte = this.bytes.length - 1;
+        }
+        for (let i = fromByte; i >= 0; i--) {
             if (carry == 0)
                 return true;
             this.bytes[i] += carry;
@@ -563,9 +577,16 @@ class BinaryInt {
         return this.addByte(1);
     }
 
-    subtractByte(n) {
+    incrementFromBit(bitIndex) {
+        return this.addByte((1 << (bitIndex % 8)), this.bytes.length - 1 - Math.floor(bitIndex / 8));
+    }
+
+    subtractByte(n, fromByte=null) {
         let borrow = n;
-        for (let i = this.bytes.length - 1; i >= 0; i--) {
+        if (fromByte == null) {
+            fromByte = this.bytes.length - 1;
+        }
+        for (let i = fromByte; i >= 0; i--) {
             if (borrow == 0)
                 return true;
             this.bytes[i] -= borrow;
@@ -582,6 +603,10 @@ class BinaryInt {
 
     decrement() {
         return this.subtractByte(1);
+    }
+
+    decrementFromBit(bitIndex) {
+        return this.subtractByte((1 << (bitIndex % 8)), this.bytes.length - 1 - Math.floor(bitIndex / 8));
     }
 
     shiftLeft(bits) {
@@ -628,6 +653,18 @@ class BinaryInt {
         }
 
         return true;
+    }
+
+    flipAllBits() {
+        for (let i = 0; i < this.bytes.length; i++) {
+            this.bytes[i] = (~this.bytes[i] & 0xff);
+        }
+    }
+
+    zeroAllBits() {
+        for (let i = 0; i < this.bytes.length; i++) {
+            this.bytes[i] = 0;
+        }
     }
 
     formatDecimal() {
@@ -706,6 +743,16 @@ class BinaryInt {
         else {
             return 0;
         }
+    }
+
+    toggleBit(bit) {
+        let byteOffset = this.bytes.length - 1 - Math.floor(bit / 8);
+        if (byteOffset < 0) {
+            return false;
+        }
+        let mask = 1 << (bit % 8);
+        this.bytes[byteOffset] ^= mask;
+        return true;
     }
 
     extractBits(topBit, length) {
@@ -824,6 +871,13 @@ function createBinaryIntFromString(text, numBytes, signed) {
             bytes.unshift(padByte);
     }
     return new BinaryInt(bytes, signed, base);
+}
+
+function createBinaryIntFromHex(text, numBytes) {
+    if (!text.toLowerCase().startsWith("0x")) {
+        text = "0x" + text;
+    }
+    return createBinaryIntFromString(text, numBytes, false);
 }
 
 function createBinaryIntFromFloat64Bin(f) {

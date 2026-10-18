@@ -6,15 +6,17 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" type="text/css" href="bitlump.css?bump=0" />
+        <link rel="stylesheet" type="text/css" href="bitlump.css?bump=1" />
     </head>
     <body onload="initPage();">
+        <script src="util.js?bump=1"></script>
         <script src="unicodedata.js?bump=0"></script>
-        <script src="binaryint.js?bump=0"></script>
+        <script src="clicktocopy.js?bump=1"></script>
+        <script src="binaryint.js?bump=1"></script>
         <script src="webutils.js?bump=0"></script>
         <script src="calendar.js?bump=0"></script>
-        <script src="conversions.js?bump=1"></script>
-        <script src="bitlump.js?bump=0"></script>
+        <script src="conversions.js?bump=2"></script>
+        <script src="bitlump.js?bump=1"></script>
         <noscript>
             <p>
                 If you had JavaScript enabled in your browser, this tool might
@@ -22,7 +24,7 @@
             </p>
         </noscript>
 
-        <div class="main" id="main">
+        <main id="main">
             <div class="maininput" id="maininput">
                 <div class="maininputrow">
                     <input id="input" type="text"></input>
@@ -52,6 +54,10 @@
                         </ul>
                         <p>
                         Click any converted value below to copy it to the clipboard.
+                        </p>
+                        <p>
+                        To look at the IEEE 754 floating-point representation
+                        in detail, see Bitlump's <a href="float.html" target="_blank">Float Twiddler</a>.
                         </p>
                     </div>
                 </div>
@@ -224,6 +230,9 @@
                                     <td class="outputcontainer outputvalue" data-converter="float32bin2mantissa" title="The decimal value of the mantissa."></td>
                                 </tr>
                             </table>
+                            <div class="floattwiddlerlinksection">
+                                To Float Twiddler: <a class="floattwiddlerlink floattwiddlerlinkdecimal floattwiddlerlink32" id="floattwiddlerlinkint32decimal"></a>
+                            </div>
                         </div>
 
                         <div class="outputgrouprow">
@@ -256,6 +265,9 @@
                                     <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64bin2mantissa" title="The decimal value of the mantissa."></td>
                                 </tr>
                             </table>
+                            <div class="floattwiddlerlinksection">
+                                To Float Twiddler: <a class="floattwiddlerlink floattwiddlerlinkdecimal floattwiddlerlink64" id="floattwiddlerlinkint64decimal"></a>
+                            </div>
                         </div>
 
                         <div class="outputgrouprow" style="text-align: left;">
@@ -323,6 +335,10 @@
                                     <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float32tovalue" data-flags="float32subnormal" title="The decimal representation of this floating point value."></td>
                                 </tr>
                             </table>
+                            <div class="floattwiddlerlinksection">
+                                To Float Twiddler: <a class="floattwiddlerlink floattwiddlerlinkhex floattwiddlerlink32" id="floattwiddlerlinkfloat32hex"></a>
+                                <a class="floattwiddlerlink floattwiddlerlinkdecimal floattwiddlerlink32" id="floattwiddlerlinkfloat32decimal"></a>
+                            </div>
                         </div>
                         <div class="outputgrouprow">
                             <div class="outputgrouprowtitle">
@@ -354,6 +370,10 @@
                                     <td class="outputcontainer outputvalue" style="width: 40%;" data-converter="float64tovalue" data-flags="float64subnormal" title="The decimal representation of this floating point value."></td>
                                 </tr>
                             </table>
+                            <div class="floattwiddlerlinksection">
+                                To Float Twiddler: <a class="floattwiddlerlink floattwiddlerlinkhex floattwiddlerlink64" id="floattwiddlerlinkfloat64hex"></a>
+                                <a class="floattwiddlerlink floattwiddlerlinkdecimal floattwiddlerlink64" id="floattwiddlerlinkfloat64decimal"></a>
+                            </div>
                         </div> <!-- outputgrouprow -->
                     </div> <!-- outputgroup float -->
 
@@ -492,6 +512,6 @@
                     </div> <!--outputgroup text -->
                 </div> <!-- outputgroupcolumn -->
             </div>
-        </div>
+        </main>
     </body>
 </html>
