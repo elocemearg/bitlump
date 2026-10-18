@@ -28,7 +28,7 @@ let floatSchemeInputs = [
     document.getElementById("floatscheme64")
 ];
 
-/* Containing labels for the radio buttons, populated further down */
+/* Containing labels for the radio buttons, populated by initPage() */
 let floatSchemeInputLabels = [];
 
 /* Drop-down list containing the input formats */
@@ -855,25 +855,29 @@ function setZeroHandler() {
     }
 }
 
-inputBox.addEventListener("input", inputHandler);
-
-for (let i = 0; i < floatSchemeInputs.length; i++) {
-    floatSchemeInputs[i].addEventListener("change", notifyFloatPrecisionChanged);
-    floatSchemeInputLabels.push(getContainingLabel(floatSchemeInputs[i]));
-}
-
-floatInputSelector.addEventListener("change", notifyInputFormatChanged);
-
-decrementExponentButton.addEventListener("click", decrementExponentHandler);
-incrementExponentButton.addEventListener("click", incrementExponentHandler);
-decrementMantissaButton.addEventListener("click", decrementMantissaHandler);
-incrementMantissaButton.addEventListener("click", incrementMantissaHandler);
-
-endianSwapButton.addEventListener("click", endianSwapHandler);
-flipBitsButton.addEventListener("click", flipBitsHandler);
-setZeroButton.addEventListener("click", setZeroHandler);
-
 function initPage() {
+    /* Attach event listeners to things that need them */
+    inputBox.addEventListener("input", inputHandler);
+
+    /* When we change float precision, call notifyFloatPrecisionChanged in order to recalculate everything */
+    for (let i = 0; i < floatSchemeInputs.length; i++) {
+        floatSchemeInputs[i].addEventListener("change", notifyFloatPrecisionChanged);
+        floatSchemeInputLabels.push(getContainingLabel(floatSchemeInputs[i]));
+    }
+
+    /* When the input format is changed, call notifyInputFormatChanged */
+    floatInputSelector.addEventListener("change", notifyInputFormatChanged);
+
+    /* Attach handlers to the dec/increment and bit manipulation buttons */
+    decrementExponentButton.addEventListener("click", decrementExponentHandler);
+    incrementExponentButton.addEventListener("click", incrementExponentHandler);
+    decrementMantissaButton.addEventListener("click", decrementMantissaHandler);
+    incrementMantissaButton.addEventListener("click", incrementMantissaHandler);
+
+    endianSwapButton.addEventListener("click", endianSwapHandler);
+    flipBitsButton.addEventListener("click", flipBitsHandler);
+    setZeroButton.addEventListener("click", setZeroHandler);
+
     /* Put the element with id "fpconditionnegative" in the fpConditionLights
      * map with the key "negative", and so on. The illumination status of
      * these lights are changed with setFPConditionLight(key, on). */
