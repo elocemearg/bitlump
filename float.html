@@ -191,6 +191,48 @@
                 where <i>signvalue</i> is 1 if the number is positive or -1 if negative.
                 </p>
                 <div class="valueextratext"></div>
+
+                <h3>Limits and constants</h3>
+                <p>
+                The following limits and attributes apply to IEEE 754 <span class="textprecisionword">XXX</span>-precision floating point numbers.
+                </p>
+                <table class="limits">
+                    <tr>
+                        <th>Number of bits</th><td class="textnumbits"></td>
+                    </tr>
+                    <tr>
+                        <th>Sign bit</th><td>1 bit, mask <span class="textsignbitmask hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Exponent bits</th><td><span class="textnumexponentbits">XXX</span> bits (biased +<span class="textexponentbias">XXX</span>), mask <span class="textexponentbitmask hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Mantissa bits</th><td><span class="textnummantissabits">XXX</span> bits (not including implied leading bit), mask <span class="textmantissabitmask hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Exponent range</th>
+                        <td>2<sup><span class="textminexponent">XXX</span></sup> to 2<sup><span class="textmaxexponent">XXX</span></sup></td>
+                    <tr>
+                        <th>Smallest subnormal value</th>
+                        <td><span class="textsmallestsubnormal">XXX</span>, <span class="textsmallestsubnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Largest subnormal value</th>
+                        <td><span class="textlargestsubnormal">XXX</span>, <span class="textlargestsubnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Smallest normal value</th>
+                        <td><span class="textsmallestnormal">XXX</span>, <span class="textsmallestnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Largest normal value</th>
+                        <td><span class="textlargestnormal">XXX</span>, <span class="textlargestnormalhex hexvalue">XXX</span></td>
+                    </tr>
+                    <tr>
+                        <th>Decimal digits required<br>for <span class="dottedunderline" title="This is the minimum number of decimal digits which must be used when formatting the value as a string, such that when the string is converted back to binary, the original value is always recovered.">lossless round-trip</span></th>
+                        <td><span class="floatformatdigits">XXX</span></td>
+                    </tr>
+                </table>
             </section>
 
         </main>

@@ -547,6 +547,17 @@ class BinaryInt {
         return this.cmp(other) <= 0;
     }
 
+    bitwiseOr(other) {
+        for (let i = 0; i < this.bytes.length; i++) {
+            let thisByteIndex = this.bytes.length - i - 1;
+            let otherByteIndex = other.bytes.length - i - 1;
+            if (otherByteIndex < 0) {
+                break;
+            }
+            this.bytes[thisByteIndex] |= other.bytes[otherByteIndex];
+        }
+    }
+
     addByte(n, fromByte=null) {
         let carry = n;
         if (fromByte == null) {

@@ -190,3 +190,16 @@ a.bitlumplink {
 .dottedunderline {
     border-bottom: 1px gray dashed;
 }
+
+table.limits th,td {
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+}
+
+table.limits th {
+    text-align: right;
+}
+
+.hexvalue {
+    font-family: monospace;
+}

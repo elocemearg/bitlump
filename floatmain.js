@@ -171,6 +171,15 @@ function clearFPConditionLights() {
     }
 }
 
+function makeBitMask(sizeBytes, topBit, numBits) {
+    let bin = createBinaryIntFromHex("0x00", sizeBytes);
+    for (let bit = topBit; bit > topBit - numBits; bit--) {
+        bin.toggleBit(bit);
+    }
+    return bin;
+}
+
+
 /* FPScheme: represents a floating-point precision and associated encoding
  * such as single-precision or double-precision. Bit positions and counts are
  * supplied on construction. */
@@ -198,6 +207,20 @@ class FPScheme {
         this.roundTripDecimalDigits = roundTripDecimalDigits;
         this.exponentHexDigits = Math.ceil(numExpBits / 4);
         this.mantissaHexDigits = Math.ceil(numMantissaBits / 4);
+
+        /* Various other constants related to this floating-point precision
+         * rather than to any specific value */
+        const sizeBytes = Math.floor(this.numBits / 8);
+        this.signBitMask = makeBitMask(sizeBytes, this.signBitIndex, 1);
+        this.exponentBitMask = makeBitMask(sizeBytes, this.topExpBitIndex, this.numExpBits);
+        this.mantissaBitMask = makeBitMask(sizeBytes, this.topMantissaBitIndex, this.numMantissaBits);
+        this.smallestSubnormalBinary = createBinaryIntFromHex("0x01", sizeBytes);
+        this.largestSubnormalBinary = this.mantissaBitMask.copy();
+        this.smallestNormalBinary = createBinaryIntFromHex("0x00", sizeBytes);
+        this.smallestNormalBinary.toggleBit(this.topExpBitIndex - this.numExpBits + 1);
+        this.largestNormalBinary = this.exponentBitMask.copy();
+        this.largestNormalBinary.toggleBit(this.topExpBitIndex - this.numExpBits + 1); /* maxExp - 1 */
+        this.largestNormalBinary.bitwiseOr(this.mantissaBitMask);
     }
 
     getNumBits() {
@@ -226,6 +249,58 @@ class FPScheme {
 
     getSubnormalExponent() {
         return this.minNormalExp;
+    }
+
+    getMinExponent() {
+        return this.minNormalExp;
+    }
+
+    getMaxExponent() {
+        return this.maxNormalExp;
+    }
+
+    getSignBitMask() {
+        return "0x" + this.signBitMask.formatHex();
+    }
+
+    getExponentBitMask() {
+        return "0x" + this.exponentBitMask.formatHex();
+    }
+
+    getMantissaBitMask() {
+        return "0x" + this.mantissaBitMask.formatHex();
+    }
+
+    getSmallestSubnormalString() {
+        return this.getValueString(this.smallestSubnormalBinary);
+    }
+
+    getSmallestSubnormalHex() {
+        return "0x" + this.getHex(this.smallestSubnormalBinary);
+    }
+
+    getLargestSubnormalString() {
+        return this.getValueString(this.largestSubnormalBinary);
+    }
+
+    getLargestSubnormalHex() {
+        return "0x" + this.getHex(this.largestSubnormalBinary);
+    }
+
+    getSmallestNormalString() {
+        return this.getValueString(this.smallestNormalBinary);
+    }
+
+    getSmallestNormalHex() {
+        return "0x" + this.getHex(this.smallestNormalBinary);
+    }
+
+    getLargestNormalString() {
+        return this.getValueString(this.largestNormalBinary);
+    }
+
+    getLargestNormalHex() {
+        return "0x" + this.getHex(this.largestNormalBinary);
     }
 
     isNegative(bin) {
@@ -737,6 +812,19 @@ function notifyFloatPrecisionChanged() {
     setContentsByClass("textexponentbias", scheme.getExponentBias().toString());
     setContentsByClass("textnummantissabits", scheme.getNumMantissaBits().toString());
     setContentsByClass("textsubnormalexponent", scheme.getSubnormalExponent().toString());
+    setContentsByClass("textsignbitmask", scheme.getSignBitMask());
+    setContentsByClass("textexponentbitmask", scheme.getExponentBitMask());
+    setContentsByClass("textmantissabitmask", scheme.getMantissaBitMask());
+    setContentsByClass("textminexponent", scheme.getMinExponent());
+    setContentsByClass("textmaxexponent", scheme.getMaxExponent());
+    setContentsByClass("textsmallestsubnormal", scheme.getSmallestSubnormalString());
+    setContentsByClass("textsmallestsubnormalhex", scheme.getSmallestSubnormalHex());
+    setContentsByClass("textlargestsubnormal", scheme.getLargestSubnormalString());
+    setContentsByClass("textlargestsubnormalhex", scheme.getLargestSubnormalHex());
+    setContentsByClass("textsmallestnormal", scheme.getSmallestNormalString());
+    setContentsByClass("textsmallestnormalhex", scheme.getSmallestNormalHex());
+    setContentsByClass("textlargestnormal", scheme.getLargestNormalString());
+    setContentsByClass("textlargestnormalhex", scheme.getLargestNormalHex());
 
     recreateBitButtons(scheme);
     updateDisplay(inputFloatBinary);
