@@ -916,8 +916,98 @@ function createBinaryIntFromFloat32Bin(f) {
     return new BinaryInt(bytesSwapped, false, 16);
 }
 
+const FLOAT16_SMALLEST_SUBNORMAL = Math.pow(2, -24);
+const FLOAT16_SMALLEST_NORMAL = Math.pow(2, -14);
+const FLOAT16_LARGEST = 65504;
+const FLOAT16_EXPONENT_BITMASK = createBinaryIntFromHex("0x7C00");
+
+/* We are given a JavaScript number, which is a double-precision float, and
+ * we have to return a 2-byte BinaryInt representing the closest half-precision
+ * (16 bit) floating point number to it.
+ *
+ * We can't do this like createBinaryIntFromFloat32Bin() because that
+ * uses a Float32Array, and the corresponding Float16Array is very new and
+ * hasn't been supported in most browsers for very long. So instead, we'll do
+ * it by manually working out what the half-precision sign, exponent and
+ * mantissa values should be. */
+function createBinaryIntFromFloat16Bin(f) {
+    /* Start with 16 zero-bits */
+    let bin = new BinaryInt([0, 0], false, 16);
+    if (f < 0) {
+        /* Value is negative, so set half-precision sign bit */
+        bin.toggleBit(15);
+    }
+    if (Math.abs(f) > FLOAT16_LARGEST) {
+        /* f is too large for a half-precision float, so we'll return infinity,
+         * which has all the exponent bits set to 1 and mantissa bits to 0. */
+        bin.bitwiseOr(FLOAT16_EXPONENT_BITMASK);
+    }
+    else if (Math.abs(f) >= FLOAT16_SMALLEST_SUBNORMAL) {
+        /* f is in the range of a half precision float and not zero. */
+
+        /* Logical value of the mantissa is [1, 2) for normal numbers, or
+         * [0, 1) for subnormal numbers. */
+        const mantissaMin = (Math.abs(f) < FLOAT16_SMALLEST_NORMAL ? 0 : 1);
+        const mantissaMax = mantissaMin + 1;
+
+        /* Calculate the exponent and mantissa by repeatedly doubling or
+         * halving the value until it falls within the valid mantissa range,
+         * and counting the number of times we did that. */
+        let mantissa = Math.abs(f);
+        let exponent = 0;
+        while (mantissa < mantissaMin) {
+            mantissa *= 2;
+            exponent--;
+        }
+        while (mantissa >= mantissaMax) {
+            mantissa /= 2;
+            exponent++;
+        }
+
+        /* Set exponentInt to the raw exponent field value, shifted into its proper place */
+        let exponentInt = (exponent + 15) << 10;
+        if (mantissaMin == 0) {
+            /* Subnormal number, so the raw exponent must be all zeroes */
+            exponentInt = 0;
+        }
+
+        /* Bitwise-or the raw exponent field into bin */
+        let exponentBin = new BinaryInt([exponentInt >> 8, 0]);
+        bin.bitwiseOr(exponentBin);
+
+        /* Now calculate the mantissa bits. First get rid of the implied
+         * leading 1 bit of the mantissa, if it's there. */
+        if (mantissa >= 1.0) {
+            mantissa -= 1.0;
+        }
+
+        /* Then test if the mantissa should have the bit representing 1/2 set,
+         * then 1/4, then 1/8, etc. */
+        let bitValue = 0.5;
+        for (let bit = 9; bit >= 0; bit--) {
+            if (mantissa >= bitValue) {
+                bin.toggleBit(bit);
+                mantissa -= bitValue;
+            }
+            bitValue /= 2;
+        }
+
+        /* Finally, if what's left in mantissa is greater than half the last
+         * bit value, then the value of f was closer to the next representable
+         * value than to this one, so round it away from zero by incrementing
+         * bin like it's a 16-bit int. */
+        if (mantissa >= bitValue) {
+            bin.increment();
+        }
+    }
+    return bin;
+}
+
 function createBinaryIntFromFloatBin(f, fBits) {
-    if (fBits == 32) {
+    if (fBits == 16) {
+        return createBinaryIntFromFloat16Bin(f);
+    }
+    else if (fBits == 32) {
         return createBinaryIntFromFloat32Bin(f);
     }
     else if (fBits == 64) {

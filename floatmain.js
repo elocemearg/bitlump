@@ -24,6 +24,7 @@ let linkValueDecimal = document.getElementById("valuedecimallink");
 
 /* Radio buttons for 32/64-bit selection */
 let floatSchemeInputs = [
+    document.getElementById("floatscheme16"),
     document.getElementById("floatscheme32"),
     document.getElementById("floatscheme64")
 ];
@@ -467,6 +468,7 @@ class FPScheme {
  * the number of bits, which must be the same as the "value" attribute of
  * the associated radio button. */
 let floatSchemes = {
+    16 : new FPScheme("half", 16, 15, 14, 5, 9, 10, 15, 5),
     32 : new FPScheme("single", 32, 31, 30, 8, 22, 23, 127, 9),
     64 : new FPScheme("double", 64, 63, 62, 11, 51, 52, 1023, 17),
 };
@@ -676,7 +678,11 @@ function getFloatBinaryFromDecimalInput() {
     else {
         let scheme = getFloatScheme();
         let bin = null;
-        if (scheme.getNumBits() == 32) {
+        let numBits = scheme.getNumBits();
+        if (numBits == 16) {
+            bin = createBinaryIntFromFloat16Bin(value);
+        }
+        else if (numBits == 32) {
             bin = createBinaryIntFromFloat32Bin(value);
         }
         else {
@@ -768,7 +774,11 @@ function notifyFloatPrecisionChanged() {
     let scheme = getFloatScheme();
     let format = getInputFormat();
 
-    if (bits == 32) {
+    if (bits == 16) {
+        ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Half-precision_floating-point_format";
+        setHrefByClass("wikipediaformatlink", "https://en.wikipedia.org/wiki/Half-precision_floating-point_format");
+    }
+    else if (bits == 32) {
         ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Single-precision_floating-point_format";
         setHrefByClass("wikipediaformatlink", "https://en.wikipedia.org/wiki/Single-precision_floating-point_format");
     }
@@ -803,8 +813,8 @@ function notifyFloatPrecisionChanged() {
         inputFloatBinary = getFloatBinaryFromHexInput();
     }
 
-    /* Any element which needs to contain 9 or 17 depending on whether we're
-     * using 32-bit or 64-bit floats, set them now. */
+    /* Fill in various text placeholders relating to the floating point
+     * precision currently in effect. */
     setContentsByClass("floatformatdigits", scheme.getRoundTripDecimalDigits().toString());
     setContentsByClass("textnumbits", scheme.getNumBits().toString());
     setContentsByClass("textprecisionword", scheme.getPrecisionWord());
@@ -1020,7 +1030,7 @@ function initPage() {
     else {
         inputBox.value = "";
         decimalInputHandler();
-        changeInputFormat();
+        notifyInputFormatChanged();
     }
 
     attachCopyHandlerToElementsWithClass("outputvalue", null);
