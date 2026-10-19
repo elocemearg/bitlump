@@ -945,30 +945,34 @@ function createBinaryIntFromFloat16Bin(f) {
     else if (Math.abs(f) >= FLOAT16_SMALLEST_SUBNORMAL) {
         /* f is in the range of a half precision float and not zero. */
 
-        /* Logical value of the mantissa is [1, 2) for normal numbers, or
-         * [0, 1) for subnormal numbers. */
-        const mantissaMin = (Math.abs(f) < FLOAT16_SMALLEST_NORMAL ? 0 : 1);
-        const mantissaMax = mantissaMin + 1;
-
         /* Calculate the exponent and mantissa by repeatedly doubling or
          * halving the value until it falls within the valid mantissa range,
          * and counting the number of times we did that. */
         let mantissa = Math.abs(f);
         let exponent = 0;
-        while (mantissa < mantissaMin) {
-            mantissa *= 2;
-            exponent--;
-        }
-        while (mantissa >= mantissaMax) {
-            mantissa /= 2;
-            exponent++;
-        }
-
-        /* Set exponentInt to the raw exponent field value, shifted into its proper place */
-        let exponentInt = (exponent + 15) << 10;
-        if (mantissaMin == 0) {
-            /* Subnormal number, so the raw exponent must be all zeroes */
+        let exponentInt;
+        if (Math.abs(f) < FLOAT16_SMALLEST_NORMAL) {
+            /* For subnormal half-precision numbers, the exponent is 2^-14
+             * and the raw value of the exponent is all zero-bits. The
+             * mantissa must lie between 0 and 1. */
+            exponent = -14;
             exponentInt = 0;
+            mantissa *= Math.pow(2, 14);
+        }
+        else {
+            /* Logical value of the mantissa is [1, 2) for normal numbers. */
+            const mantissaMin = 1;
+            const mantissaMax = 2;
+            while (mantissa < mantissaMin) {
+                mantissa *= 2;
+                exponent--;
+            }
+            while (mantissa >= mantissaMax) {
+                mantissa /= 2;
+                exponent++;
+            }
+            /* Set exponentInt to the raw exponent field value, shifted into its proper place */
+            exponentInt = (exponent + 15) << 10;
         }
 
         /* Bitwise-or the raw exponent field into bin */
@@ -976,7 +980,8 @@ function createBinaryIntFromFloat16Bin(f) {
         bin.bitwiseOr(exponentBin);
 
         /* Now calculate the mantissa bits. First get rid of the implied
-         * leading 1 bit of the mantissa, if it's there. */
+         * leading 1 bit (representing the value 1) from "mantissa", so
+         * that we have only the fractional part of it. */
         if (mantissa >= 1.0) {
             mantissa -= 1.0;
         }
