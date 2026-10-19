@@ -1020,7 +1020,7 @@ function initPage() {
     else {
         inputBox.value = "";
         decimalInputHandler();
-        changeInputFormat();
+        notifyInputFormatChanged();
     }
 
     attachCopyHandlerToElementsWithClass("outputvalue", null);
