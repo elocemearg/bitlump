@@ -24,9 +24,10 @@ div.maininputrow {
     margin-bottom: 15px;
 }
 
-label.radiolabel {
+button.precisionselector {
     background-color: white;
     font-family: "Fira Sans Condensed", sans-serif;
+    font-size: 11pt;
     border-radius: 5px;
     border: 2px silver outset;
     padding: 5px 10px 5px 10px;
@@ -35,10 +36,10 @@ label.radiolabel {
     cursor: pointer;
 }
 
-label.radiolabelselected {
-    background-color: royalblue;
+button.buttonhighlight {
+    background-color: royalblue !important;
     border: 2px silver inset !important;
-    color: white;
+    color: white !important;
 }
 
 input.floatinput {
