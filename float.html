@@ -2,7 +2,9 @@
 <html lang="en">
     <head>
         <title>Bitlump Float Twiddler</title>
-        <meta name="description" content="Display and manipulate the bits of an IEEE 754 single or double precision floating point value" />
+        <meta name="description" content="Display and manipulate the bits of an IEEE 754 half-precision, single-precision or double-precision floating point value" />
+        <meta name="author" content="Graeme Cole">
+        <meta name="keywords" content="float, IEEE 754, floating point, single precision, double precision, half precision, bits, exponent, mantissa">
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,8 +34,9 @@
                 <h1>Bitlump Float Twiddler</h1>
                 <h2>Input</h2>
                 <div class="maininputrow">
-                    <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme32" value="32" checked> Single-precision (32 bit)</label>
-                    <label class="radiolabel"><input type="radio" name="floatscheme" id="floatscheme64" value="64"> Double-precision (64 bit)</label>
+                    <button class="precisionselector" id="floatscheme16" data-value="16">Half-precision (16 bits)</button>
+                    <button class="precisionselector" id="floatscheme32" data-value="32">Single-precision (32 bits)</button>
+                    <button class="precisionselector" id="floatscheme64" data-value="64">Double-precision (64 bits)</button>
                 </div>
                 <div class="maininputrow">
                     <select id="floatinputformat" class="bigselect">

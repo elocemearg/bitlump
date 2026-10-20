@@ -22,14 +22,12 @@ let outputValueDecimal = document.getElementById("valuedecimal");
 let linkValueRaw = document.getElementById("valuehexlink");
 let linkValueDecimal = document.getElementById("valuedecimallink");
 
-/* Radio buttons for 32/64-bit selection */
+/* Buttons for 16/32/64-bit selection */
 let floatSchemeInputs = [
+    document.getElementById("floatscheme16"),
     document.getElementById("floatscheme32"),
     document.getElementById("floatscheme64")
 ];
-
-/* Containing labels for the radio buttons, populated by initPage() */
-let floatSchemeInputLabels = [];
 
 /* Drop-down list containing the input formats */
 let floatInputSelector = document.getElementById("floatinputformat");
@@ -83,9 +81,11 @@ impliedMantissaBit.innerText = "1.";
  * If the input is invalid, inputFloatBinary is null. */
 let inputFloatBinary = null;
 
+/* One of the FPScheme objects from floatSchemes (see below) */
+let currentFloatScheme = null;
 
 /* Functions for manipulating the state of the bit-toggling buttons, and
- * for recreating them when we change between 32 and 64 bit precision. */
+ * for recreating them when we select a different precision. */
 function setBitButtonValue(button, value) {
     if (value) {
         button.innerText = "1";
@@ -467,25 +467,19 @@ class FPScheme {
  * the number of bits, which must be the same as the "value" attribute of
  * the associated radio button. */
 let floatSchemes = {
+    16 : new FPScheme("half", 16, 15, 14, 5, 9, 10, 15, 5),
     32 : new FPScheme("single", 32, 31, 30, 8, 22, 23, 127, 9),
     64 : new FPScheme("double", 64, 63, 62, 11, 51, 52, 1023, 17),
 };
 
-/* Return the "value" attribute of the selected precision radio button.
- * The return value may be used as a key to floatSchemes. */
+/* Return the number of bits in the currently-selected float precision. */
 function getFloatBits() {
-    for (let i = 0; i < floatSchemeInputs.length; i++) {
-        if (floatSchemeInputs[i].checked) {
-            return parseInt(floatSchemeInputs[i].value);
-        }
-    }
-    return null;
+    return currentFloatScheme.getNumBits();
 }
 
-/* Return the FPScheme object currently selected by the radio buttons. */
+/* Return the FPScheme object last selected by one of the precision buttons. */
 function getFloatScheme() {
-    let bits = getFloatBits();
-    return floatSchemes[bits];
+    return currentFloatScheme;
 }
 
 /* Return the value of the <option> element selected in the "input format"
@@ -676,7 +670,11 @@ function getFloatBinaryFromDecimalInput() {
     else {
         let scheme = getFloatScheme();
         let bin = null;
-        if (scheme.getNumBits() == 32) {
+        let numBits = scheme.getNumBits();
+        if (numBits == 16) {
+            bin = createBinaryIntFromFloat16Bin(value);
+        }
+        else if (numBits == 32) {
             bin = createBinaryIntFromFloat32Bin(value);
         }
         else {
@@ -767,29 +765,24 @@ function notifyFloatPrecisionChanged() {
     let bits = getFloatBits();
     let scheme = getFloatScheme();
     let format = getInputFormat();
+    let precisionWord = scheme.getPrecisionWord();
+    let precisionWordCapitalised = precisionWord.charAt(0).toUpperCase() + precisionWord.substring(1);
+    let wikiUrl = "https://en.wikipedia.org/wiki/" + precisionWordCapitalised + "-precision_floating-point_format";
 
-    if (bits == 32) {
-        ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Single-precision_floating-point_format";
-        setHrefByClass("wikipediaformatlink", "https://en.wikipedia.org/wiki/Single-precision_floating-point_format");
-    }
-    else {
-        ieee754EncodingLink.href = "https://en.wikipedia.org/wiki/Double-precision_floating-point_format";
-        setHrefByClass("wikipediaformatlink", "https://en.wikipedia.org/wiki/Double-precision_floating-point_format");
-    }
+    ieee754EncodingLink.href = wikiUrl;
+    setHrefByClass("wikipediaformatlink", wikiUrl);
 
-    /* Highlight the label containing the selected radio button */
-    for (let i = 0; i < floatSchemeInputLabels.length; i++) {
-        let label = floatSchemeInputLabels[i];
-        if (label && label.classList.contains("radiolabel")) {
-            if (floatSchemeInputs[i].checked) {
-                if (!label.classList.contains("radiolabelselected")) {
-                    label.classList.add("radiolabelselected");
-                }
+    /* Highlight the button corresponding to the currently-selected precision */
+    for (let i = 0; i < floatSchemeInputs.length; i++) {
+        let button = floatSchemeInputs[i];
+        if (parseInt(button.getAttribute("data-value")) == bits) {
+            if (!button.classList.contains("buttonhighlight")) {
+                button.classList.add("buttonhighlight");
             }
-            else {
-                if (label.classList.contains("radiolabelselected")) {
-                    label.classList.remove("radiolabelselected");
-                }
+        }
+        else {
+            if (button.classList.contains("buttonhighlight")) {
+                button.classList.remove("buttonhighlight");
             }
         }
     }
@@ -803,8 +796,8 @@ function notifyFloatPrecisionChanged() {
         inputFloatBinary = getFloatBinaryFromHexInput();
     }
 
-    /* Any element which needs to contain 9 or 17 depending on whether we're
-     * using 32-bit or 64-bit floats, set them now. */
+    /* Fill in various text placeholders relating to the floating point
+     * precision currently in effect. */
     setContentsByClass("floatformatdigits", scheme.getRoundTripDecimalDigits().toString());
     setContentsByClass("textnumbits", scheme.getNumBits().toString());
     setContentsByClass("textprecisionword", scheme.getPrecisionWord());
@@ -828,6 +821,15 @@ function notifyFloatPrecisionChanged() {
 
     recreateBitButtons(scheme);
     updateDisplay(inputFloatBinary);
+}
+
+/* Set currentFloatScheme to one of the FPScheme objects in floatSchemes. */
+function setFloatScheme(bits) {
+    let scheme = floatSchemes[bits];
+    if (scheme) {
+        currentFloatScheme = scheme;
+        notifyFloatPrecisionChanged();
+    }
 }
 
 function notifyInputFormatChanged() {
@@ -947,10 +949,16 @@ function initPage() {
     /* Attach event listeners to things that need them */
     inputBox.addEventListener("input", inputHandler);
 
-    /* When we change float precision, call notifyFloatPrecisionChanged in order to recalculate everything */
+    /* When we change float precision, call setFloatScheme(), which switches
+     * currentFloatScheme then calls notifyFloatPrecisionChanged() in order
+     * to recalculate everything. */
     for (let i = 0; i < floatSchemeInputs.length; i++) {
-        floatSchemeInputs[i].addEventListener("change", notifyFloatPrecisionChanged);
-        floatSchemeInputLabels.push(getContainingLabel(floatSchemeInputs[i]));
+        let bits = parseInt(floatSchemeInputs[i].getAttribute("data-value"));
+        if (!isNaN(bits)) {
+            floatSchemeInputs[i].addEventListener("click", function () {
+                setFloatScheme(bits);
+            });
+        }
     }
 
     /* When the input format is changed, call notifyInputFormatChanged */
@@ -984,6 +992,7 @@ function initPage() {
         }
     }
 
+
     inputFloatBinary = createBinaryIntFromFloat32Bin(0);
 
     /* If the URL's query string has parameters, apply them to the precision
@@ -993,17 +1002,13 @@ function initPage() {
     if ("p" in queryString) {
         let bits = parseInt(queryString["p"]);
         if (!isNaN(bits)) {
-            for (let i = 0; i < floatSchemeInputs.length; i++) {
-                if (parseInt(floatSchemeInputs[i].value) == bits) {
-                    floatSchemeInputs[i].checked = true;
-                    break;
-                }
-            }
+            setFloatScheme(bits);
         }
     }
 
-    /* Set up the bit-twiddling buttons for the selected precision. */
-    notifyFloatPrecisionChanged();
+    if (currentFloatScheme == null) {
+        setFloatScheme(32);
+    }
 
     /* Handle parameters like h=0x12345678 (enter hex input mode) and f=3.142
      * (enter decimal input mode). */

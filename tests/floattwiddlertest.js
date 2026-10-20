@@ -1,3 +1,149 @@
+/* Half-precision test cases:
+ * https://en.wikipedia.org/wiki/Half-precision_floating-point_format#Half_precision_examples
+ */
+const floatFieldTests16 = [
+    {
+        /* Zero */
+        "value" : 0,
+        "sign" : 0,
+        "exponent" : -14,
+        "mantissa" : 0,
+        "exponentrawhex" : "0x00",
+        "mantissarawhex" : "0x000",
+        "hex" : "0x0000"
+    },
+    {
+        /* 1 */
+        "value" : 1,
+        "sign" : 0,
+        "exponent" : 0,
+        "mantissa" : 1,
+        "exponentrawhex" : "0x0F",
+        "mantissarawhex" : "0x000",
+        "hex" : "0x3C00"
+    },
+    {
+        /* -2 */
+        "value" : -2,
+        "sign" : 1,
+        "exponent" : 1,
+        "mantissa" : 1,
+        "exponentrawhex" : "0x10",
+        "mantissarawhex" : "0x000",
+        "hex" : "0xC000"
+    },
+    {
+        /* smallest positive subnormal number */
+        "value" : 0.000000059604645,
+        "sign" : 0,
+        "exponent" : -14,
+        "mantissa" : 1/1024,
+        "exponentrawhex" : "0x00",
+        "mantissarawhex" : "0x001",
+        "hex" : "0x0001"
+    },
+    {
+        /* largest subnormal number */
+        "value" : 0.000060975552,
+        "sign" : 0,
+        "exponent" : -14,
+        "mantissa" : 1023/1024,
+        "exponentrawhex" : "0x00",
+        "mantissarawhex" : "0x3FF",
+        "hex" : "0x03FF"
+    },
+    {
+        /* smallest positive normal number */
+        "value" : 0.00006103515625,
+        "sign" : 0,
+        "exponent" : -14,
+        "mantissa" : 1,
+        "exponentrawhex" : "0x01",
+        "mantissarawhex" : "0x000",
+        "hex" : "0x0400"
+    },
+    {
+        /* nearest number to 1/3 */
+        "value" : 0.33325195,
+        "sign" : 0,
+        "exponent" : -2,
+        "mantissa" : 1 + 341/1024,
+        "exponentrawhex" : "0x0D",
+        "mantissarawhex" : "0x155",
+        "hex" : "0x3555"
+    },
+    {
+        /* largest number less than 1 */
+        "value" : 0.99951172,
+        "sign" : 0,
+        "exponent" : -1,
+        "mantissa" : 1 + 1023/1024,
+        "exponentrawhex" : "0x0E",
+        "mantissarawhex" : "0x3FF",
+        "hex" : "0x3BFF"
+    },
+    {
+        /* smallest number larger than 1 */
+        "value" : 1.00097656,
+        "sign" : 0,
+        "exponent" : 0,
+        "mantissa" : 1025/1024,
+        "exponentrawhex" : "0x0F",
+        "mantissarawhex" : "0x001",
+        "hex" : "0x3C01"
+    },
+    {
+        /* closest value to pi */
+        "value" : 3.140625,
+        "sign" : 0,
+        "exponent" : 1,
+        "mantissa" : 3.140625 / 2,
+        "exponentrawhex" : "0x10",
+        "mantissarawhex" : "0x248",
+        "hex" : "0x4248"
+    },
+    {
+        /* largest odd number: after 2048, lowest mantissa bit represents 2 */
+        "value" : 2047,
+        "sign" : 0,
+        "exponent" : 10,
+        "mantissa" : 2047 / 1024,
+        "exponentrawhex" : "0x19",
+        "mantissarawhex" : "0x3FF",
+        "hex" : "0x67FF"
+    },
+    {
+        /* largest normal number */
+        "value" : 65504,
+        "sign" : 0,
+        "exponent" : 15,
+        "mantissa" : 65504 / Math.pow(2, 15),
+        "exponentrawhex" : "0x1E",
+        "mantissarawhex" : "0x3FF",
+        "hex" : "0x7BFF"
+    },
+    {
+        /* Infinity */
+        "value" : Infinity,
+        "sign" : 0,
+        "exponent" : 16,
+        "mantissa" : 1,
+        "exponentrawhex" : "0x1F",
+        "mantissarawhex" : "0x000",
+        "hex" : "0x7C00"
+    },
+    {
+        /* -Infinity */
+        "value" : -Infinity,
+        "sign" : 1,
+        "exponent" : 16,
+        "mantissa" : 1,
+        "exponentrawhex" : "0x1F",
+        "mantissarawhex" : "0x000",
+        "hex" : "0xFC00"
+    },
+];
+
 /* Some test cases, most of them from https://en.wikipedia.org/wiki/Single-precision_floating-point_format#Notable_single-precision_cases */
 const floatFieldTests32 = [
     {
@@ -369,6 +515,7 @@ function testFloatFields(suiteName, tests, scheme, createFunction) {
 
 function runTests() {
     let result = true;
+    result = testFloatFields("testFloatFields (16)", floatFieldTests16, floatSchemes[16], createBinaryIntFromFloat16Bin) && result;
     result = testFloatFields("testFloatFields (32)", floatFieldTests32, floatSchemes[32], createBinaryIntFromFloat32Bin) && result;
     result = testFloatFields("testFloatFields (64)", floatFieldTests64, floatSchemes[64], createBinaryIntFromFloat64Bin) && result;
     if (result) {

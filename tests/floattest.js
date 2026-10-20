@@ -32,7 +32,7 @@ function runFloatTest() {
             let b = createBinaryIntFromString(inputHexString, 8, false);
 
             let result = (a == 0 ? b.getCastFloat32() : b.getCastFloat64());
-            let resultString = (a == 0 ? result.toExponential(6) : result.toExponential(14));
+            let resultString = (a == 0 ? result.toExponential(8) : result.toExponential(16));
 
             /* If the resultString ends with e[+-] followed by only one digit,
              * add a leading zero to the exponent because C printf() always
@@ -46,7 +46,7 @@ function runFloatTest() {
                  * zero. So if the result doesn't match what we expected, try
                  * again with one extra decimal place and see if that
                  * resolves things. */
-                let resultStringExtraPrec = (a == 0 ? result.toExponential(7) : result.toExponential(15));
+                let resultStringExtraPrec = (a == 0 ? result.toExponential(9) : result.toExponential(17));
                 resultStringExtraPrec = fixExponentDigits(resultStringExtraPrec);
                 if (resultStringExtraPrec != expectedStringExtraPrec) {
                     console.log(name + " test " + (i + 1).toString() + "/" +
