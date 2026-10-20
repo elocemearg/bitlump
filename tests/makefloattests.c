@@ -18,7 +18,7 @@ write_float32_test_case(FILE *out, float f) {
         sprintf(float_hex + 2 + i * 2, "%02x", (unsigned int) x[3 - i]);
     }
     float_hex[10] = '\0';
-    fprintf(out, "    { \"input\": \"%s\", \"expectedValue\": \"%.6e\", \"expectedValueExtra\": \"%.7e\" },\n",
+    fprintf(out, "    { \"input\": \"%s\", \"expectedValue\": \"%.8e\", \"expectedValueExtra\": \"%.9e\" },\n",
             float_hex, (double) f, (double) f);
 }
 
@@ -31,7 +31,7 @@ write_float64_test_case(FILE *out, double f) {
         sprintf(float_hex + 2 + i * 2, "%02x", (unsigned int) x[7 - i]);
     }
     float_hex[18] = '\0';
-    fprintf(out, "    { \"input\": \"%s\", \"expectedValue\": \"%.14e\", \"expectedValueExtra\": \"%.15e\" },\n",
+    fprintf(out, "    { \"input\": \"%s\", \"expectedValue\": \"%.16e\", \"expectedValueExtra\": \"%.17e\" },\n",
             float_hex, f, f);
 }
 
