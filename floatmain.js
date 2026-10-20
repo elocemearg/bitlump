@@ -74,6 +74,7 @@ let mantissaBitButtons = [];
 let impliedMantissaBit = document.createElement("DIV");
 impliedMantissaBit.classList.add("leadingmantissadigit");
 impliedMantissaBit.innerText = "1.";
+impliedMantissaBit.title = "The bit to the left of the mantissa's binary point is implied, not stored.";
 
 /* A BinaryInt object converted from either the decimal input box or the hex
  * input box. This is where we remember the binary reprsentation of the float
