@@ -249,6 +249,11 @@ a.floattwiddlerlink {
     font-family: monospace;
 }
 
+/* Don't display float twiddler links for disabled outputs */
+div.outputgroupvoid a.floattwiddlerlink {
+    display: none;
+}
+
 div.buttonblock {
     text-align: center;
 }
